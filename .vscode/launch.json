@@ -1,0 +1,58 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "sbtw (Debug)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "dotnet",
+            "args": [
+                "${workspaceRoot}/sbtw.Desktop/bin/Debug/net5.0/sbtw.Desktop.dll"
+            ],
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "Build sbtw (Debug)",
+            "console": "internalConsole"
+        },
+        {
+            "name": "sbtw (Release)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "dotnet",
+            "args": [
+                "${workspaceRoot}/sbtw.Desktop/bin/Release/net5.0/sbtw.Desktop.dll"
+            ],
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "Build sbtw (Release)",
+            "console": "internalConsole"
+        },
+        {
+            "name": "sbtw (Tests, Debug)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "dotnet",
+            "args": [
+                "${workspaceRoot}/sbtw.Game.Tests/bin/Debug/net5.0/sbtw.Game.Tests.dll"
+            ],
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "Build tests (Debug)",
+            "console": "internalConsole"
+        },
+        {
+            "name": "sbtw (Tests, Release)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "dotnet",
+            "args": [
+                "${workspaceRoot}/sbtw.Game.Tests/bin/Release/net5.0/sbtw.Game.Tests.dll"
+            ],
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "Build tests (Release)",
+            "console": "internalConsole"
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach"
+        }
+    ]
+}

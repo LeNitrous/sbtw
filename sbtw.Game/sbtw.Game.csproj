@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\sbtw.Common\sbtw.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build" Version="17.0.0" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.0.0" />
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+    <PackageReference Include="ppy.osu.Game" Version="2021.1105.0" />
+  </ItemGroup>
+
+</Project>
