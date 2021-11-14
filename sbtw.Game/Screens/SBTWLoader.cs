@@ -78,7 +78,7 @@ namespace sbtw.Game.Screens
             }
 
             var newProject = new Project(config, host, audio, rulesets);
-            newProject.Save();
+            newProject.Save(true);
             newProject.Build();
 
             project.Value = newProject;

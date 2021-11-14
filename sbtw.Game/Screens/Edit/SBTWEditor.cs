@@ -502,6 +502,6 @@ namespace sbtw.Game.Screens.Edit
         }
 
         private void openProjectFile()
-            => game.OpenFileDialog(new[] { "*.csproj" }, "MSBuild Projects", path => Schedule(() => loader.LoadProject(path)));
+            => game.OpenFileDialog(new[] { "*.sbtw.json" }, "sbtw! Projects", path => Schedule(() => loader.LoadProject(path)));
     }
 }

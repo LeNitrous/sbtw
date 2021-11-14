@@ -3,9 +3,7 @@
 
 using System;
 using System.IO;
-using System.Linq;
-using Microsoft.Build.Construction;
-using Microsoft.Build.Exceptions;
+using Newtonsoft.Json;
 using osu.Framework.Audio;
 using osu.Framework.IO.Stores;
 using osu.Framework.Platform;
@@ -19,12 +17,12 @@ namespace sbtw.Game.Projects
         /// <summary>
         /// The name of this project.
         /// </summary>
-        public string Name { get; private set; }
+        public string Name => config.Name;
 
         /// <summary>
         /// The absolute path to the project.
         /// </summary>
-        public string Path { get; private set; }
+        public string Path => config.Path;
 
         /// <summary>
         /// The path to the beatmap for this project.
@@ -36,19 +34,12 @@ namespace sbtw.Game.Projects
         public string BeatmapPath
         {
             get => UseStablePath ? System.IO.Path.Combine(ProjectHelper.STABLE_PATH, "Songs", beatmapPath) : beatmapPath;
-            private set => beatmapPath = value;
         }
 
         /// <summary>
         /// Determines whether <see cref="BeatmapPath"/> should be relative to the stable installation songs folder or not.
         /// </summary>
-        public bool UseStablePath { get; private set; }
-
-        /// <summary>
-        /// Determines whether this project exists on disk. This is always true for instances created using <see cref="Load"/>
-        /// and false for instances created in-memory until <see cref="Save"/> is called.
-        /// </summary>
-        public bool Exists { get; private set; }
+        public bool UseStablePath => config.UseStablePath;
 
         /// <summary>
         /// Invoked when a file has been changed in either the project directory or the beatmap directory.
@@ -69,17 +60,17 @@ namespace sbtw.Game.Projects
         /// </summary>
         public IResourceStore<byte[]> Resources => beatmapManager.Resources;
 
-        private string beatmapPath;
+        private bool exists => File.Exists(msBuildProjectPath);
+        private string msBuildProjectPath => System.IO.Path.Combine(Path, System.IO.Path.ChangeExtension(Name, "csproj"));
+        private string projectConfigPath => System.IO.Path.Combine(Path, System.IO.Path.ChangeExtension(Name, ".sbtw.json"));
+        private string beatmapPath => config.BeatmapPath;
+        private readonly ProjectConfiguration config;
         private readonly ProjectFileWatcher fileWatcher;
         private readonly ProjectBeatmapManager beatmapManager;
 
         public Project(ProjectConfiguration config, GameHost host, AudioManager audio, RulesetStore rulesets)
         {
-            Name = config.Name;
-            Path = config.Path;
-            BeatmapPath = config.BeatmapPath;
-            UseStablePath = config.UseStablePath;
-
+            this.config = config;
             fileWatcher = new ProjectFileWatcher(this);
             beatmapManager = new ProjectBeatmapManager(this, host, audio, rulesets);
         }
@@ -89,7 +80,7 @@ namespace sbtw.Game.Projects
         /// </summary>
         public void Build()
         {
-            if (Exists)
+            if (exists)
                 ProjectHelper.Build(Path);
         }
 
@@ -98,7 +89,7 @@ namespace sbtw.Game.Projects
         /// </summary>
         public void Clean()
         {
-            if (Exists)
+            if (exists)
                 ProjectHelper.Clean(Path);
         }
 
@@ -107,17 +98,24 @@ namespace sbtw.Game.Projects
         /// </summary>
         public void Restore()
         {
-            if (Exists)
+            if (exists)
                 ProjectHelper.Restore(Path);
         }
 
         /// <summary>
-        /// Saves this project as an MSBuild Project file.
+        /// Saves this project.
         /// </summary>
-        public void Save()
+        public void Save(bool generateMSBuildProject = false)
         {
-            Exists = true;
-            File.WriteAllText(System.IO.Path.Combine(Path, System.IO.Path.ChangeExtension(Name, "csproj")), string.Format(template, beatmapPath, UseStablePath, resolve_osu_game_version()));
+            using var stream = File.OpenWrite(projectConfigPath);
+            using var writer = new StreamWriter(stream);
+            writer.Write(JsonConvert.SerializeObject(config, Formatting.Indented));
+            writer.Close();
+
+            if (!generateMSBuildProject)
+                return;
+
+            File.WriteAllText(msBuildProjectPath, string.Format(template, resolve_osu_game_version()));
         }
 
         /// <summary>
@@ -128,35 +126,27 @@ namespace sbtw.Game.Projects
 
 
         /// <summary>
-        /// Load from an MSBuild Project file. Returns null if the provided project file is invalid.
+        /// Load from an sbtw JSON file. Returns null if the provided project file is invalid.
         /// </summary>
         public static Project Load(string path, GameHost host, AudioManager audioManager, RulesetStore rulesets)
         {
-            if (string.IsNullOrEmpty(path) || System.IO.Path.GetExtension(path) != ".csproj")
+            if (string.IsNullOrEmpty(path) || !path.Contains(".sbtw.json"))
                 return null;
 
             try
             {
-                var project = ProjectRootElement.Open(path);
+                using var stream = File.OpenRead(path);
+                using var reader = new StreamReader(stream);
+                var config = JsonConvert.DeserializeObject<ProjectConfiguration>(reader.ReadToEnd());
+                config.Path = System.IO.Path.GetDirectoryName(path);
+                config.Name = System.IO.Path.GetFileNameWithoutExtension(path);
 
-                string beatmapPath = project.GetPropertyValue("sbtwBeatmapPath");
-
-                if (string.IsNullOrEmpty(beatmapPath))
+                if (string.IsNullOrEmpty(config.BeatmapPath))
                     return null;
 
-                var config = new ProjectConfiguration
-                {
-                    Path = System.IO.Path.GetDirectoryName(path),
-                    Name = System.IO.Path.GetFileNameWithoutExtension(path),
-                    BeatmapPath = beatmapPath,
-                    UseStablePath = project.GetPropertyValue("sbtwUseStablePath").ToLowerInvariant() == "true",
-                };
-
-                var SBTWProject = new Project(config, host, audioManager, rulesets) { Exists = true };
-
-                return SBTWProject;
+                return new Project(config, host, audioManager, rulesets);
             }
-            catch (InvalidProjectFileException)
+            catch (Exception)
             {
                 return null;
             }
@@ -180,25 +170,14 @@ namespace sbtw.Game.Projects
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <sbtwBeatmapPath>{0}</sbtwBeatmapPath>
-    <sbtwUseStablePath>{1}</sbtwUseStablePath>
-  </PropertyGroup>
-
   <ItemGroup>
     <None Include=""Beatmap\**\*"" CopyToOutputDirectory=""Never""/>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include=""ppy.osu.Game"" Version=""{2}"" PrivateAssets=""All"" />
+    <PackageReference Include=""ppy.osu.Game"" Version=""{0}"" PrivateAssets=""All"" />
   </ItemGroup>
 
 </Project>";
-    }
-
-    internal static class ProjectRootElementExtensions
-    {
-        public static string GetPropertyValue(this ProjectRootElement root, string propName)
-            => root.Properties.FirstOrDefault(p => p.Name == propName)?.Value;
     }
 }
