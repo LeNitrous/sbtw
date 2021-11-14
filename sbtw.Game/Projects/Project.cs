@@ -107,15 +107,13 @@ namespace sbtw.Game.Projects
         /// </summary>
         public void Save(bool generateMSBuildProject = false)
         {
-            using var stream = File.OpenWrite(projectConfigPath);
-            using var writer = new StreamWriter(stream);
-            writer.Write(JsonConvert.SerializeObject(config, Formatting.Indented));
-            writer.Close();
+            File.WriteAllText(projectConfigPath, JsonConvert.SerializeObject(config, Formatting.Indented));
 
             if (!generateMSBuildProject)
                 return;
 
-            File.WriteAllText(msBuildProjectPath, string.Format(template, resolve_osu_game_version()));
+            File.WriteAllText(msBuildProjectPath, Templates.PROJECT);
+            File.WriteAllText(System.IO.Path.Combine(Path, "Script.cs"), Templates.SCRIPT_CS);
         }
 
         /// <summary>
@@ -158,13 +156,10 @@ namespace sbtw.Game.Projects
             GC.SuppressFinalize(this);
         }
 
-        private static string resolve_osu_game_version()
-        {
-            var version = typeof(osu.Game.OsuGame).Assembly.GetName().Version;
-            return $"{version.Major}.{version.Minor}.{version.Revision}";
-        }
 
-        private static readonly string template = @"<Project Sdk=""Microsoft.NET.Sdk"">
+        private static class Templates
+        {
+            public static readonly string PROJECT = @"<Project Sdk=""Microsoft.NET.Sdk"">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -174,10 +169,32 @@ namespace sbtw.Game.Projects
     <None Include=""Beatmap\**\*"" CopyToOutputDirectory=""Never""/>
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include=""ppy.osu.Game"" Version=""{0}"" PrivateAssets=""All"" />
-  </ItemGroup>
-
 </Project>";
+
+            public static readonly string SCRIPT_CS = @"using sbtw.Common.Scripting;
+
+namespace Project
+{
+    public class Script : StoryboardScript
+    {
+        public void Generate()
+        {
+        }
+    }
+}
+";
+
+            public static readonly string SCRIPT_VB = @"Imports sbtw.Common.Scripting
+
+Namespace Project
+    Public Class Script
+        Inherits StoryboardScript
+
+        Public Sub Generate()
+        End Sub
+    End Class
+End Namespace
+";
+        }
     }
 }

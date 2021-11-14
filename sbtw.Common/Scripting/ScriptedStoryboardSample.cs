@@ -12,17 +12,17 @@ namespace sbtw.Common.Scripting
         /// <summary>
         /// The path to the audio file for this sample.
         /// </summary>
-        public string Path { get; private set; }
+        internal string Path { get; private set; }
 
         /// <summary>
         /// The time when this sample is triggered.
         /// </summary>
-        public double Time { get; private set; }
+        internal double Time { get; private set; }
 
         /// <summary>
         /// The loudness of this sample.
         /// </summary>
-        public int Volume { get; private set; }
+        internal int Volume { get; private set; }
 
         public ScriptedStoryboardSample(StoryboardScript owner, StoryboardLayerName layer, string path, double time, int volume)
         {

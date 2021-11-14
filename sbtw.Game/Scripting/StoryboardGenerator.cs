@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using osu.Game.Storyboards;
 using sbtw.Common.Scripting;
 using sbtw.Game.Projects;
+using osuAnchor = osu.Framework.Graphics.Anchor;
 
 namespace sbtw.Game.Scripting
 {
@@ -25,10 +26,10 @@ namespace sbtw.Game.Scripting
         protected override void PreGenerate() => elementMap.Clear();
 
         protected override void HandleAnimation(Storyboard context, ScriptedStoryboardAnimation animation)
-            => add(context, animation, apply(animation, new StoryboardAnimation(animation.Path, animation.Origin, animation.InitialPosition, animation.FrameCount, animation.FrameDelay, animation.LoopType)));
+            => add(context, animation, apply(animation, new StoryboardAnimation(animation.Path, Enum.Parse<osuAnchor>(Enum.GetName(animation.Origin)), animation.InitialPosition, animation.FrameCount, animation.FrameDelay, animation.LoopType)));
 
         protected override void HandleSprite(Storyboard context, ScriptedStoryboardSprite sprite)
-            => add(context, sprite, apply(sprite, new StoryboardSprite(sprite.Path, sprite.Origin, sprite.InitialPosition)));
+            => add(context, sprite, apply(sprite, new StoryboardSprite(sprite.Path, Enum.Parse<osuAnchor>(Enum.GetName(sprite.Origin)), sprite.InitialPosition)));
 
         protected override void HandleSample(Storyboard context, ScriptedStoryboardSample sample)
             => add(context, sample, new StoryboardSampleInfo(sample.Path, sample.Time, sample.Volume));

@@ -3,9 +3,10 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using osu.Framework.Graphics;
+using System.Numerics;
 using osu.Game.Storyboards;
-using osuTK;
+using osuAnchor = osu.Framework.Graphics.Anchor;
+using osuVector = osuTK.Vector2;
 
 namespace sbtw.Common.Scripting
 {
@@ -51,7 +52,7 @@ namespace sbtw.Common.Scripting
         /// </summary>
         public ScriptedStoryboardSprite CreateSprite(string path, Anchor origin = Anchor.TopLeft, Vector2 initialPosition = default, StoryboardLayerName layer = StoryboardLayerName.Background)
         {
-            var sprite = new ScriptedStoryboardSprite(owner, layer, path, origin, initialPosition);
+            var sprite = new ScriptedStoryboardSprite(owner, layer, path, (osuAnchor)origin, new osuVector(initialPosition.X, initialPosition.Y));
             Add(sprite);
             return sprite;
         }
@@ -59,9 +60,9 @@ namespace sbtw.Common.Scripting
         /// <summary>
         /// Creates a new animation for this group.
         /// </summary>
-        public ScriptedStoryboardAnimation CreateAnimation(string path, Anchor origin = Anchor.TopLeft, Vector2 initialPosition = default, int frameCount = 0, double frameDelay = 0, AnimationLoopType loopType = AnimationLoopType.LoopOnce, StoryboardLayerName layer = StoryboardLayerName.Background)
+        public ScriptedStoryboardAnimation CreateAnimation(string path, Anchor origin = Anchor.TopLeft, Vector2 initialPosition = default, int frameCount = 0, double frameDelay = 0, LoopType loopType = LoopType.Once, StoryboardLayerName layer = StoryboardLayerName.Background)
         {
-            var animation = new ScriptedStoryboardAnimation(owner, layer, path, origin, initialPosition, frameCount, frameDelay, loopType);
+            var animation = new ScriptedStoryboardAnimation(owner, layer, path, (osuAnchor)origin, new osuVector(initialPosition.X, initialPosition.Y), frameCount, frameDelay, (AnimationLoopType)loopType);
             Add(animation);
             return animation;
         }

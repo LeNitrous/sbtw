@@ -8,8 +8,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper.Internal;
-using osu.Framework.Audio.Track;
-using osu.Game.Beatmaps;
 
 namespace sbtw.Common.Scripting
 {
@@ -21,7 +19,7 @@ namespace sbtw.Common.Scripting
         /// <summary>
         /// The active beatmap.
         /// </summary>
-        public IBeatmap Beatmap { get; init; }
+        public Beatmap Beatmap { get; init; }
 
         /// <summary>
         /// The waveform of the current beatmap's track.

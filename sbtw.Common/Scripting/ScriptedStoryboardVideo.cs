@@ -9,9 +9,9 @@ namespace sbtw.Common.Scripting
 
         public StoryboardLayerName Layer { get; private set; }
 
-        public string Path { get; private set; }
+        internal string Path { get; private set; }
 
-        public int Offset { get; private set; }
+        internal int Offset { get; private set; }
 
         public ScriptedStoryboardVideo(StoryboardScript owner, string path, int offset)
         {

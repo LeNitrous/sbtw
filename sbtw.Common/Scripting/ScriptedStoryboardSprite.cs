@@ -3,9 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using osu.Framework.Graphics;
 using osu.Game.Storyboards;
-using osuTK;
+using osuAnchor = osu.Framework.Graphics.Anchor;
+using osuEasing = osu.Framework.Graphics.Easing;
+using osuVector = osuTK.Vector2;
 
 namespace sbtw.Common.Scripting
 {
@@ -24,17 +27,17 @@ namespace sbtw.Common.Scripting
         /// <summary>
         /// The path to the image file for this sprite.
         /// </summary>
-        public string Path { get; private set; }
+        internal string Path { get; private set; }
 
         /// <summary>
         /// The origin of this sprite.
         /// </summary>
-        public Anchor Origin { get; private set; }
+        internal osuAnchor Origin { get; private set; }
 
         /// <summary>
         /// The initial position of this sprite.
         /// </summary>
-        public Vector2 InitialPosition { get; private set; }
+        internal osuVector InitialPosition { get; private set; }
 
         internal IReadOnlyList<CommandLoop> Loops => loops;
 
@@ -58,7 +61,7 @@ namespace sbtw.Common.Scripting
         private readonly List<CommandLoop> loops = new List<CommandLoop>();
         private readonly List<CommandTrigger> triggers = new List<CommandTrigger>();
 
-        public ScriptedStoryboardSprite(StoryboardScript owner, StoryboardLayerName layer, string path, Anchor origin, Vector2 initialPosition)
+        public ScriptedStoryboardSprite(StoryboardScript owner, StoryboardLayerName layer, string path, osuAnchor origin, osuVector initialPosition)
         {
             Path = path;
             Owner = owner;
@@ -118,7 +121,7 @@ namespace sbtw.Common.Scripting
         /// See <see cref="MoveY"/> in moving the sprite in the Y axis and <see cref="Move"/> in moving the sprite in both axes.
         /// </summary>
         public void MoveX(Easing easing, double startTime, double endTime, float start, float end)
-            => currentContext.X.Add(easing, startTime, endTime, start, end);
+            => currentContext.X.Add((osuEasing)easing, startTime, endTime, start, end);
 
         /// <inheritdoc cref="MoveX"/>
         public void MoveX(double startTime, double endTime, float start, float end)
@@ -133,7 +136,7 @@ namespace sbtw.Common.Scripting
         /// See <see cref="MoveX"/> in moving the sprite in the X axis and <see cref="Move"/> in moving the sprite in both axes.
         /// </summary>
         public void MoveY(Easing easing, double startTime, double endTime, float start, float end)
-            => currentContext.Y.Add(easing, startTime, endTime, start, end);
+            => currentContext.Y.Add((osuEasing)easing, startTime, endTime, start, end);
 
         /// <inheritdoc cref="MoveY"/>
         public void MoveY(double startTime, double endTime, float start, float end)
@@ -147,7 +150,7 @@ namespace sbtw.Common.Scripting
         /// Changes the sprite's size proportionally overtime. See <see cref="ScaleVec"/> in changing the sprite's size in individual axes.
         /// </summary>
         public void Scale(Easing easing, double startTime, double endTime, float start, float end)
-            => currentContext.Scale.Add(easing, startTime, endTime, start, end);
+            => currentContext.Scale.Add((osuEasing)easing, startTime, endTime, start, end);
 
         /// <inheritdoc cref="Scale"/>
         public void Scale(double startTime, double endTime, float start, float end)
@@ -161,7 +164,7 @@ namespace sbtw.Common.Scripting
         /// Changes the sprite's size overtime. See <see cref="Scale"/> in changing the sprite's size proportionally.
         /// </summary>
         public void ScaleVec(Easing easing, double startTime, double endTime, Vector2 startScale, Vector2 endScale)
-            => currentContext.VectorScale.Add(easing, startTime, endTime, startScale, endScale);
+            => currentContext.VectorScale.Add((osuEasing)easing, startTime, endTime, new osuVector(startScale.X, startScale.Y), new osuVector(endScale.X, endScale.Y));
 
         /// <inheritdoc cref="ScaleVec"/>
         public void ScaleVec(Easing easing, double startTime, double endTime, Vector2 startPosition, float endX, float endY)
@@ -203,7 +206,7 @@ namespace sbtw.Common.Scripting
         /// Changes the sprite's rotation overtime.
         /// </summary>
         public void Rotate(Easing easing, double startTime, double endTime, float start, float end)
-            => currentContext.Rotation.Add(easing, startTime, endTime, start, end);
+            => currentContext.Rotation.Add((osuEasing)easing, startTime, endTime, start, end);
 
         /// <inheritdoc cref="Rotate"/>
         public void Rotate(double startTime, double endTime, float start, float end)
@@ -217,7 +220,7 @@ namespace sbtw.Common.Scripting
         /// Changes the sprite's opacity overtime.
         /// </summary>
         public void Fade(Easing easing, double startTime, double endTime, float start, float end)
-            => currentContext.Alpha.Add(easing, startTime, endTime, start, end);
+            => currentContext.Alpha.Add((osuEasing)easing, startTime, endTime, start, end);
 
         /// <inheritdoc cref="Fade"/>
         public void Fade(double startTime, double endTime, float start, float end)
@@ -231,52 +234,52 @@ namespace sbtw.Common.Scripting
         /// Changes the sprite's color overtime.
         /// </summary>
         /// <remarks>
-        /// Although it uses <see cref="Colour4"/>, the alpha channel is ignored. To change the sprite's opacity, use <see cref="Fade"/>
+        /// Although it uses <see cref="Color"/>, the alpha channel is ignored. To change the sprite's opacity, use <see cref="Fade"/>
         /// </remarks>
-        public void Color(Easing easing, double startTime, double endTime, Colour4 startColor, Colour4 endColor)
-            => currentContext.Colour.Add(easing, startTime, endTime, startColor, endColor);
+        public void Color(Easing easing, double startTime, double endTime, Color startColor, Color endColor)
+            => currentContext.Colour.Add((osuEasing)easing, startTime, endTime, (Colour4)startColor, (Colour4)endColor);
 
         /// <inheritdoc cref="Color"/>
-        public void Color(Easing easing, double startTime, double endTime, Colour4 startColor, float endRed, float endBlue, float endGreen)
-            => Color(easing, startTime, endTime, startColor, new Colour4(endRed, endBlue, endGreen, 1.0f));
+        public void Color(Easing easing, double startTime, double endTime, Color startColor, float endRed, float endBlue, float endGreen)
+            => Color(easing, startTime, endTime, startColor, new Color(endRed, endBlue, endGreen));
 
         /// <inheritdoc cref="Color"/>
-        public void Color(Easing easing, double startTime, double endTime, float startRed, float startBlue, float startGreen, Colour4 endColor)
-            => Color(easing, startTime, endTime, new Colour4(startRed, startBlue, startGreen, 1.0f), endColor);
+        public void Color(Easing easing, double startTime, double endTime, float startRed, float startBlue, float startGreen, Color endColor)
+            => Color(easing, startTime, endTime, new Color(startRed, startBlue, startGreen), endColor);
 
         /// <inheritdoc cref="Color"/>
         public void Color(Easing easing, double startTime, double endTime, float startRed, float startBlue, float startGreen, float endRed, float endBlue, float endGreen)
-            => Color(easing, startTime, endTime, new Colour4(startRed, startBlue, startGreen, 1.0f), new Colour4(endRed, endBlue, endGreen, 1.0f));
+            => Color(easing, startTime, endTime, new Color(startRed, startBlue, startGreen), new Color(endRed, endBlue, endGreen));
 
         /// <inheritdoc cref="Color"/>
-        public void Color(double startTime, double endTime, Colour4 startColor, Colour4 endColor)
+        public void Color(double startTime, double endTime, Color startColor, Color endColor)
             => Color(Easing.None, startTime, endTime, startColor, endColor);
 
         /// <inheritdoc cref="Color"/>
-        public void Color(double startTime, double endTime, Colour4 startColor, float endRed, float endBlue, float endGreen)
-            => Color(Easing.None, startTime, endTime, startColor, new Colour4(endRed, endBlue, endGreen, 1.0f));
+        public void Color(double startTime, double endTime, Color startColor, float endRed, float endBlue, float endGreen)
+            => Color(Easing.None, startTime, endTime, startColor, new Color(endRed, endBlue, endGreen));
 
         /// <inheritdoc cref="Color"/>
-        public void Color(double startTime, double endTime, float startRed, float startBlue, float startGreen, Colour4 endColor)
-            => Color(Easing.None, startTime, endTime, new Colour4(startRed, startBlue, startGreen, 1.0f), endColor);
+        public void Color(double startTime, double endTime, float startRed, float startBlue, float startGreen, Color endColor)
+            => Color(Easing.None, startTime, endTime, new Color(startRed, startBlue, startGreen), endColor);
 
         /// <inheritdoc cref="Color"/>
         public void Color(double startTime, double endTime, float startRed, float startBlue, float startGreen, float endRed, float endBlue, float endGreen)
-            => Color(Easing.None, startTime, endTime, new Colour4(startRed, startBlue, startGreen, 1.0f), new Colour4(endRed, endBlue, endGreen, 1.0f));
+            => Color(Easing.None, startTime, endTime, new Color(startRed, startBlue, startGreen), new Color(endRed, endBlue, endGreen));
 
         /// <inheritdoc cref="Color"/>
-        public void Color(double time, Colour4 color)
+        public void Color(double time, Color color)
             => Color(Easing.None, time, time, color, color);
 
         /// <inheritdoc cref="Color"/>
         public void Color(double time, float red, float blue, float green)
-            => Color(time, new Colour4(red, blue, green, 1.0f));
+            => Color(time, new Color(red, blue, green));
 
         /// <summary>
         /// Flips the sprite horizontally.
         /// </summary>
         public void FlipH(Easing easing, double startTime, double endTime)
-            => currentContext.FlipH.Add(easing, startTime, endTime, true, startTime == endTime);
+            => currentContext.FlipH.Add((osuEasing)easing, startTime, endTime, true, startTime == endTime);
 
         /// <inheritdoc cref="FlipH"/>
         public void FlipH(double time)
@@ -286,7 +289,7 @@ namespace sbtw.Common.Scripting
         /// Flips the sprite vertically.
         /// </summary>
         public void FlipV(Easing easing, double startTime, double endTime)
-            => currentContext.FlipV.Add(easing, startTime, endTime, true, startTime == endTime);
+            => currentContext.FlipV.Add((osuEasing)easing, startTime, endTime, true, startTime == endTime);
 
         /// <inheritdoc cref="FlipV"/>
         public void FlipV(double time)
@@ -296,7 +299,7 @@ namespace sbtw.Common.Scripting
         /// Applies an additive blending to the sprite. Best used in conjunction with <see cref="Color"/>.
         /// </summary>
         public void Additive(Easing easing, double startTime, double endTime)
-            => currentContext.BlendingParameters.Add(easing, startTime, endTime, BlendingParameters.Additive, startTime == endTime ? BlendingParameters.Additive : BlendingParameters.Inherit);
+            => currentContext.BlendingParameters.Add((osuEasing)easing, startTime, endTime, BlendingParameters.Additive, startTime == endTime ? BlendingParameters.Additive : BlendingParameters.Inherit);
 
         /// <inheritdoc cref="Additive"/>
         public void Additive(double time)
