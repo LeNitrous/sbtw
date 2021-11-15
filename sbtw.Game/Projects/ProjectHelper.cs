@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.Versioning;
 using Microsoft.Win32;
+using osu.Framework;
 
 namespace sbtw.Game.Projects
 {
@@ -126,21 +127,30 @@ namespace sbtw.Game.Projects
         {
             var found = new Dictionary<string, string>();
 
-            string[] known = new[]
+            if (RuntimeInfo.OS == RuntimeInfo.Platform.Windows)
             {
-                "Microsoft VS Code",
-                "Microsoft VS Code Insiders",
-            };
-
-            string[] paths = Environment.GetEnvironmentVariable("PATH").Split(';');
-
-            foreach (string path in paths)
-            {
-                foreach (string editor in known)
+                string[] known = new[]
                 {
-                    if (path.Contains($@"\{editor}\") && !found.ContainsKey(path))
-                        found.Add(Path.Combine(path, "code"), editor);
+                    "Microsoft VS Code",
+                    "Microsoft VS Code Insiders",
+                };
+
+                string[] paths = Environment.GetEnvironmentVariable("PATH").Split(';');
+
+                foreach (string path in paths)
+                {
+                    foreach (string editor in known)
+                    {
+                        if (path.Contains($@"\{editor}\") && !found.ContainsKey(path))
+                            found.Add(Path.Combine(path, "code"), editor);
+                    }
                 }
+            }
+
+            if (RuntimeInfo.OS == RuntimeInfo.Platform.Linux)
+            {
+                if (File.Exists("/usr/bin/code"))
+                    found.Add("/usr/bin/code", "Microsoft VS Code");
             }
 
             return found;
@@ -148,12 +158,21 @@ namespace sbtw.Game.Projects
 
         private static string get_dotnet_path()
         {
-            string[] paths = Environment.GetEnvironmentVariable("PATH").Split(';');
-
-            foreach (string path in paths)
+            if (RuntimeInfo.OS == RuntimeInfo.Platform.Windows)
             {
-                if (path.Contains(@"\dotnet"))
-                    return path;
+                string[] paths = Environment.GetEnvironmentVariable("PATH").Split(';');
+
+                foreach (string path in paths)
+                {
+                    if (path.Contains(@"\dotnet"))
+                        return path;
+                }
+            }
+
+            if (RuntimeInfo.OS == RuntimeInfo.Platform.Linux)
+            {
+                if (File.Exists("/usr/bin/dotnet"))
+                    return "usr/bin/dotnet";
             }
 
             return null;
