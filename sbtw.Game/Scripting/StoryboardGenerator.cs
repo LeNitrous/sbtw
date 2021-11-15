@@ -3,10 +3,10 @@
 
 using System;
 using System.Collections.Generic;
+using osu.Game.Beatmaps;
 using osu.Game.Storyboards;
 using sbtw.Common.Scripting;
 using sbtw.Game.Projects;
-using osuAnchor = osu.Framework.Graphics.Anchor;
 
 namespace sbtw.Game.Scripting
 {
@@ -15,21 +15,23 @@ namespace sbtw.Game.Scripting
         public IReadOnlyDictionary<IStoryboardElement, IScriptedElement> ElementMap => elementMap;
 
         private readonly Dictionary<IStoryboardElement, IScriptedElement> elementMap = new Dictionary<IStoryboardElement, IScriptedElement>();
+        private readonly BeatmapInfo beatmapInfo;
 
-        public StoryboardGenerator(Project project)
+        public StoryboardGenerator(Project project, BeatmapInfo beatmapInfo)
             : base(project)
         {
+            this.beatmapInfo = beatmapInfo;
         }
 
-        protected override Storyboard CreateContext() => new Storyboard { BeatmapInfo = { WidescreenStoryboard = true } };
+        protected override Storyboard CreateContext() => new Storyboard { BeatmapInfo = beatmapInfo };
 
         protected override void PreGenerate(Storyboard _) => elementMap.Clear();
 
         protected override void HandleAnimation(Storyboard context, ScriptedAnimation animation)
-            => add(context, animation, apply(animation, new StoryboardAnimation(animation.Path, animation.Origin, animation.InitialPosition, animation.FrameCount, animation.FrameDelay, animation.LoopType)));
+            => add(context, animation, copy(animation, new StoryboardAnimation(animation.Path, animation.Origin, animation.InitialPosition, animation.FrameCount, animation.FrameDelay, animation.LoopType)));
 
         protected override void HandleSprite(Storyboard context, ScriptedSprite sprite)
-            => add(context, sprite, apply(sprite, new StoryboardSprite(sprite.Path, sprite.Origin, sprite.InitialPosition)));
+            => add(context, sprite, copy(sprite, new StoryboardSprite(sprite.Path, sprite.Origin, sprite.InitialPosition)));
 
         protected override void HandleSample(Storyboard context, ScriptedSample sample)
             => add(context, sample, new StoryboardSampleInfo(sample.Path, sample.Time, sample.Volume));
@@ -46,27 +48,39 @@ namespace sbtw.Game.Scripting
             elementMap.Add(element, scripted);
         }
 
-        private static TObject apply<TScript, TObject>(TScript source, TObject destination)
+        private static TObject copy<TScript, TObject>(TScript source, TObject destination)
             where TScript : ScriptedSprite
             where TObject : StoryboardSprite
         {
             foreach (var loop in source.Loops)
-                destination.AddLoop(loop.StartTime, loop.TotalIterations);
+                copyTimelineGroups(loop, destination.AddLoop(loop.StartTime, loop.TotalIterations));
 
             foreach (var trigger in source.Triggers)
-                destination.AddTrigger(trigger.TriggerName, trigger.StartTime, trigger.EndTime, trigger.GroupNumber);
+                copyTimelineGroups(trigger, destination.AddTrigger(trigger.TriggerName, trigger.StartTime, trigger.EndTime, trigger.GroupNumber));
 
-            destination.TimelineGroup.X = source.Timeline.X;
-            destination.TimelineGroup.Y = source.Timeline.Y;
-            destination.TimelineGroup.Alpha = source.Timeline.Alpha;
-            destination.TimelineGroup.Scale = source.Timeline.Scale;
-            destination.TimelineGroup.FlipH = source.Timeline.FlipH;
-            destination.TimelineGroup.FlipV = source.Timeline.FlipV;
-            destination.TimelineGroup.Rotation = source.Timeline.Rotation;
-            destination.TimelineGroup.VectorScale = source.Timeline.VectorScale;
-            destination.TimelineGroup.BlendingParameters = source.Timeline.BlendingParameters;
+            copyTimelineGroups(source.Timeline, destination.TimelineGroup);
 
             return destination;
+        }
+
+        private static void copyTimelineGroups(CommandTimelineGroup source, CommandTimelineGroup destination)
+        {
+            copyTimelines(source.X, destination.X);
+            copyTimelines(source.Y, destination.Y);
+            copyTimelines(source.Alpha, destination.Alpha);
+            copyTimelines(source.Scale, destination.Scale);
+            copyTimelines(source.FlipV, destination.FlipV);
+            copyTimelines(source.FlipH, destination.FlipH);
+            copyTimelines(source.Colour, destination.Colour);
+            copyTimelines(source.Rotation, destination.Rotation);
+            copyTimelines(source.VectorScale, destination.VectorScale);
+            copyTimelines(source.BlendingParameters, destination.BlendingParameters);
+        }
+
+        private static void copyTimelines<TValue>(CommandTimeline<TValue> source, CommandTimeline<TValue> destination)
+        {
+            foreach (var command in source.Commands)
+                destination.Add(command.Easing, command.StartTime, command.EndTime, command.StartValue, command.EndValue);
         }
     }
 }

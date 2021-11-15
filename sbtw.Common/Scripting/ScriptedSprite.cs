@@ -222,7 +222,7 @@ namespace sbtw.Common.Scripting
         /// Changes the sprite's color overtime.
         /// </summary>
         public void Color(Easing easing, double startTime, double endTime, Color startColor, Color endColor)
-            => currentContext.Colour.Add((osuEasing)easing, startTime, endTime, (Colour4)startColor, (Colour4)endColor);
+            => currentContext.Colour.Add((osuEasing)easing, startTime, endTime, new Colour4(startColor.R, startColor.G, startColor.B, 1.0f), new Colour4(endColor.R, endColor.G, endColor.B, 1.0f));
 
         /// <inheritdoc cref="Color"/>
         public void Color(Easing easing, double startTime, double endTime, Color startColor, float endRed, float endBlue, float endGreen)

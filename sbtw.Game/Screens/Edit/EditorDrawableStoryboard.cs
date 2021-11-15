@@ -12,6 +12,7 @@ using osu.Framework.Platform;
 using osu.Game.Screens.Edit;
 using osu.Game.Storyboards;
 using osu.Game.Storyboards.Drawables;
+using osuTK;
 using sbtw.Game.Projects;
 
 namespace sbtw.Game.Screens.Edit
@@ -23,6 +24,8 @@ namespace sbtw.Game.Screens.Edit
 
         protected override Container<DrawableStoryboardLayer> Content { get; }
 
+        protected override Vector2 DrawScale => new Vector2(Parent.DrawHeight / 480);
+
         private DependencyContainer dependencies;
 
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent) =>
@@ -31,7 +34,7 @@ namespace sbtw.Game.Screens.Edit
         public EditorDrawableStoryboard(Storyboard storyboard)
         {
             Storyboard = storyboard;
-            RelativeSizeAxes = Axes.Both;
+            Size = new Vector2(854, 480);
 
             Anchor = Anchor.Centre;
             Origin = Anchor.Centre;

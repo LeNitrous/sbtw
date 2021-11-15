@@ -1,6 +1,7 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -52,7 +53,7 @@ namespace sbtw.Common.Scripting
         /// </summary>
         public ScriptedSprite CreateSprite(string path, Anchor origin = Anchor.TopLeft, Vector2 initialPosition = default, Layer layer = Layer.Background)
         {
-            var sprite = new ScriptedSprite(owner, layer, path, (osuAnchor)origin, new osuVector(initialPosition.X, initialPosition.Y));
+            var sprite = new ScriptedSprite(owner, layer, path, Enum.Parse<osuAnchor>(Enum.GetName(origin)), new osuVector(initialPosition.X, initialPosition.Y));
             Add(sprite);
             return sprite;
         }
@@ -62,7 +63,7 @@ namespace sbtw.Common.Scripting
         /// </summary>
         public ScriptedAnimation CreateAnimation(string path, Anchor origin = Anchor.TopLeft, Vector2 initialPosition = default, int frameCount = 0, double frameDelay = 0, LoopType loopType = LoopType.Once, Layer layer = Layer.Background)
         {
-            var animation = new ScriptedAnimation(owner, layer, path, (osuAnchor)origin, new osuVector(initialPosition.X, initialPosition.Y), frameCount, frameDelay, (AnimationLoopType)loopType);
+            var animation = new ScriptedAnimation(owner, layer, path, Enum.Parse<osuAnchor>(Enum.GetName(origin)), new osuVector(initialPosition.X, initialPosition.Y), frameCount, frameDelay, (AnimationLoopType)loopType);
             Add(animation);
             return animation;
         }

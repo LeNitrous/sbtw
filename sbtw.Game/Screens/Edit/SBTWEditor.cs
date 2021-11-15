@@ -445,7 +445,7 @@ namespace sbtw.Game.Screens.Edit
         {
             storyboard.Value?.Expire();
 
-            using var generator = new StoryboardGenerator(project.Value);
+            using var generator = new StoryboardGenerator(project.Value, Beatmap.Value.BeatmapInfo);
             var generated = generator.Generate(groups, out var added, out var removed);
             storyboard.Value = new EditorDrawableStoryboard(generated) { Clock = clock };
 

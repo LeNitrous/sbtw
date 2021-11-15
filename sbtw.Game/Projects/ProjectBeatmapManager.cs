@@ -67,8 +67,8 @@ namespace sbtw.Game.Projects
                 {
                     beatmapSet.Files.Add(new BeatmapSetFileInfo
                     {
-                        Filename = Path.GetFileName(path),
-                        FileInfo = new osu.Game.IO.FileInfo { Hash = Path.Combine(new string(' ', 2), "$" + Path.GetFileName(path)) }
+                        Filename = path.Replace(project.BeatmapPath + "\\", string.Empty).Replace("\\", "/"),
+                        FileInfo = new osu.Game.IO.FileInfo { Hash = Path.Combine(new string(' ', 2), "$" + path.Replace(project.BeatmapPath + "\\", string.Empty)) }
                     });
                 }
 
@@ -157,16 +157,16 @@ namespace sbtw.Game.Projects
                 => store.Dispose();
 
             public byte[] Get(string name)
-                => store.Get(name.Split('$').Last());
+                => store.Get(name.Split('$').Last().Replace("\\", "/"));
 
             public Task<byte[]> GetAsync(string name)
-                => store.GetAsync(name.Split('$').Last());
+                => store.GetAsync(name.Split('$').Last().Replace("\\", "/"));
 
             public IEnumerable<string> GetAvailableResources()
                 => store.GetAvailableResources();
 
             public Stream GetStream(string name)
-                => store.GetStream(name.Split('$').Last());
+                => store.GetStream(name.Split('$').Last().Replace("\\", "/"));
         }
     }
 }
