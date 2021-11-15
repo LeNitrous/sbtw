@@ -14,7 +14,7 @@ namespace sbtw.Common.Scripting
     /// <summary>
     /// A scriptable storyboard effect.
     /// </summary>
-    public abstract class StoryboardScript
+    public abstract class Script
     {
         /// <summary>
         /// The active beatmap.
@@ -26,9 +26,9 @@ namespace sbtw.Common.Scripting
         /// </summary>
         public Waveform Waveform { get; init; }
 
-        private readonly List<StoryboardScriptElementGroup> groups = new List<StoryboardScriptElementGroup>();
+        private readonly List<ScriptElementGroup> groups = new List<ScriptElementGroup>();
 
-        internal IEnumerable<StoryboardScriptElementGroup> Groups => groups;
+        internal IEnumerable<ScriptElementGroup> Groups => groups;
 
         /// <summary>
         /// The entry point for this script. This is where all storyboard elements will be added.
@@ -48,14 +48,14 @@ namespace sbtw.Common.Scripting
         /// <summary>
         /// Gets an element group by name.
         /// </summary>
-        public StoryboardScriptElementGroup GetGroup(string name)
+        public ScriptElementGroup GetGroup(string name)
         {
             var group = Groups.FirstOrDefault(g => g.Name == name);
 
             if (group != null)
                 return group;
 
-            group = new StoryboardScriptElementGroup(this, name);
+            group = new ScriptElementGroup(this, name);
             groups.Add(group);
 
             return group;

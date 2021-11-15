@@ -3,23 +3,21 @@
 
 namespace sbtw.Common.Scripting
 {
-    public class ScriptedStoryboardVideo : IScriptedElementHasStartTime
+    public class ScriptedVideo : ScriptedElement, IScriptedElementHasStartTime
     {
-        public StoryboardScript Owner { get; private set; }
-
-        public StoryboardLayerName Layer { get; private set; }
-
         internal string Path { get; private set; }
 
         internal int Offset { get; private set; }
 
-        public ScriptedStoryboardVideo(StoryboardScript owner, string path, int offset)
+        public ScriptedVideo(Script owner, string path, int offset)
+            : base(owner, Layer.Background)
         {
             Path = path;
-            Owner = owner;
             Offset = offset;
         }
 
         double IScriptedElementHasStartTime.StartTime => Offset;
+
+        internal override string Encode() => $"Video,{Offset},\"{Path}\"";
     }
 }

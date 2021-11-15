@@ -12,9 +12,9 @@ namespace sbtw.Game.Scripting
 {
     public class StoryboardGenerator : ScriptAssemblyRunner<Storyboard>
     {
-        public IReadOnlyDictionary<IStoryboardElement, IScriptedStoryboardElement> ElementMap => elementMap;
+        public IReadOnlyDictionary<IStoryboardElement, IScriptedElement> ElementMap => elementMap;
 
-        private readonly Dictionary<IStoryboardElement, IScriptedStoryboardElement> elementMap = new Dictionary<IStoryboardElement, IScriptedStoryboardElement>();
+        private readonly Dictionary<IStoryboardElement, IScriptedElement> elementMap = new Dictionary<IStoryboardElement, IScriptedElement>();
 
         public StoryboardGenerator(Project project)
             : base(project)
@@ -23,31 +23,31 @@ namespace sbtw.Game.Scripting
 
         protected override Storyboard CreateContext() => new Storyboard { BeatmapInfo = { WidescreenStoryboard = true } };
 
-        protected override void PreGenerate() => elementMap.Clear();
+        protected override void PreGenerate(Storyboard _) => elementMap.Clear();
 
-        protected override void HandleAnimation(Storyboard context, ScriptedStoryboardAnimation animation)
-            => add(context, animation, apply(animation, new StoryboardAnimation(animation.Path, Enum.Parse<osuAnchor>(Enum.GetName(animation.Origin)), animation.InitialPosition, animation.FrameCount, animation.FrameDelay, animation.LoopType)));
+        protected override void HandleAnimation(Storyboard context, ScriptedAnimation animation)
+            => add(context, animation, apply(animation, new StoryboardAnimation(animation.Path, animation.Origin, animation.InitialPosition, animation.FrameCount, animation.FrameDelay, animation.LoopType)));
 
-        protected override void HandleSprite(Storyboard context, ScriptedStoryboardSprite sprite)
-            => add(context, sprite, apply(sprite, new StoryboardSprite(sprite.Path, Enum.Parse<osuAnchor>(Enum.GetName(sprite.Origin)), sprite.InitialPosition)));
+        protected override void HandleSprite(Storyboard context, ScriptedSprite sprite)
+            => add(context, sprite, apply(sprite, new StoryboardSprite(sprite.Path, sprite.Origin, sprite.InitialPosition)));
 
-        protected override void HandleSample(Storyboard context, ScriptedStoryboardSample sample)
+        protected override void HandleSample(Storyboard context, ScriptedSample sample)
             => add(context, sample, new StoryboardSampleInfo(sample.Path, sample.Time, sample.Volume));
 
-        protected override void HandleVideo(Storyboard context, ScriptedStoryboardVideo video)
+        protected override void HandleVideo(Storyboard context, ScriptedVideo video)
             => add(context, "Video", video, new StoryboardVideo(video.Path, video.Offset));
 
-        private void add(Storyboard storyboard, IScriptedStoryboardElement scripted, IStoryboardElement element)
+        private void add(Storyboard storyboard, IScriptedElement scripted, IStoryboardElement element)
             => add(storyboard, Enum.GetName(scripted.Layer), scripted, element);
 
-        private void add(Storyboard storyboard, string layer, IScriptedStoryboardElement scripted, IStoryboardElement element)
+        private void add(Storyboard storyboard, string layer, IScriptedElement scripted, IStoryboardElement element)
         {
             storyboard.GetLayer(layer).Add(element);
             elementMap.Add(element, scripted);
         }
 
         private static TObject apply<TScript, TObject>(TScript source, TObject destination)
-            where TScript : ScriptedStoryboardSprite
+            where TScript : ScriptedSprite
             where TObject : StoryboardSprite
         {
             foreach (var loop in source.Loops)

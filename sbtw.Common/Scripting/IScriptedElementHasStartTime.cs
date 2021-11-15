@@ -3,7 +3,7 @@
 
 namespace sbtw.Common.Scripting
 {
-    public interface IScriptedElementHasStartTime : IScriptedStoryboardElement
+    public interface IScriptedElementHasStartTime : IScriptedElement
     {
         double StartTime { get; }
     }

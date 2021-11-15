@@ -4,39 +4,22 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Text;
 using osu.Framework.Graphics;
 using osu.Game.Storyboards;
+using osuTK.Graphics;
 using osuAnchor = osu.Framework.Graphics.Anchor;
 using osuEasing = osu.Framework.Graphics.Easing;
 using osuVector = osuTK.Vector2;
 
 namespace sbtw.Common.Scripting
 {
-    public class ScriptedStoryboardSprite : IScriptedElementHasEndTime
+    public class ScriptedSprite : ScriptedElement, IScriptedElementHasEndTime
     {
-        /// <summary>
-        /// The script that owns this sprite.
-        /// </summary>
-        public StoryboardScript Owner { get; private set; }
-
-        /// <summary>
-        /// The storyboard layer that this sprite will be shown to.
-        /// </summary>
-        public StoryboardLayerName Layer { get; private set; }
-
-        /// <summary>
-        /// The path to the image file for this sprite.
-        /// </summary>
         internal string Path { get; private set; }
 
-        /// <summary>
-        /// The origin of this sprite.
-        /// </summary>
         internal osuAnchor Origin { get; private set; }
 
-        /// <summary>
-        /// The initial position of this sprite.
-        /// </summary>
         internal osuVector InitialPosition { get; private set; }
 
         internal IReadOnlyList<CommandLoop> Loops => loops;
@@ -61,19 +44,20 @@ namespace sbtw.Common.Scripting
         private readonly List<CommandLoop> loops = new List<CommandLoop>();
         private readonly List<CommandTrigger> triggers = new List<CommandTrigger>();
 
-        public ScriptedStoryboardSprite(StoryboardScript owner, StoryboardLayerName layer, string path, osuAnchor origin, osuVector initialPosition)
+        public ScriptedSprite(Script owner, Layer layer, string path, osuAnchor origin, osuVector initialPosition)
+            : base(owner, layer)
         {
             Path = path;
-            Owner = owner;
-            Layer = layer;
             Origin = origin;
             InitialPosition = initialPosition;
         }
 
         /// <summary>
         /// Changes the position of the sprite overtime in both X and Y axes.
-        /// See <see cref="MoveX"/> and <see cref="MoveY"/> in moving the sprite's position in a single axis.
         /// </summary>
+        /// <remarks>
+        /// See <see cref="MoveX"/> and <see cref="MoveY"/> in moving the sprite's position in a single axis.
+        /// </remarks>
         public void Move(Easing easing, double startTime, double endTime, Vector2 startPosition, Vector2 endPosition)
         {
             MoveX(easing, startTime, endTime, startPosition.X, endPosition.X);
@@ -118,8 +102,10 @@ namespace sbtw.Common.Scripting
 
         /// <summary>
         /// Changes the position of the sprite overtime in the X axis.
-        /// See <see cref="MoveY"/> in moving the sprite in the Y axis and <see cref="Move"/> in moving the sprite in both axes.
         /// </summary>
+        /// <remarks>
+        /// See <see cref="MoveY"/> in moving the sprite in the Y axis and <see cref="Move"/> in moving the sprite in both axes.
+        /// </remarks>
         public void MoveX(Easing easing, double startTime, double endTime, float start, float end)
             => currentContext.X.Add((osuEasing)easing, startTime, endTime, start, end);
 
@@ -133,8 +119,10 @@ namespace sbtw.Common.Scripting
 
         /// <summary>
         /// Changes the position of the sprite overtime in the Y axis.
-        /// See <see cref="MoveX"/> in moving the sprite in the X axis and <see cref="Move"/> in moving the sprite in both axes.
         /// </summary>
+        /// <remarks>
+        /// See <see cref="MoveX"/> in moving the sprite in the X axis and <see cref="Move"/> in moving the sprite in both axes.
+        /// </remarks>
         public void MoveY(Easing easing, double startTime, double endTime, float start, float end)
             => currentContext.Y.Add((osuEasing)easing, startTime, endTime, start, end);
 
@@ -233,9 +221,6 @@ namespace sbtw.Common.Scripting
         /// <summary>
         /// Changes the sprite's color overtime.
         /// </summary>
-        /// <remarks>
-        /// Although it uses <see cref="Color"/>, the alpha channel is ignored. To change the sprite's opacity, use <see cref="Fade"/>
-        /// </remarks>
         public void Color(Easing easing, double startTime, double endTime, Color startColor, Color endColor)
             => currentContext.Colour.Add((osuEasing)easing, startTime, endTime, (Colour4)startColor, (Colour4)endColor);
 
@@ -313,7 +298,7 @@ namespace sbtw.Common.Scripting
             if (context != null)
                 throw new InvalidOperationException("Cannot start a new group when an existing group is active.");
 
-            var loop = new CommandLoop(startTime, repeatCount);
+            var loop = new CommandLoop(startTime, repeatCount - 1);
             loops.Add(loop);
             currentContext = loop;
         }
@@ -338,5 +323,54 @@ namespace sbtw.Common.Scripting
         {
             currentContext = null;
         }
+
+        protected internal virtual string Header
+            => $"{GetType().Name.Replace("Scripted", string.Empty)},{Enum.GetName(Layer)},{Enum.GetName(Origin)},\"{Path}\",{InitialPosition.X},{InitialPosition.Y}";
+
+        internal override string Encode()
+        {
+            var builder = new StringBuilder();
+
+            builder.AppendLine(Header);
+            handleTimelineGroup(builder, Timeline);
+
+            foreach (var loop in Loops)
+            {
+                builder.AppendLine($" L,{loop.LoopStartTime},{loop.TotalIterations}");
+                handleTimelineGroup(builder, loop, 2);
+            }
+
+            foreach (var trigger in Triggers)
+            {
+                builder.AppendLine($" T,{trigger.TriggerName},{trigger.TriggerStartTime},{trigger.TriggerEndTime}");
+                handleTimelineGroup(builder, trigger, 2);
+            }
+
+            return builder.ToString();
+        }
+
+        private static void handleTimelineGroup(StringBuilder builder, CommandTimelineGroup group, int depth = 1)
+        {
+            handleTimeline(builder, group.X, "MX", depth);
+            handleTimeline(builder, group.Y, "MY", depth);
+            handleTimeline(builder, group.Scale, "S", depth);
+            handleTimeline(builder, group.Alpha, "F", depth);
+            handleTimeline(builder, group.Colour, "C", depth, handleCommandColor);
+            handleTimeline(builder, group.VectorScale, "V", depth, handleCommandVector);
+            handleTimeline(builder, group.FlipH, "P", depth, _ => "H");
+            handleTimeline(builder, group.FlipV, "P", depth, _ => "V");
+            handleTimeline(builder, group.BlendingParameters, "P", depth, _ => "A");
+        }
+
+        private static void handleTimeline<TValue>(StringBuilder builder, CommandTimeline<TValue> timeline, string identifier, int depth = 1, Func<CommandTimeline<TValue>.TypedCommand, string> format = null)
+        {
+            format ??= handleCommand;
+            foreach (var command in timeline.Commands)
+                builder.AppendLine($"{new string(' ', depth)}{identifier},{(int)command.Easing},{command.StartTime},{command.EndTime},{format(command)}");
+        }
+
+        private static string handleCommandVector(CommandTimeline<osuVector>.TypedCommand command) => $"{command.StartValue.X},{command.StartValue.Y},{command.EndValue.X},{command.EndValue.Y}";
+        private static string handleCommandColor(CommandTimeline<Color4>.TypedCommand command) => $"{command.StartValue.R},{command.StartValue.G},{command.StartValue.B},{command.EndValue.R},{command.EndValue.G},{command.EndValue.B}";
+        private static string handleCommand<TValue>(CommandTimeline<TValue>.TypedCommand command) => $"{command.StartValue},{command.EndValue}";
     }
 }
