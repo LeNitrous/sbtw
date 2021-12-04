@@ -43,12 +43,7 @@ namespace sbtw.Game.Screens.Edit
         protected override void LoadComplete()
         {
             base.LoadComplete();
-            Scheduler.AddOnce(regenerateAutoplay);
-        }
-
-        private void regenerateAutoplay()
-        {
-            drawableRuleset.SetReplayScore(autoplay.CreateReplayScore(beatmap, drawableRuleset.Mods));
+            Scheduler.AddOnce(() => drawableRuleset.SetReplayScore(autoplay.CreateReplayScore(beatmap, drawableRuleset.Mods)));
         }
     }
 }

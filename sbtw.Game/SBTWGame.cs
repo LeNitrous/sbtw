@@ -27,6 +27,7 @@ using osu.Game.Overlays.Volume;
 using osu.Game.Screens;
 using sbtw.Game.Projects;
 using sbtw.Game.Screens;
+using sbtw.Game.Screens.Edit;
 
 namespace sbtw.Game
 {
@@ -44,17 +45,7 @@ namespace sbtw.Game
         private BackButton backButton;
 
         [Cached]
-        private readonly SBTWLoader loader = new SBTWLoader();
-
-        [Cached]
         private readonly NetProcessListener netProcessListener = new NetProcessListener();
-
-#pragma warning disable IDE0052 // We need this to be cached at the topmost level.
-
-        [Cached]
-        private readonly Bindable<Project> project = new Bindable<Project>();
-
-#pragma warning restore IDE0052
 
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
             => dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
@@ -63,6 +54,10 @@ namespace sbtw.Game
         private void load()
         {
             Resources.AddStore(new NamespacedResourceStore<byte[]>(new DllResourceStore(typeof(SBTWGame).Assembly), "Resources"));
+
+            var projectManager = new ProjectManager(Host, Audio, RulesetStore, BeatmapManager.DefaultBeatmap);
+            dependencies.CacheAs(projectManager);
+            dependencies.CacheAs<Bindable<IProject>>(new NonNullableBindable<IProject>(projectManager.DefaultProject));
 
             AddInternal(channelManager = new SBTWOutputManager());
             dependencies.CacheAs<ChannelManager>(channelManager);
@@ -139,15 +134,17 @@ namespace sbtw.Game
                 }
             });
 
-            if (!checkAndReportForDependencies())
-                return;
-
             dependencies.CacheAs(notifications);
             dependencies.CacheAs(chatOverlay);
 
             ScreenStack.ScreenPushed += screenPushed;
             ScreenStack.ScreenExited += screenExited;
-            ScreenStack.Push(loader);
+
+            SkinManager.CurrentSkinInfo.Value = SkinManager.DefaultLegacySkin.SkinInfo;
+
+            if (!checkAndReportForDependencies())
+                return;
+            ScreenStack.Push(new SBTWEditor());
         }
 
         private bool checkAndReportForDependencies()

@@ -21,7 +21,7 @@ namespace sbtw.Game.Projects
     /// <summary>
     /// A <see cref="BeatmapManager"/> shim that completely bypasses database and <see cref="FileStore"/> operations.
     /// </summary>
-    public class ProjectBeatmapManager : IBeatmapResourceProvider
+    public class ProjectBeatmapManager : IBeatmapResourceProvider, IDisposable
     {
         /// <summary>
         /// Gets whether a reimport is needed on the next fetch.
@@ -137,6 +137,28 @@ namespace sbtw.Game.Projects
 
         IResourceStore<TextureUpload> IStorageResourceProvider.CreateTextureLoaderStore(IResourceStore<byte[]> underlyingStore)
             => host.CreateTextureLoaderStore(underlyingStore);
+
+        private bool isDisposed;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!isDisposed)
+            {
+                if (disposing)
+                {
+                    resources.Dispose();
+                    largeTextureStore.Dispose();
+                }
+
+                isDisposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         #endregion
 

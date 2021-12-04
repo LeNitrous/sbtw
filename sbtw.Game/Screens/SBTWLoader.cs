@@ -26,7 +26,7 @@ using sbtw.Game.Screens.Edit;
 
 namespace sbtw.Game.Screens
 {
-    public class SBTWLoader : OsuScreen
+    public class SBTWLoader : SBTWScreen
     {
         public override bool AllowBackButton => false;
 
@@ -34,9 +34,6 @@ namespace sbtw.Game.Screens
 
         [Resolved]
         private NotificationOverlay notifications { get; set; }
-
-        [Resolved]
-        private Bindable<Project> project { get; set; }
 
         [Resolved]
         private SkinManager skins { get; set; }
@@ -61,47 +58,8 @@ namespace sbtw.Game.Screens
                 }
             });
 
-            project.BindValueChanged(handleProjectChange, true);
+            Project.BindValueChanged(handleProjectChange, true);
             skins.CurrentSkinInfo.Value = skins.DefaultLegacySkin.SkinInfo;
-        }
-
-        /// <summary>
-        /// Bootstraps a new project provided by a <see cref="ProjectConfiguration"/>
-        /// </summary>
-        public void CreateProject(ProjectConfiguration config)
-        {
-            Directory.CreateDirectory(config.Path);
-
-            if (Path.GetExtension(config.BeatmapPath) == ".osz")
-            {
-                ZipFile.ExtractToDirectory(config.BeatmapPath, Path.Combine(config.Path, "Beatmap"));
-            }
-
-            var newProject = new Project(config, host, audio, rulesets);
-            newProject.Save(true);
-            newProject.Build();
-
-            project.Value = newProject;
-        }
-
-        /// <summary>
-        /// Loads an existing project from a given path.
-        /// </summary>
-        public void LoadProject(string path)
-        {
-            var loaded = Project.Load(path, host, audio, rulesets);
-
-            if (loaded == null)
-            {
-                notifications.Post(new SimpleErrorNotification
-                {
-                    Text = "File is not a SBTW Project.",
-                    Icon = FontAwesome.Solid.ExclamationTriangle,
-                });
-                return;
-            }
-
-            project.Value = loaded;
         }
 
         /// <summary>
@@ -110,24 +68,29 @@ namespace sbtw.Game.Screens
         public void CloseProject()
         {
             ensureCurrent();
-            project.Value = null;
-            Beatmap.SetDefault();
+            Project.SetDefault();
             pushEditor();
         }
 
         private ScheduledDelegate scheduledBeatmapChange;
 
         /// <summary>
-        /// Changes the beatmap difficulty with the gi ven<see cref="BeatmapInfo"/>
+        /// Changes the beatmap difficulty with the specified verison name.
         /// </summary>
         public void ChangeBeatmap(string version)
+            => ChangeBeatmap(Project.Value.GetWorkingBeatmap(version));
+
+        /// <summary>
+        /// Changes the beatmap difficulty with the specified <see cref="WorkingBeatmap"/>
+        /// </summary>
+        public void ChangeBeatmap(WorkingBeatmap beatmap)
         {
             ensureCurrent();
 
             scheduledBeatmapChange?.Cancel();
             scheduledBeatmapChange = Scheduler.Add(() =>
             {
-                Beatmap.Value = project.Value.GetWorkingBeatmap(version);
+                Beatmap.Value = beatmap;
                 Ruleset.Value = Beatmap.Value.BeatmapInfo.Ruleset;
                 scheduledBeatmapChange = null;
                 pushEditor();
@@ -163,13 +126,19 @@ namespace sbtw.Game.Screens
             ValidForResume = false;
         }
 
-        private void handleProjectChange(ValueChangedEvent<Project> project)
+        private void handleProjectChange(ValueChangedEvent<IProject> project)
         {
-            if (project.NewValue == null)
-                return;
-
             ensureCurrent();
-            ChangeBeatmap(project.NewValue.BeatmapSet.Beatmaps.FirstOrDefault().Version);
+
+            if (project.NewValue is DummyProject)
+            {
+                Beatmap.SetDefault();
+            }
+
+            if (project.NewValue is Project loadable)
+            {
+                ChangeBeatmap(loadable.BeatmapSet.Beatmaps.FirstOrDefault().Version);
+            }
         }
     }
 }

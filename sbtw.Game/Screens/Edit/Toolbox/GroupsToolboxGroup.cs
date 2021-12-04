@@ -7,7 +7,7 @@ using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Rulesets.Edit;
 
-namespace sbtw.Game.Screens.Edit
+namespace sbtw.Game.Screens.Edit.Toolbox
 {
     public class GroupsToolboxGroup : ToolboxGroup
     {

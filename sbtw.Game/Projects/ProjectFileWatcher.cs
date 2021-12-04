@@ -99,10 +99,25 @@ namespace sbtw.Game.Projects
             watcher.EnableRaisingEvents = true;
         }
 
+        private bool isDisposed;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!isDisposed)
+            {
+                if (disposing)
+                {
+                    projectWatcher?.Dispose();
+                    beatmapWatcher?.Dispose();
+                }
+
+                isDisposed = true;
+            }
+        }
+
         public void Dispose()
         {
-            projectWatcher?.Dispose();
-            beatmapWatcher?.Dispose();
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
     }

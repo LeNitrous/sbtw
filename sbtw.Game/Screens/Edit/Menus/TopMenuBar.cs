@@ -1,27 +1,55 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
+using osu.Framework.Platform;
+using osu.Game.Beatmaps;
 using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Overlays;
 using osu.Game.Screens.Edit.Components.Menus;
 using osuTK;
 using osuTK.Graphics;
+using sbtw.Game.Projects;
 
-namespace sbtw.Game.Screens.Edit
+namespace sbtw.Game.Screens.Edit.Menus
 {
-    public class SBTWEditorMenuBar : OsuMenu
+    public class TopMenuBar : OsuMenu
     {
-        public SBTWEditorMenuBar()
+        [Resolved]
+        private GameHost host { get; set; }
+
+        [Resolved(canBeNull: true)]
+        private SBTWGame game { get; set; }
+
+        [Resolved(canBeNull: true)]
+        private ChatOverlay chat { get; set; }
+
+        [Resolved(canBeNull: true)]
+        private NotificationOverlay notifications { get; set; }
+
+        private Bindable<WorkingBeatmap> beatmap;
+        private Bindable<IProject> project;
+
+        public Action RequestNewProject;
+        public Action RequestCloseProject;
+        public Action<string> RequestOpenProject;
+        public Action RequestGenerateStoryboard;
+        public Action<BeatmapInfo> RequestDifficultyChange;
+        public readonly Bindable<bool> InterfaceVisibility = new Bindable<bool>();
+
+        public TopMenuBar()
             : base(Direction.Horizontal, true)
         {
             BackgroundColour = Colour4.FromHex("111");
-            RelativeSizeAxes = Axes.X;
+            RelativeSizeAxes = Axes.Both;
 
             MaskingContainer.CornerRadius = 0;
             ItemsContainer.Padding = new MarginPadding { Left = 100 };
@@ -38,9 +66,55 @@ namespace sbtw.Game.Screens.Edit
             });
         }
 
+        [BackgroundDependencyLoader(true)]
+        private void load(Bindable<WorkingBeatmap> beatmap, Bindable<IProject> project)
+        {
+            this.beatmap = beatmap?.GetBoundCopy();
+            this.project = project?.GetBoundCopy();
+
+            this.beatmap?.BindValueChanged(_ => createItems());
+            this.project?.BindValueChanged(_ => createItems());
+
+            createItems();
+        }
+
+        private void createItems() => Schedule(() =>
+        {
+            Items = new[]
+            {
+                new MenuItem("File")
+                {
+                    Items = new[]
+                    {
+                        new EditorMenuItem("New", MenuItemType.Standard, RequestNewProject),
+                        new EditorMenuItem("Open", MenuItemType.Standard, openProject),
+                        new EditorMenuItem("Save", MenuItemType.Standard, project.Value.Save) { Action = { Disabled = project.Value is DummyProject } },
+                        new EditorMenuItem("Close", MenuItemType.Standard, RequestCloseProject) { Action = { Disabled = project.Value is DummyProject } },
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("Exit", MenuItemType.Destructive, host.Exit),
+                    }
+                },
+                new ProjectMenuItems(host, project.Value, RequestGenerateStoryboard),
+                new BeatmapMenuItems(host, beatmap?.Value, project.Value, RequestDifficultyChange),
+                new MenuItem("View")
+                {
+                    Items = new MenuItem[]
+                    {
+                        new ToggleMenuItem("Show Interface") { State = { BindTarget = InterfaceVisibility } },
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("Show Logs", MenuItemType.Standard, () => chat?.Show()),
+                        new EditorMenuItem("Show Notifications", MenuItemType.Standard, () => notifications?.Show()),
+                    }
+                }
+            };
+        });
+
         protected override Menu CreateSubMenu() => new SubMenu();
 
         protected override DrawableMenuItem CreateDrawableMenuItem(MenuItem item) => new DrawableEditorBarMenuItem(item);
+
+        private void openProject()
+            => game?.OpenFileDialog(new[] { "*.sbtw.json" }, "sbtw! Projects", RequestOpenProject);
 
         private class DrawableEditorBarMenuItem : DrawableOsuMenuItem
         {

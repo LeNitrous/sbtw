@@ -145,7 +145,7 @@ namespace sbtw.Game.Screens.Edit
                 => type == ProjectFileType.Script;
 
             [BackgroundDependencyLoader]
-            private void load(Bindable<Project> project)
+            private void load(Bindable<IProject> project)
             {
                 project.BindValueChanged(e =>
                 {

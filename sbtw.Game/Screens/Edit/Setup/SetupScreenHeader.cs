@@ -3,7 +3,7 @@
 
 using osu.Game.Overlays;
 
-namespace sbtw.Game.Screens.Setup
+namespace sbtw.Game.Screens.Edit.Setup
 {
     public class SetupScreenHeader : OverlayHeader
     {

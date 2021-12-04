@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using Newtonsoft.Json;
 using osu.Framework.Audio;
+using osu.Framework.Bindables;
 using osu.Framework.IO.Stores;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
@@ -12,17 +13,16 @@ using osu.Game.Rulesets;
 
 namespace sbtw.Game.Projects
 {
-    public class Project : IDisposable
+    [Serializable]
+    public class Project : IProject, IDisposable
     {
-        /// <summary>
-        /// The name of this project.
-        /// </summary>
-        public string Name => config.Name;
+        [JsonIgnore]
+        public string Name { get; init; }
 
-        /// <summary>
-        /// The absolute path to the project.
-        /// </summary>
-        public string Path => config.Path;
+        [JsonIgnore]
+        public string Path { get; init; }
+
+        public bool UseStablePath { get; set; }
 
         /// <summary>
         /// The path to the beatmap for this project.
@@ -31,170 +31,91 @@ namespace sbtw.Game.Projects
         /// If <see cref="UseStablePath"/> is true, then it is a path relative to the stable songs folder.
         /// Otherwise, it is the absolute path to the beatmap used for this project.
         /// </remarks>
+        [JsonIgnore]
         public string BeatmapPath
         {
             get => UseStablePath ? System.IO.Path.Combine(ProjectHelper.STABLE_PATH, "Songs", beatmapPath) : beatmapPath;
+            set => beatmapPath = value;
         }
 
-        /// <summary>
-        /// Determines whether <see cref="BeatmapPath"/> should be relative to the stable installation songs folder or not.
-        /// </summary>
-        public bool UseStablePath => config.UseStablePath;
+        [JsonProperty("BeatmapPath")]
+        private string beatmapPath;
 
-        /// <summary>
-        /// Invoked when a file has been changed in either the project directory or the beatmap directory.
-        /// </summary>
+        [JsonProperty]
+        public BindableList<string> Groups { get; private set; } = new BindableList<string>();
+
+        [JsonProperty]
+        public Bindable<bool> ShowBeatmapBackground { get; private set; } = new Bindable<bool>();
+
+        [JsonProperty]
+        public Bindable<bool> WidescreenStoryboard { get; private set; } = new Bindable<bool>();
+
+        [JsonIgnore]
+        public BeatmapSetInfo BeatmapSet => beatmapManager.BeatmapSet;
+
+        [JsonIgnore]
+        public IResourceStore<byte[]> Resources => beatmapManager.Resources;
+
         public event Action<ProjectFileType> FileChanged
         {
             add => fileWatcher.FileChanged += value;
             remove => fileWatcher.FileChanged -= value;
         }
 
-        /// <summary>
-        /// Gets the beatmap set for this project.
-        /// </summary>
-        public BeatmapSetInfo BeatmapSet => beatmapManager.BeatmapSet;
+        private ProjectFileWatcher fileWatcher;
+        private ProjectBeatmapManager beatmapManager;
+        private readonly GameHost host;
+        private readonly AudioManager audio;
+        private readonly RulesetStore rulesets;
 
-        /// <summary>
-        /// Gets the beatmap resources for this project.
-        /// </summary>
-        public IResourceStore<byte[]> Resources => beatmapManager.Resources;
-
-        private bool exists => File.Exists(msBuildProjectPath);
-        private string msBuildProjectPath => System.IO.Path.Combine(Path, System.IO.Path.ChangeExtension(Name, "csproj"));
-        private string projectConfigPath => System.IO.Path.Combine(Path, System.IO.Path.ChangeExtension(Name, ".sbtw.json"));
-        private string beatmapPath => config.BeatmapPath;
-        private readonly ProjectConfiguration config;
-        private readonly ProjectFileWatcher fileWatcher;
-        private readonly ProjectBeatmapManager beatmapManager;
-
-        public Project(ProjectConfiguration config, GameHost host, AudioManager audio, RulesetStore rulesets)
+        public Project(GameHost host, AudioManager audio, RulesetStore rulesets)
         {
-            this.config = config;
+            this.host = host;
+            this.audio = audio;
+            this.rulesets = rulesets;
+        }
+
+        public void Initialize()
+        {
             fileWatcher = new ProjectFileWatcher(this);
             beatmapManager = new ProjectBeatmapManager(this, host, audio, rulesets);
         }
 
-        /// <summary>
-        /// Builds this project.
-        /// </summary>
         public void Build()
-        {
-            if (exists)
-                ProjectHelper.Build(Path);
-        }
+            => ProjectHelper.Build(Path);
 
-        /// <summary>
-        /// Cleans this project.
-        /// </summary>
         public void Clean()
-        {
-            if (exists)
-                ProjectHelper.Clean(Path);
-        }
+            => ProjectHelper.Clean(Path);
 
-        /// <summary>
-        /// Restores this project's dependencies.
-        /// </summary>
         public void Restore()
-        {
-            if (exists)
-                ProjectHelper.Restore(Path);
-        }
+            => ProjectHelper.Restore(Path);
 
-        /// <summary>
-        /// Saves this project.
-        /// </summary>
-        public void Save(bool generateMSBuildProject = false)
-        {
-            File.WriteAllText(projectConfigPath, JsonConvert.SerializeObject(config, Formatting.Indented));
+        public void Save()
+            => File.WriteAllText(System.IO.Path.Combine(Path, System.IO.Path.ChangeExtension(Name, ".sbtw.json")), JsonConvert.SerializeObject(this, Formatting.Indented));
 
-            if (!generateMSBuildProject)
-                return;
-
-            File.WriteAllText(msBuildProjectPath, Templates.PROJECT);
-            File.WriteAllText(System.IO.Path.Combine(Path, "Script.cs"), Templates.SCRIPT_CS);
-        }
-
-        /// <summary>
-        /// Gets the working beatmap for this project.
-        /// </summary>
         public WorkingBeatmap GetWorkingBeatmap(string version)
             => beatmapManager.GetWorkingBeatmap(version);
 
+        private bool isDisposed;
 
-        /// <summary>
-        /// Load from an sbtw JSON file. Returns null if the provided project file is invalid.
-        /// </summary>
-        public static Project Load(string path, GameHost host, AudioManager audioManager, RulesetStore rulesets)
+        protected virtual void Dispose(bool disposing)
         {
-            if (string.IsNullOrEmpty(path) || !path.Contains(".sbtw.json"))
-                return null;
-
-            try
+            if (!isDisposed)
             {
-                using var stream = File.OpenRead(path);
-                using var reader = new StreamReader(stream);
-                var config = JsonConvert.DeserializeObject<ProjectConfiguration>(reader.ReadToEnd());
-                config.Path = System.IO.Path.GetDirectoryName(path);
-                config.Name = System.IO.Path.GetFileNameWithoutExtension(path);
+                if (disposing)
+                {
+                    fileWatcher.Dispose();
+                    beatmapManager.Dispose();
+                }
 
-                if (string.IsNullOrEmpty(config.BeatmapPath))
-                    return null;
-
-                return new Project(config, host, audioManager, rulesets);
-            }
-            catch (Exception)
-            {
-                return null;
+                isDisposed = true;
             }
         }
 
         public void Dispose()
         {
-            fileWatcher.Dispose();
+            Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-
-        private static class Templates
-        {
-            public static readonly string PROJECT = @"<Project Sdk=""Microsoft.NET.Sdk"">
-
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <None Include=""Beatmap\**\*"" CopyToOutputDirectory=""Never""/>
-  </ItemGroup>
-
-</Project>";
-
-            public static readonly string SCRIPT_CS = @"using sbtw.Common.Scripting;
-
-namespace Project
-{
-    public class Script : StoryboardScript
-    {
-        public void Generate()
-        {
-        }
-    }
-}
-";
-
-            public static readonly string SCRIPT_VB = @"Imports sbtw.Common.Scripting
-
-Namespace Project
-    Public Class Script
-        Inherits StoryboardScript
-
-        Public Sub Generate()
-        End Sub
-    End Class
-End Namespace
-";
         }
     }
 }

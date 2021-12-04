@@ -7,14 +7,12 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Screens.Play.PlayerSettings;
-using osu.Game.Storyboards.Drawables;
 
-namespace sbtw.Game.Screens.Edit
+namespace sbtw.Game.Screens.Edit.Toolbox
 {
     public class LayersToolboxGroup : ToolboxGroup
     {
         public readonly Bindable<bool> Playfield = new Bindable<bool>();
-
         private readonly Bindable<bool> video = new Bindable<bool>(true);
         private readonly Bindable<bool> background = new Bindable<bool>(true);
         private readonly Bindable<bool> foreground = new Bindable<bool>(true);
