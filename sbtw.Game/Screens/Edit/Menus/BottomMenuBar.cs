@@ -21,7 +21,6 @@ namespace sbtw.Game.Screens.Edit.Menus
             Children = new BottomMenuBarItem[]
             {
                 new TimeInfoContainer(),
-                new BeatSnapControl(),
                 new TimelineControl(),
                 new RateControl(),
                 new PlaybackControl(),

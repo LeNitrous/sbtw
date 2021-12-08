@@ -26,7 +26,7 @@ namespace sbtw.Game.Screens.Edit.Menus
 
         public TimelineControl()
         {
-            Size = new Vector2(600, 60);
+            Width = 600;
             Content.Padding = new MarginPadding { Horizontal = 10 };
             Children = new Drawable[]
             {

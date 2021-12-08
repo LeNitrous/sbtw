@@ -5,6 +5,7 @@ using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Cursor;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Game.Beatmaps;
@@ -15,6 +16,7 @@ using osu.Game.Screens.Backgrounds;
 using sbtw.Game.Projects;
 using sbtw.Game.Screens.Edit.Menus;
 using sbtw.Game.Screens.Edit.Setup;
+using sbtw.Game.Scripting;
 
 namespace sbtw.Game.Screens.Edit
 {
@@ -24,10 +26,14 @@ namespace sbtw.Game.Screens.Edit
 
         public override bool AllowBackButton => false;
 
+        public override bool DisallowExternalBeatmapRulesetChanges => true;
+
+        public override bool? AllowTrackAdjustments => false;
+
         protected override BackgroundScreen CreateBackground() => new BackgroundScreenBlack();
 
         private Container spinner;
-        private Container content;
+        private Container<EditorContent> content;
         private SetupOverlay setup;
 
         [Resolved]
@@ -38,9 +44,13 @@ namespace sbtw.Game.Screens.Edit
         {
             InternalChildren = new Drawable[]
             {
-                content = new Container
+                new PopoverContainer
                 {
                     RelativeSizeAxes = Axes.Both,
+                    Child = content = new Container<EditorContent>
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                    },
                 },
                 spinner = new LoadingSpinner(true)
                 {
@@ -57,6 +67,7 @@ namespace sbtw.Game.Screens.Edit
                         RequestOpenProject = openProject,
                         RequestCloseProject = closeProject,
                         RequestDifficultyChange = openDifficulty,
+                        RequestGenerateStoryboard = () => content.Child?.GenerateStoryboard(),
                     },
                 },
                 setup = new SetupOverlay(),

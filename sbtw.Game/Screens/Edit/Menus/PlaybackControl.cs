@@ -5,8 +5,10 @@ using System;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Input.Events;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Screens.Edit;
+using osuTK.Input;
 
 namespace sbtw.Game.Screens.Edit.Menus
 {
@@ -35,6 +37,18 @@ namespace sbtw.Game.Screens.Edit.Menus
                 clock.Stop();
             else
                 clock.Start();
+        }
+
+        protected override bool OnKeyDown(KeyDownEvent e)
+        {
+            switch (e.Key)
+            {
+                case Key.Space:
+                    togglePause();
+                    return true;
+            }
+
+            return base.OnKeyDown(e);
         }
 
         protected override void Update()

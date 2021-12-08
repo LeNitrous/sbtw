@@ -45,7 +45,7 @@ namespace sbtw.Game.Screens.Edit
         }
 
         [BackgroundDependencyLoader]
-        private void load(EditorClock clock, GameHost host, Bindable<Project> project)
+        private void load(EditorClock clock, GameHost host, Bindable<IProject> project)
         {
             Clock = clock;
 

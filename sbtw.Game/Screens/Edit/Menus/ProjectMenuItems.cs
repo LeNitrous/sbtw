@@ -46,7 +46,7 @@ namespace sbtw.Game.Screens.Edit.Menus
             openInExplorer.Action.Disabled = project is DummyProject;
         }
 
-        private void presentProjectFolder() => host.OpenFileExternally(Path.GetDirectoryName(project.Path));
+        private void presentProjectFolder() => host.OpenFileExternally(project.Path);
 
         private void presentProjectFolderInCode() => Process.Start(new ProcessStartInfo
         {
