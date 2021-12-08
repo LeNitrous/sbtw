@@ -16,6 +16,7 @@ using osu.Game.Screens.Play;
 using osuTK.Input;
 using sbtw.Game.Projects;
 using sbtw.Game.Screens.Edit.Menus;
+using sbtw.Game.Screens.Edit.Toolbox;
 using sbtw.Game.Scripting;
 
 namespace sbtw.Game.Screens.Edit
@@ -34,6 +35,8 @@ namespace sbtw.Game.Screens.Edit
         private IBeatmap playableBeatmap;
         private BeatmapBackground background;
         private Container storyboard;
+        private ViewToolboxGroup viewToolbox;
+        private EditorDrawableRuleset playfield;
         private readonly BindableBeatDivisor beatDivisor = new BindableBeatDivisor();
         private readonly Bindable<bool> samplePlaybackDisabled = new Bindable<bool>();
 
@@ -45,6 +48,9 @@ namespace sbtw.Game.Screens.Edit
 
         [Resolved]
         private Bindable<RulesetInfo> rulesetInfo { get; set; }
+
+        [Cached(typeof(IBindable<EditorDrawableStoryboard>))]
+        private readonly Bindable<EditorDrawableStoryboard> drawableStoryboard = new Bindable<EditorDrawableStoryboard>();
 
         [BackgroundDependencyLoader]
         private void load()
@@ -88,16 +94,30 @@ namespace sbtw.Game.Screens.Edit
                 },
                 new EditorSkinProvidingContainer(editorBeatmap)
                 {
-                    Child = new EditorDrawableRuleset(playableBeatmap, ruleset.CreateDrawableRulesetWith(playableBeatmap), ruleset.GetAutoplayMod())
+                    Child = playfield = new EditorDrawableRuleset(playableBeatmap, ruleset.CreateDrawableRulesetWith(playableBeatmap), ruleset.GetAutoplayMod())
                     {
                         Clock = clock,
                         ProcessCustomClock = false,
+                    },
+                },
+                new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Padding = new MarginPadding { Top = 50, Bottom = 90, Horizontal = 10 },
+                    Children = new Drawable[]
+                    {
+                        viewToolbox = new ViewToolboxGroup
+                        {
+                            Anchor = Anchor.TopRight,
+                            Origin = Anchor.TopRight,
+                        }
                     },
                 },
                 new BottomMenuBar(),
             });
 
             project.Value.ShowBeatmapBackground.BindValueChanged(e => background.FadeTo(e.NewValue ? 1 : 0, 200, Easing.OutQuint));
+            viewToolbox.PlayfieldVisibility.BindValueChanged(e => playfield.Alpha = e.NewValue ? 1 : 0);
         }
 
         protected override void Update()
@@ -124,11 +144,13 @@ namespace sbtw.Game.Screens.Edit
 
         public void GenerateStoryboard()
         {
-            if (project.Value is not Project usableProject)
+            if (project.Value is not Project workingProject)
                 return;
 
-            using var generator = new StoryboardGenerator(usableProject, beatmap.Value.BeatmapInfo);
-            storyboard.Child = new EditorDrawableStoryboard(generator.Generate(usableProject.Groups));
+            using var generator = new StoryboardGenerator(workingProject, beatmap.Value.BeatmapInfo);
+            LoadComponentAsync(
+                drawableStoryboard.Value = new EditorDrawableStoryboard(generator.Generate(viewToolbox.Groups)),
+                loaded => storyboard.Child = loaded);
         }
 
         private void seek(UIEvent e, int direction)
