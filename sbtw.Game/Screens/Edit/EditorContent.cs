@@ -25,6 +25,8 @@ namespace sbtw.Game.Screens.Edit
     [Cached(typeof(ISamplePlaybackDisabler))]
     public class EditorContent : CompositeDrawable, IBeatSnapProvider, ISamplePlaybackDisabler
     {
+        public Container Controls { get; private set; }
+
         private DependencyContainer dependencies;
 
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent) =>
@@ -100,20 +102,27 @@ namespace sbtw.Game.Screens.Edit
                         ProcessCustomClock = false,
                     },
                 },
-                new Container
+                Controls = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Padding = new MarginPadding { Top = 50, Bottom = 90, Horizontal = 10 },
                     Children = new Drawable[]
                     {
-                        viewToolbox = new ViewToolboxGroup
+                        new Container
                         {
-                            Anchor = Anchor.TopRight,
-                            Origin = Anchor.TopRight,
-                        }
-                    },
+                            RelativeSizeAxes = Axes.Both,
+                            Padding = new MarginPadding { Top = 50, Bottom = 90, Horizontal = 10 },
+                            Children = new Drawable[]
+                            {
+                                viewToolbox = new ViewToolboxGroup
+                                {
+                                    Anchor = Anchor.TopRight,
+                                    Origin = Anchor.TopRight,
+                                }
+                            },
+                        },
+                        new BottomMenuBar(),
+                    }
                 },
-                new BottomMenuBar(),
             });
 
             project.Value.ShowBeatmapBackground.BindValueChanged(e => background.FadeTo(e.NewValue ? 1 : 0, 200, Easing.OutQuint));

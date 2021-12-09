@@ -16,7 +16,6 @@ using osu.Game.Screens.Backgrounds;
 using sbtw.Game.Projects;
 using sbtw.Game.Screens.Edit.Menus;
 using sbtw.Game.Screens.Edit.Setup;
-using sbtw.Game.Scripting;
 
 namespace sbtw.Game.Screens.Edit
 {
@@ -33,8 +32,11 @@ namespace sbtw.Game.Screens.Edit
         protected override BackgroundScreen CreateBackground() => new BackgroundScreenBlack();
 
         private Container spinner;
-        private Container<EditorContent> content;
+        private Container content;
+        private TopMenuBar topMenuBar;
         private SetupOverlay setup;
+
+        private EditorContent editor => content.Children.OfType<EditorContent>().FirstOrDefault();
 
         [Resolved]
         private ProjectManager projectManager { get; set; }
@@ -47,7 +49,7 @@ namespace sbtw.Game.Screens.Edit
                 new PopoverContainer
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Child = content = new Container<EditorContent>
+                    Child = content = new Container
                     {
                         RelativeSizeAxes = Axes.Both,
                     },
@@ -57,21 +59,29 @@ namespace sbtw.Game.Screens.Edit
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                 },
-                new Container
+                new Container<TopMenuBar>
                 {
                     RelativeSizeAxes = Axes.X,
                     Height = 40,
-                    Child = new TopMenuBar
+                    Child = topMenuBar = new TopMenuBar
                     {
                         RequestNewProject = () => setup?.Show(),
                         RequestOpenProject = openProject,
                         RequestCloseProject = closeProject,
                         RequestDifficultyChange = openDifficulty,
-                        RequestGenerateStoryboard = () => content.Child?.GenerateStoryboard(),
+                        RequestGenerateStoryboard = () => editor?.GenerateStoryboard(),
                     },
                 },
                 setup = new SetupOverlay(),
             };
+
+            topMenuBar.InterfaceVisibility.BindValueChanged(e =>
+            {
+                topMenuBar.FadeTo(e.NewValue ? 1 : 0, 200, Easing.OutQuint);
+
+                if (Project.Value is Project)
+                    editor?.Controls.FadeTo(e.NewValue ? 1 : 0, 200, Easing.OutQuint);
+            });
         }
 
         private void closeProject()
@@ -128,6 +138,7 @@ namespace sbtw.Game.Screens.Edit
             switch (e.Action)
             {
                 case GlobalAction.ToggleInGameInterface:
+                    topMenuBar.InterfaceVisibility.Value = !topMenuBar.InterfaceVisibility.Value;
                     return true;
             }
 
