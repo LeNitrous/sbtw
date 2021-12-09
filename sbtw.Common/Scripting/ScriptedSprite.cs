@@ -260,6 +260,54 @@ namespace sbtw.Common.Scripting
         public void Color(double time, float red, float blue, float green)
             => Color(time, new Color(red, blue, green));
 
+        /// <inheritdoc cref="Color"/>
+        public void Color(Easing easing, double startTime, double endTime, string startHex, string endHex)
+            => Color(easing, startTime, endTime, Colour4.FromHex(startHex), Colour4.FromHex(endHex));
+
+        /// <inheritdoc cref="Color"/>
+        public void Color(double startTime, double endTime, string startHex, string endHex)
+            => Color(Easing.None, startTime, endTime, startHex, endHex);
+
+        /// <inheritdoc cref="Color"/>
+        public void Color(double time, string hex)
+            => Color(time, time, hex, hex);
+
+        /// <inheritdoc cref="Color"/>
+        public void Color(Easing easing, double startTime, double endTime, byte startRed, byte startBlue, byte startGreen, byte endRed, byte endBlue, byte endGreen)
+            => Color(easing, startTime, endTime, new Colour4(startRed, startGreen, startBlue, 255), new Colour4(endRed, endGreen, endBlue, 255));
+
+        /// <inheritdoc cref="Color"/>
+        public void Color(double startTime, double endTime, byte startRed, byte startBlue, byte startGreen, byte endRed, byte endBlue, byte endGreen)
+            => Color(Easing.None, startTime, endTime, startRed, startGreen, startBlue, endRed, endGreen, endBlue);
+
+        /// <inheritdoc cref="Color"/>
+        public void Color(double time, byte red, byte blue, byte green)
+            => Color(time, time, red, blue, green, red, blue, green);
+
+        /// <inheritdoc cref="Color"/>
+        public void ColorHSL(Easing easing, double startTime, double endTime, float startHue, float startSaturation, float startLightness, float endHue, float endSaturation, float endLightness)
+            => Color(easing, startTime, endTime, Colour4.FromHSL(startHue, startSaturation, startLightness), Colour4.FromHSL(endHue, endSaturation, endLightness));
+
+        /// <inheritdoc cref="Color"/>
+        public void ColorHSL(double startTime, double endTime, float startHue, float startSaturation, float startLightness, float endHue, float endSaturation, float endLightness)
+            => ColorHSL(Easing.None, startTime, endTime, startHue, startSaturation, startLightness, endHue, endSaturation, endLightness);
+
+        /// <inheritdoc cref="Color"/>
+        public void ColorHSL(double time, float hue, float saturation, float lightness)
+            => ColorHSL(time, time, hue, saturation, lightness, hue, saturation, lightness);
+
+        /// <inheritdoc cref="Color"/>
+        public void ColorHSV(Easing easing, double startTime, double endTime, float startHue, float startSaturation, float startValue, float endHue, float endSaturation, float endValue)
+            => Color(easing, startTime, endTime, Colour4.FromHSV(startHue, startSaturation, startValue), Colour4.FromHSV(endHue, endSaturation, endValue));
+
+        /// <inheritdoc cref="Color"/>
+        public void ColorHSV(double startTime, double endTime, float startHue, float startSaturation, float startValue, float endHue, float endSaturation, float endValue)
+            => ColorHSV(Easing.None, startTime, endTime, startHue, startSaturation, startValue, endHue, endSaturation, endValue);
+
+        /// <inheritdoc cref="Color"/>
+        public void ColorHSV(double time, float hue, float saturation, float value)
+            => ColorHSV(time, time, hue, saturation, value, hue, saturation, value);
+
         /// <summary>
         /// Flips the sprite horizontally.
         /// </summary>
@@ -320,9 +368,7 @@ namespace sbtw.Common.Scripting
         /// Ends the current group.
         /// </summary>
         public void EndGroup()
-        {
-            currentContext = null;
-        }
+            => currentContext = null;
 
         protected internal virtual string Header
             => $"{GetType().Name.Replace("Scripted", string.Empty)},{Enum.GetName(Layer)},{Enum.GetName(Origin)},\"{Path}\",{InitialPosition.X},{InitialPosition.Y}";
