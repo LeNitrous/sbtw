@@ -25,9 +25,11 @@ using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.Volume;
 using osu.Game.Screens;
+using Python.Runtime;
 using sbtw.Game.Projects;
 using sbtw.Game.Screens;
 using sbtw.Game.Screens.Edit;
+using sbtw.Game.Utils;
 
 namespace sbtw.Game
 {
@@ -149,11 +151,11 @@ namespace sbtw.Game
 
         private bool checkAndReportForDependencies()
         {
-            if (ProjectHelper.HAS_DOTNET)
+            if (NetDriverHelper.HAS_DOTNET)
             {
-                channelManager.Post($".NET driver found in {ProjectHelper.DOTNET_PATH}");
-                ProjectHelper.OnDotNetError += msg => channelManager.Post(msg, LogLevel.Error);
-                ProjectHelper.OnDotNetMessage += msg => channelManager.Post(msg);
+                channelManager.Post($".NET driver found in {NetDriverHelper.DOTNET_PATH}");
+                NetDriverHelper.OnDotNetError += msg => channelManager.Post(msg, LogLevel.Error);
+                NetDriverHelper.OnDotNetMessage += msg => channelManager.Post(msg);
             }
             else
             {
@@ -165,9 +167,9 @@ namespace sbtw.Game
                 });
             }
 
-            if (ProjectHelper.EDITORS.Any())
+            if (CodeHelper.EDITORS.Any())
             {
-                channelManager.Post($"Code Editors found:\n{string.Join('\n', ProjectHelper.EDITORS.Select(e => $"{e.Value} ({e.Key})"))}");
+                channelManager.Post($"Code Editors found:\n{string.Join('\n', CodeHelper.EDITORS.Select(e => $"{e.Value} ({e.Key})"))}");
             }
             else
             {
@@ -177,6 +179,11 @@ namespace sbtw.Game
                     Text = "Unable to locate a Visual Studio Code installation. You will be unable to open projects from the editor.",
                     Icon = FontAwesome.Solid.Bomb,
                 });
+            }
+
+            if (PythonHelper.HAS_PYTHON)
+            {
+                channelManager.Post($"Python {PythonEngine.Version.Split(' ').FirstOrDefault()} found in {PythonHelper.PYTHON_PATH}");
             }
 
             if (!RulesetStore.AvailableRulesets.Any())

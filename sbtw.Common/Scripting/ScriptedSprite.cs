@@ -273,15 +273,15 @@ namespace sbtw.Common.Scripting
             => Color(time, time, hex, hex);
 
         /// <inheritdoc cref="Color"/>
-        public void Color(Easing easing, double startTime, double endTime, byte startRed, byte startBlue, byte startGreen, byte endRed, byte endBlue, byte endGreen)
+        public void ColorRGB(Easing easing, double startTime, double endTime, byte startRed, byte startBlue, byte startGreen, byte endRed, byte endBlue, byte endGreen)
             => Color(easing, startTime, endTime, new Colour4(startRed, startGreen, startBlue, 255), new Colour4(endRed, endGreen, endBlue, 255));
 
         /// <inheritdoc cref="Color"/>
-        public void Color(double startTime, double endTime, byte startRed, byte startBlue, byte startGreen, byte endRed, byte endBlue, byte endGreen)
+        public void ColorRGB(double startTime, double endTime, byte startRed, byte startBlue, byte startGreen, byte endRed, byte endBlue, byte endGreen)
             => Color(Easing.None, startTime, endTime, startRed, startGreen, startBlue, endRed, endGreen, endBlue);
 
         /// <inheritdoc cref="Color"/>
-        public void Color(double time, byte red, byte blue, byte green)
+        public void ColorRGB(double time, byte red, byte blue, byte green)
             => Color(time, time, red, blue, green, red, blue, green);
 
         /// <inheritdoc cref="Color"/>
@@ -354,7 +354,7 @@ namespace sbtw.Common.Scripting
         /// <summary>
         /// Performs a set of commands called after this until <see cref="EndGroup"/> is called.
         /// </summary>
-        public void StartTriggerGroup(string triggerName, double startTime, double endTime, int group)
+        public void StartTriggerGroup(string triggerName, double startTime, double endTime, int group = 0)
         {
             if (context != null)
                 throw new InvalidOperationException("Cannot start a new group when an existing group is active.");

@@ -9,7 +9,7 @@ using sbtw.Game.Projects;
 
 namespace sbtw.Game.Scripting
 {
-    public class StoryboardEncoder : ScriptAssemblyRunner<StringBuilder>
+    public class StoryboardEncoder : ScriptRunner<StringBuilder>
     {
         private readonly Dictionary<Layer, StringBuilder> layers = new Dictionary<Layer, StringBuilder>();
 

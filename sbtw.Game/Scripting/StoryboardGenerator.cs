@@ -10,7 +10,7 @@ using sbtw.Game.Projects;
 
 namespace sbtw.Game.Scripting
 {
-    public class StoryboardGenerator : ScriptAssemblyRunner<Storyboard>
+    public class StoryboardGenerator : ScriptRunner<Storyboard>
     {
         public IReadOnlyDictionary<IStoryboardElement, IScriptedElement> ElementMap => elementMap;
 

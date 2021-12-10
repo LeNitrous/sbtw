@@ -4,7 +4,7 @@
 using System.Linq;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
-using sbtw.Game.Projects;
+using sbtw.Game.Utils;
 
 namespace sbtw.Game
 {
@@ -18,8 +18,8 @@ namespace sbtw.Game
 
         public NetProcessListener()
         {
-            ProjectHelper.OnDotNetExit += () => state.Value = NetProcessStatus.Exited;
-            ProjectHelper.OnDotNetStart += args =>
+            NetDriverHelper.OnDotNetExit += () => state.Value = NetProcessStatus.Exited;
+            NetDriverHelper.OnDotNetStart += args =>
             {
                 switch (args.Split(' ').First())
                 {

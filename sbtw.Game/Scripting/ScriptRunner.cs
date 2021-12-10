@@ -5,41 +5,47 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Python.Runtime;
 using sbtw.Common.Scripting;
 using sbtw.Game.Projects;
+using sbtw.Game.Utils;
 
 namespace sbtw.Game.Scripting
 {
-    public abstract class ScriptAssemblyRunner<T> : IDisposable
+    public abstract class ScriptRunner<T> : IDisposable
         where T : new()
     {
+        private readonly List<Script> loaded = new List<Script>();
         private readonly ScriptAssemblyContext assemblyContext;
-        private readonly string outputPath;
-        private IEnumerable<ScriptElementGroup> groups;
 
-        /// <summary>
-        /// The types loaded from the assembly.
-        /// </summary>
-        public readonly IReadOnlyList<Type> Loaded;
-
-        /// <summary>
-        /// Gets whether this runner is disposed or not.
-        /// </summary>
         public bool IsDisposed { get; private set; }
 
-        protected ScriptAssemblyRunner(Project project)
+        public ScriptRunner(Project project)
         {
-            outputPath = Path.Combine(project.Path, "bin", "Debug", "net5.0");
-            assemblyContext = new ScriptAssemblyContext(outputPath);
+            string assemblyOutputPath = Path.Combine(project.Path, "bin", "Debug", "net5.0");
+            assemblyContext = new ScriptAssemblyContext(assemblyOutputPath);
 
-            var assembly = assemblyContext.LoadFromAssemblyPath(Path.Combine(outputPath, Path.ChangeExtension(project.Name, ".dll")));
-            Loaded = assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(Script)) && !t.IsAbstract).ToArray();
+            string assemblyPath = Path.Combine(assemblyOutputPath, Path.ChangeExtension(project.Name, ".dll"));
+            if (File.Exists(assemblyPath))
+            {
+                // Load all .NET Scripts
+                var assembly = assemblyContext.LoadFromAssemblyPath(assemblyPath);
+                foreach (var type in assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(Script)) && !t.IsAbstract && t.GetConstructor(Type.EmptyTypes) != null))
+                    loaded.Add(Activator.CreateInstance(type) as Script);
+            }
+
+            // Load all JS scripts
+            foreach (var scriptPath in Directory.GetFiles(project.Path).Where(p => Path.GetExtension(p) == ".js"))
+                loaded.Add(new JSScript(scriptPath));
+
+            // Load all Python scripts
+            foreach (var scriptPath in Directory.GetFiles(project.Path).Where(p => Path.GetExtension(p) == ".py"))
+                loaded.Add(new PythonScript(scriptPath));
         }
 
-        /// <summary>
-        /// Generates <see cref="T"/> with the option of ordering groups.
-        /// </summary>
-        public T Generate(IEnumerable<string> ordering = null)
+        public async Task<T> GenerateAsync(CancellationToken token = default)
         {
             if (IsDisposed)
                 throw new InvalidOperationException("Cannot generate an already disposed runner.");
@@ -48,18 +54,17 @@ namespace sbtw.Game.Scripting
 
             PreGenerate(context);
 
-            // Merge all elements and group them by name
-            // TODO: Make this non-blocking!
-            groups = Loaded
-                .SelectMany(type => { var script = Activator.CreateInstance(type) as Script; script.Generate(); return script.Groups; })
-                .GroupBy(g => g.Name, g => g.Elements, (key, g) => new ScriptElementGroup(key) { Elements = g.SelectMany(a => a) });
+            if (PythonHelper.HAS_PYTHON && loaded.Any(s => s is PythonScript))
+                PythonEngine.Initialize();
 
-            // If ordering is specified, order them by key index
-            if (ordering != null && ordering.Any())
-            {
-                var lookup = ordering.Select((key, idx) => new { key, idx }).ToDictionary(p => p.key, p => p.idx);
-                groups = groups.OrderBy(g => lookup.ContainsKey(g.Name) ? lookup[g.Name] : 0);
-            }
+            await Task.WhenAll(loaded.Select(s => s.GenerateAsync(token)));
+
+            if (PythonHelper.HAS_PYTHON && loaded.Any(s => s is PythonScript))
+                PythonEngine.Shutdown();
+
+            var groups = loaded
+                .SelectMany(s => s.Groups)
+                .GroupBy(g => g.Name, g => g.Elements, (key, g) => new ScriptElementGroup(key) { Elements = g.SelectMany(a => a) });
 
             // Generate...
             foreach (var group in groups)
@@ -78,17 +83,7 @@ namespace sbtw.Game.Scripting
             return context;
         }
 
-        /// <summary>
-        /// Generates <see cref="T"/> with the option of ordering groups and returning a list of added and removed group names.
-        /// </summary>
-        public T Generate(IEnumerable<string> ordering, out IEnumerable<string> added, out IEnumerable<string> removed)
-        {
-            var context = Generate(ordering);
-            var groupNames = groups.Select(g => g.Name);
-            added = groupNames.Except(ordering);
-            removed = ordering.Except(groupNames);
-            return context;
-        }
+        public T Generate() => GenerateAsync().Result;
 
         private void handle(T context, IScriptedElement element)
         {
@@ -164,6 +159,9 @@ namespace sbtw.Game.Scripting
             IsDisposed = true;
         }
 
+        /// <summary>
+        /// Disposes resources used by this runner.
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);

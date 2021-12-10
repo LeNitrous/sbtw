@@ -2,13 +2,21 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.ClearScript;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
+using osu.Framework.Logging;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics.Backgrounds;
+using osu.Game.Graphics.UserInterface;
+using osu.Game.Overlays;
+using osu.Game.Overlays.Notifications;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Screens.Edit;
@@ -32,13 +40,14 @@ namespace sbtw.Game.Screens.Edit
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent) =>
             dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
+        private LoadingSpinner spinner;
         private EditorClock clock;
         private EditorBeatmap editorBeatmap;
         private IBeatmap playableBeatmap;
         private BeatmapBackground background;
-        private Container storyboard;
         private ViewToolboxGroup viewToolbox;
         private EditorDrawableRuleset playfield;
+        private Container backgroundContent;
         private readonly BindableBeatDivisor beatDivisor = new BindableBeatDivisor();
         private readonly Bindable<bool> samplePlaybackDisabled = new Bindable<bool>();
 
@@ -51,8 +60,17 @@ namespace sbtw.Game.Screens.Edit
         [Resolved]
         private Bindable<RulesetInfo> rulesetInfo { get; set; }
 
+        [Resolved]
+        private NotificationOverlay notifications { get; set; }
+
+        [Resolved]
+        private SBTWOutputManager logger { get; set; }
+
+        [Resolved]
+        private ChatOverlay chat { get; set; }
+
         [Cached(typeof(IBindable<EditorDrawableStoryboard>))]
-        private readonly Bindable<EditorDrawableStoryboard> drawableStoryboard = new Bindable<EditorDrawableStoryboard>();
+        private readonly Bindable<EditorDrawableStoryboard> storyboard = new Bindable<EditorDrawableStoryboard>();
 
         [BackgroundDependencyLoader]
         private void load()
@@ -84,14 +102,13 @@ namespace sbtw.Game.Screens.Edit
             var ruleset = rulesetInfo.Value.CreateInstance();
             AddRangeInternal(new Drawable[]
             {
-                new AspectRatioPreservingContainer
+                backgroundContent = new AspectRatioPreservingContainer
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     Children = new Drawable[]
                     {
                         background = new BeatmapBackground(beatmap.Value),
-                        storyboard = new Container { RelativeSizeAxes = Axes.Both },
                     },
                 },
                 new EditorSkinProvidingContainer(editorBeatmap)
@@ -123,6 +140,12 @@ namespace sbtw.Game.Screens.Edit
                         new BottomMenuBar(),
                     }
                 },
+                spinner = new LoadingSpinner(true)
+                {
+                    Anchor = Anchor.BottomRight,
+                    Origin = Anchor.BottomRight,
+                    Margin = new MarginPadding { Right = 30, Bottom = 30 },
+                }
             });
 
             project.Value.ShowBeatmapBackground.BindValueChanged(e => background.FadeTo(e.NewValue ? 1 : 0, 200, Easing.OutQuint));
@@ -151,15 +174,65 @@ namespace sbtw.Game.Screens.Edit
             return base.OnKeyDown(e);
         }
 
+        private CancellationTokenSource generatorCancellationToken;
+
         public void GenerateStoryboard()
         {
             if (project.Value is not Project workingProject)
                 return;
 
-            using var generator = new StoryboardGenerator(workingProject, beatmap.Value.BeatmapInfo);
-            LoadComponentAsync(
-                drawableStoryboard.Value = new EditorDrawableStoryboard(generator.Generate(viewToolbox.Groups)),
-                loaded => storyboard.Child = loaded);
+            spinner.Show();
+
+            generatorCancellationToken?.Cancel();
+            generatorCancellationToken = new CancellationTokenSource();
+
+            Task.Run(async () =>
+            {
+                using var generator = new StoryboardGenerator(workingProject, beatmap.Value.BeatmapInfo);
+                var generated = await generator.GenerateAsync(generatorCancellationToken.Token);
+
+                Schedule(() =>
+                {
+                    LoadComponentAsync(new EditorDrawableStoryboard(generated), loaded =>
+                        {
+                            storyboard.Value?.Expire();
+                            backgroundContent.Add(storyboard.Value = loaded);
+
+                            spinner.Hide();
+                            generatorCancellationToken = null;
+                        }, generatorCancellationToken.Token);
+                });
+
+            }, generatorCancellationToken.Token).ContinueWith(task =>
+            {
+                Schedule(() =>
+                {
+                    spinner.Hide();
+
+                    if (task.Exception.InnerExceptions.FirstOrDefault() is TaskCanceledException)
+                        return;
+
+                    notifications.Post(new SimpleErrorNotification
+                    {
+                        Text = @"A script has generated an error. See output for details.",
+                        Activated = () =>
+                        {
+                            chat.Show();
+                            return true;
+                        }
+                    });
+
+                    foreach (var exception in task.Exception.InnerExceptions)
+                    {
+                        if (exception is ScriptEngineException jsException)
+                            logger.Post(jsException.ErrorDetails, LogLevel.Error);
+                        else if (exception is PythonExecutionException pyException)
+                            logger.Post(exception.Message, LogLevel.Error);
+                        else
+                            logger.Post(exception.ToString(), LogLevel.Error);
+                    }
+                });
+            }, TaskContinuationOptions.OnlyOnFaulted);
         }
 
         private void seek(UIEvent e, int direction)

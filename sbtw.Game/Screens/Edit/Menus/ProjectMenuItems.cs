@@ -11,6 +11,7 @@ using osu.Framework.Platform;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Screens.Edit.Components.Menus;
 using sbtw.Game.Projects;
+using sbtw.Game.Utils;
 
 namespace sbtw.Game.Screens.Edit.Menus
 {
@@ -40,9 +41,9 @@ namespace sbtw.Game.Screens.Edit.Menus
             this.host = host;
 
             foreach (var item in Items.Take(5))
-                item.Action.Disabled = !ProjectHelper.HAS_DOTNET || project is DummyProject;
+                item.Action.Disabled = !NetDriverHelper.HAS_DOTNET || project is DummyProject;
 
-            openInCode.Action.Disabled = !ProjectHelper.EDITORS.Any() || project is DummyProject;
+            openInCode.Action.Disabled = !CodeHelper.EDITORS.Any() || project is DummyProject;
             openInExplorer.Action.Disabled = project is DummyProject;
         }
 
@@ -50,7 +51,7 @@ namespace sbtw.Game.Screens.Edit.Menus
 
         private void presentProjectFolderInCode() => Process.Start(new ProcessStartInfo
         {
-            FileName = ProjectHelper.EDITORS.FirstOrDefault().Key,
+            FileName = CodeHelper.EDITORS.FirstOrDefault().Key,
             Arguments = project.Path,
             WindowStyle = ProcessWindowStyle.Hidden,
             UseShellExecute = true,

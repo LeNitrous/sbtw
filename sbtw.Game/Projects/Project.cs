@@ -10,6 +10,7 @@ using osu.Framework.IO.Stores;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets;
+using sbtw.Game.Utils;
 
 namespace sbtw.Game.Projects
 {
@@ -34,7 +35,7 @@ namespace sbtw.Game.Projects
         [JsonIgnore]
         public string BeatmapPath
         {
-            get => UseStablePath ? System.IO.Path.Combine(ProjectHelper.STABLE_PATH, "Songs", beatmapPath) : beatmapPath;
+            get => UseStablePath ? System.IO.Path.Combine(StableHelper.STABLE_PATH, "Songs", beatmapPath) : beatmapPath;
             set => beatmapPath = value;
         }
 
@@ -82,13 +83,13 @@ namespace sbtw.Game.Projects
         }
 
         public void Build()
-            => ProjectHelper.Build(Path);
+            => NetDriverHelper.Build(Path);
 
         public void Clean()
-            => ProjectHelper.Clean(Path);
+            => NetDriverHelper.Clean(Path);
 
         public void Restore()
-            => ProjectHelper.Restore(Path);
+            => NetDriverHelper.Restore(Path);
 
         public void Save()
             => File.WriteAllText(System.IO.Path.Combine(Path, System.IO.Path.ChangeExtension(Name, ".sbtw.json")), JsonConvert.SerializeObject(this, Formatting.Indented));

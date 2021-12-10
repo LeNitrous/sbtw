@@ -12,6 +12,7 @@ using osu.Framework.Audio;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets;
+using sbtw.Game.Utils;
 
 namespace sbtw.Game.Projects
 {
@@ -69,10 +70,10 @@ namespace sbtw.Game.Projects
 
             if (Path.GetExtension(beatmapPath) == ".osu")
             {
-                if (!ProjectHelper.HAS_STABLE)
+                if (!StableHelper.HAS_STABLE)
                     throw new PlatformNotSupportedException(@"Attempted to import a beatmap file but system does not have stable installed.");
 
-                if (!beatmapPath.Contains(ProjectHelper.STABLE_PATH))
+                if (!beatmapPath.Contains(StableHelper.STABLE_PATH))
                     throw new InvalidOperationException(@"Beatmap file must originate from an existing stable installation.");
             }
 

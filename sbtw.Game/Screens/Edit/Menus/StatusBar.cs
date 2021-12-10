@@ -42,8 +42,6 @@ namespace sbtw.Game.Screens.Edit
                         new BuildingStatusIcon(),
                         new CleaningStatusIcon(),
                         new RestoringStatusIcon(),
-                        new ProjectFileChangeStatusIcon(),
-                        new BeatmapFileChangeStatusIcon(),
                     }
                 }
             };
@@ -133,42 +131,6 @@ namespace sbtw.Game.Screens.Edit
             public override LocalisableString TooltipText => @"Cleaning";
 
             public override IconUsage Icon => FontAwesome.Solid.Broom;
-        }
-
-        private class ProjectFileChangeStatusIcon : StatusBarIcon
-        {
-            public override LocalisableString TooltipText => @"Scripts have been updated. Please regenerate.";
-
-            public override IconUsage Icon => FontAwesome.Solid.Info;
-
-            public virtual bool Condition(ProjectFileType type)
-                => type == ProjectFileType.Script;
-
-            [BackgroundDependencyLoader]
-            private void load(Bindable<IProject> project)
-            {
-                project.BindValueChanged(e =>
-                {
-                    if (e.OldValue != null)
-                        e.OldValue.FileChanged -= handleFileEvent;
-
-                    if (e.NewValue != null)
-                        e.NewValue.FileChanged += handleFileEvent;
-                }, true);
-            }
-
-            private void handleFileEvent(ProjectFileType type)
-            {
-                State.Value = Condition(type) ? Visibility.Visible : Visibility.Hidden;
-            }
-        }
-
-        private class BeatmapFileChangeStatusIcon : ProjectFileChangeStatusIcon
-        {
-            public override LocalisableString TooltipText => @"Beatmap files have been changed. Please reload.";
-
-            public override bool Condition(ProjectFileType type)
-                => type == ProjectFileType.Beatmap || type == ProjectFileType.Storyboard || type == ProjectFileType.Resource;
         }
     }
 }

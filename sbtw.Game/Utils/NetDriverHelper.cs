@@ -2,32 +2,14 @@
 // See LICENSE in the repository root for more details.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.Versioning;
-using Microsoft.Win32;
 using osu.Framework;
 
-namespace sbtw.Game.Projects
+namespace sbtw.Game.Utils
 {
-    public static class ProjectHelper
+    public static class NetDriverHelper
     {
-        /// <summary>
-        /// Returns an enumerable list of paths to installed code editors based on the "PATH" environment variable.
-        /// </summary>
-        public static readonly Dictionary<string, string> EDITORS = get_installed_code_editor_paths();
-
-        /// <summary>
-        /// Returns whether there is an existing stable installation found.
-        /// </summary>
-        public static bool HAS_STABLE => !string.IsNullOrEmpty(STABLE_PATH);
-
-        /// <summary>
-        /// Returns the path to a stable installation or null if no stable installation was found.
-        /// </summary>
-        public static readonly string STABLE_PATH = get_stable_path();
-
         /// <summary>
         /// Returns whether the .NET driver is installed or not.
         /// </summary>
@@ -123,96 +105,27 @@ namespace sbtw.Game.Projects
             OnDotNetStart?.Invoke(args);
         }
 
-        private static Dictionary<string, string> get_installed_code_editor_paths()
+        private static string get_dotnet_path()
         {
-            var found = new Dictionary<string, string>();
-
             if (RuntimeInfo.OS == RuntimeInfo.Platform.Windows)
             {
-                string[] known = new[]
+                foreach (string path in PathHelper.GetEnvironmentPaths())
                 {
-                    "Microsoft VS Code",
-                    "Microsoft VS Code Insiders",
-                };
-
-                string[] paths = Environment.GetEnvironmentVariable("PATH").Split(';');
-
-                foreach (string path in paths)
-                {
-                    foreach (string editor in known)
+                    if (path.Contains(@"\dotnet"))
                     {
-                        if (path.Contains($@"\{editor}\") && !found.ContainsKey(path))
-                            found.Add(Path.Combine(path, "code"), editor);
+                        if (File.Exists(Path.Combine(path, "dotnet.exe")))
+                            return path;
                     }
                 }
             }
 
             if (RuntimeInfo.OS == RuntimeInfo.Platform.Linux)
             {
-                if (File.Exists("/usr/bin/code"))
-                    found.Add("/usr/bin/code", "Microsoft VS Code");
-            }
-
-            return found;
-        }
-
-        private static string get_dotnet_path()
-        {
-            if (RuntimeInfo.OS == RuntimeInfo.Platform.Windows)
-            {
-                string[] paths = Environment.GetEnvironmentVariable("PATH").Split(';');
-
-                foreach (string path in paths)
-                {
-                    if (path.Contains(@"\dotnet"))
-                        return path;
-                }
-            }
-
-            if (RuntimeInfo.OS == RuntimeInfo.Platform.Linux)
-            {
                 if (File.Exists("/usr/bin/dotnet"))
-                    return "usr/bin/dotnet";
+                    return "/usr/bin/dotnet";
             }
 
             return null;
-        }
-
-        // https://github.com/ppy/osu/blob/master/osu.Desktop/OsuGameDesktop.cs
-        private static string get_stable_path()
-        {
-            static bool checkExists(string p) => Directory.Exists(Path.Combine(p, "Songs")) || File.Exists(Path.Combine(p, "osu!.cfg"));
-
-            string stableInstallPath;
-
-            if (OperatingSystem.IsWindows())
-            {
-                try
-                {
-                    stableInstallPath = get_stable_install_path_from_registry();
-
-                    if (!string.IsNullOrEmpty(stableInstallPath) && checkExists(stableInstallPath))
-                        return stableInstallPath;
-                }
-                catch { }
-            }
-
-            stableInstallPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"osu!");
-            if (checkExists(stableInstallPath))
-                return stableInstallPath;
-
-            stableInstallPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".osu");
-            if (checkExists(stableInstallPath))
-                return stableInstallPath;
-
-            return null;
-        }
-
-        [SupportedOSPlatform("windows")]
-        private static string get_stable_install_path_from_registry()
-        {
-            using RegistryKey key = Registry.ClassesRoot.OpenSubKey("osu");
-            return key?.OpenSubKey(@"shell\open\command")?.GetValue(string.Empty)?.ToString()?.Split('"')[1].Replace("osu!.exe", "");
         }
     }
 }

@@ -28,22 +28,10 @@ namespace sbtw.Common.Scripting
 
         private readonly List<ScriptElementGroup> groups = new List<ScriptElementGroup>();
 
-        internal IEnumerable<ScriptElementGroup> Groups => groups;
-
         /// <summary>
         /// The entry point for this script. This is where all storyboard elements will be added.
         /// </summary>
         public abstract void Generate();
-
-        internal Task GenerateAsync(CancellationToken token = default)
-        {
-            if (token.IsCancellationRequested)
-                token.ThrowIfCancellationRequested();
-
-            Generate();
-
-            return Task.CompletedTask;
-        }
 
         /// <summary>
         /// Gets an element group by name.
@@ -70,6 +58,20 @@ namespace sbtw.Common.Scripting
                 throw new InvalidOperationException("Cannot create another video in the same difficulty.");
 
             GetGroup("Video").CreateVideo(path, offset);
+        }
+
+        protected virtual internal string Name => GetType().Name;
+
+        internal IEnumerable<ScriptElementGroup> Groups => groups;
+
+        internal Task GenerateAsync(CancellationToken token = default)
+        {
+            if (token.IsCancellationRequested)
+                token.ThrowIfCancellationRequested();
+
+            Generate();
+
+            return Task.CompletedTask;
         }
 
         internal IEnumerable<ConfigurableMember> GetConfigurableMembers()
