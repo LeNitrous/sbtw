@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ClearScript;
+using Microsoft.ClearScript.V8;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -68,6 +69,9 @@ namespace sbtw.Game.Screens.Edit
 
         [Resolved]
         private ChatOverlay chat { get; set; }
+
+        [Resolved]
+        private V8ScriptEngine jsScriptEngine { get; set; }
 
         [Cached(typeof(IBindable<EditorDrawableStoryboard>))]
         private readonly Bindable<EditorDrawableStoryboard> storyboard = new Bindable<EditorDrawableStoryboard>();
@@ -150,6 +154,8 @@ namespace sbtw.Game.Screens.Edit
 
             project.Value.ShowBeatmapBackground.BindValueChanged(e => background.FadeTo(e.NewValue ? 1 : 0, 200, Easing.OutQuint));
             viewToolbox.PlayfieldVisibility.BindValueChanged(e => playfield.Alpha = e.NewValue ? 1 : 0);
+
+            GenerateStoryboard();
         }
 
         protected override void Update()
@@ -182,13 +188,20 @@ namespace sbtw.Game.Screens.Edit
                 return;
 
             spinner.Show();
+            workingProject.Build(generateStoryboard);
+        }
+
+        private void generateStoryboard()
+        {
+            if (project.Value is not Project workingProject)
+                return;
 
             generatorCancellationToken?.Cancel();
             generatorCancellationToken = new CancellationTokenSource();
 
             Task.Run(async () =>
             {
-                using var generator = new StoryboardGenerator(workingProject, beatmap.Value.BeatmapInfo);
+                using var generator = new StoryboardGenerator(workingProject, beatmap.Value.BeatmapInfo, jsScriptEngine);
                 var generated = await generator.GenerateAsync(generatorCancellationToken.Token);
 
                 Schedule(() =>

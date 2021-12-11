@@ -139,7 +139,7 @@ namespace sbtw.Game.Screens.Edit.Setup
             }
             catch (PlatformNotSupportedException e)
             {
-                postErrorNotification(e, "No stable installation found. Cannot import beatmap difficulty file.");
+                postErrorNotification(e, e.Message);
             }
             catch (InvalidOperationException e)
             {
@@ -162,7 +162,6 @@ namespace sbtw.Game.Screens.Edit.Setup
                 return;
 
             project.Save();
-            project.Build();
 
             Hide();
             editor.OpenProject(project);

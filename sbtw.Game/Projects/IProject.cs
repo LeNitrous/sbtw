@@ -69,17 +69,17 @@ namespace sbtw.Game.Projects
         /// <summary>
         /// Builds this project.
         /// </summary>
-        void Build();
+        void Build(Action exitAction = null);
 
         /// <summary>
         /// Cleans this project.
         /// </summary>
-        void Clean();
+        void Clean(Action exitAction = null);
 
         /// <summary>
         /// Restores this project's dependencies.
         /// </summary>
-        void Restore();
+        void Restore(Action exitAction = null);
 
         /// <summary>
         /// Saves this project.

@@ -35,21 +35,24 @@ namespace sbtw.Game.Projects
             this.workingBeatmap = workingBeatmap;
         }
 
-        public void Build()
+        public void Build(Action exitAction = null)
         {
+            exitAction?.Invoke();
         }
 
-        public void Clean()
+        public void Clean(Action exitAction = null)
         {
+            exitAction?.Invoke();
+        }
+
+        public void Restore(Action exitAction = null)
+        {
+            exitAction?.Invoke();
         }
 
         public WorkingBeatmap GetWorkingBeatmap() => GetWorkingBeatmap(string.Empty);
 
         public WorkingBeatmap GetWorkingBeatmap(string version) => workingBeatmap;
-
-        public void Restore()
-        {
-        }
 
         public void Save()
         {

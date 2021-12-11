@@ -119,22 +119,28 @@ namespace sbtw.Game.Projects
                 generator.Generate();
         }
 
-        public void Build()
+        public void Build(Action exitAction = null)
         {
             if (IsMsBuildProject)
-                NetDriverHelper.Build(Path);
+                NetDriverHelper.Build(Path, exitAction);
+            else
+                exitAction?.Invoke();
         }
 
-        public void Clean()
+        public void Clean(Action exitAction = null)
         {
             if (IsMsBuildProject)
-                NetDriverHelper.Clean(Path);
+                NetDriverHelper.Clean(Path, exitAction);
+            else
+                exitAction?.Invoke();
         }
 
-        public void Restore()
+        public void Restore(Action exitAction = null)
         {
             if (IsMsBuildProject)
-                NetDriverHelper.Restore(Path);
+                NetDriverHelper.Restore(Path, exitAction);
+            else
+                exitAction?.Invoke();
         }
 
         public void Save()

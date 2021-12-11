@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.ClearScript.V8;
 using osu.Game.Beatmaps;
 using osu.Game.Storyboards;
 using sbtw.Common.Scripting;
@@ -17,8 +18,8 @@ namespace sbtw.Game.Scripting
         private readonly Dictionary<IStoryboardElement, IScriptedElement> elementMap = new Dictionary<IStoryboardElement, IScriptedElement>();
         private readonly BeatmapInfo beatmapInfo;
 
-        public StoryboardGenerator(Project project, BeatmapInfo beatmapInfo)
-            : base(project)
+        public StoryboardGenerator(Project project, BeatmapInfo beatmapInfo, V8ScriptEngine jsScriptEngine = null)
+            : base(project, jsScriptEngine)
         {
             this.beatmapInfo = beatmapInfo;
         }

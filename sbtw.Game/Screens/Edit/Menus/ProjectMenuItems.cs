@@ -3,9 +3,7 @@
 
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using osu.Framework.Bindables;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Platform;
 using osu.Game.Graphics.UserInterface;
@@ -40,11 +38,11 @@ namespace sbtw.Game.Screens.Edit.Menus
             this.project = project;
             this.host = host;
 
-            foreach (var item in Items.Take(5))
+            foreach (var item in Items.Take(2))
                 item.Action.Disabled = !NetDriverHelper.HAS_DOTNET || project is DummyProject;
 
             foreach (var item in Items.Skip(2).Take(3))
-                item.Action.Disabled = !(project as Project)?.IsMsBuildProject ?? false;
+                item.Action.Disabled = !NetDriverHelper.HAS_DOTNET || project is DummyProject || (!(project as Project)?.IsMsBuildProject ?? false);
 
             openInCode.Action.Disabled = !CodeHelper.EDITORS.Any() || project is DummyProject;
             openInExplorer.Action.Disabled = project is DummyProject;

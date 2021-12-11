@@ -83,7 +83,7 @@ namespace sbtw.Game.Projects
             if (Path.GetExtension(beatmapPath) == ".osu")
             {
                 if (!StableHelper.HAS_STABLE)
-                    throw new PlatformNotSupportedException(@"Attempted to import a beatmap file but system does not have stable installed.");
+                    throw new PlatformNotSupportedException(@"No stable installation found. Cannot import beatmap difficulty file.");
 
                 if (!beatmapPath.Contains(StableHelper.STABLE_PATH))
                     throw new InvalidOperationException(@"Beatmap file must originate from an existing stable installation.");
@@ -94,6 +94,9 @@ namespace sbtw.Game.Projects
 
             if (Directory.GetFiles(path).Any())
                 throw new NonEmptyProjectPathException(@"Project path is not empty.");
+
+            if (type != ProjectTemplateType.Freeform && !NetDriverHelper.HAS_DOTNET)
+                throw new PlatformNotSupportedException(@"Cannot create an MSBuild project when no NET Driver is present. Try making a freeform project instead.");
 
             Directory.CreateDirectory(path);
 

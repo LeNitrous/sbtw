@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.ClearScript;
+using Microsoft.ClearScript.V8;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -28,7 +30,6 @@ using osu.Game.Overlays.Volume;
 using osu.Game.Screens;
 using Python.Runtime;
 using sbtw.Game.Projects;
-using sbtw.Game.Screens;
 using sbtw.Game.Screens.Edit;
 using sbtw.Game.Utils;
 
@@ -46,6 +47,7 @@ namespace sbtw.Game
         private DummyAPIAccess dummyAPI;
         private BackButton.Receptor receptor;
         private BackButton backButton;
+        private V8ScriptEngine jsScriptEngine;
 
         [Cached]
         private readonly NetProcessListener netProcessListener = new NetProcessListener();
@@ -80,6 +82,15 @@ namespace sbtw.Game
             var debuggerPoller = new DebuggerPoller();
             AddInternal(debuggerPoller);
             dependencies.CacheAs(debuggerPoller);
+
+            jsScriptEngine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableDynamicModuleImports, 7270);
+            jsScriptEngine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            jsScriptEngine.AddHostType(typeof(Common.Scripting.Layer));
+            jsScriptEngine.AddHostType(typeof(Common.Scripting.Color));
+            jsScriptEngine.AddHostType(typeof(Common.Scripting.Anchor));
+            jsScriptEngine.AddHostType(typeof(System.Numerics.Vector2));
+            jsScriptEngine.AddHostType(typeof(Common.Scripting.LoopType));
+            dependencies.CacheAs(jsScriptEngine);
 
             Add(new OsuContextMenuContainer
             {
@@ -261,5 +272,11 @@ namespace sbtw.Game
         protected abstract string OpenFileDialog(IEnumerable<string> filters, string filterDescription);
 
         protected abstract string SaveFileDialog(string filename, IEnumerable<string> filters, string filterDescription);
+
+        protected override void Dispose(bool isDisposing)
+        {
+            base.Dispose(isDisposing);
+            jsScriptEngine.Dispose();
+        }
     }
 }

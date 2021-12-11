@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.ClearScript.V8;
 using sbtw.Common.Scripting;
 using sbtw.Game.Projects;
 
@@ -13,8 +14,8 @@ namespace sbtw.Game.Scripting
     {
         private readonly Dictionary<Layer, StringBuilder> layers = new Dictionary<Layer, StringBuilder>();
 
-        public StoryboardEncoder(Project project)
-            : base(project)
+        public StoryboardEncoder(Project project, V8ScriptEngine jsScriptEngine = null)
+            : base(project, jsScriptEngine)
         {
         }
 

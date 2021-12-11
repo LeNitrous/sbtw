@@ -44,23 +44,26 @@ namespace sbtw.Game.Utils
         /// Executes the .NET driver to build the project.
         /// </summary>
         /// <param name="path">The path to the project.</param>
-        public static void Build(string path) => start_dotnet($"build {path}");
+        /// <param name="exitAction">Action to invoke when process exits.</param>
+        public static void Build(string path, Action exitAction = null) => start_dotnet($"build {path}", exitAction);
 
         /// <summary>
         /// Executes the .NET driver to clean the project output.
         /// </summary>
         /// <param name="path">The path to the project.</param>
-        public static void Clean(string path) => start_dotnet($"clean {path}");
+        /// <param name="exitAction">Action to invoke when process exits.</param>
+        public static void Clean(string path, Action exitAction = null) => start_dotnet($"clean {path}", exitAction);
 
         /// <summary>
         /// Executes the .NET driver to restore project dependencies.
         /// </summary>
         /// <param name="path">The path to the project.</param>>
-        public static void Restore(string path) => start_dotnet($"restore {path}");
+        /// <param name="exitAction">Action to invoke when process exits.</param>
+        public static void Restore(string path, Action exitAction = null) => start_dotnet($"restore {path}", exitAction);
 
         private static Process current;
 
-        private static void start_dotnet(string args)
+        private static void start_dotnet(string args, Action exitAction = null)
         {
             if (current != null || !HAS_DOTNET)
                 return;
@@ -84,6 +87,7 @@ namespace sbtw.Game.Utils
                 current.Dispose();
                 current = null;
                 OnDotNetExit?.Invoke();
+                exitAction?.Invoke();
             };
 
             current.OutputDataReceived += (_, args) =>

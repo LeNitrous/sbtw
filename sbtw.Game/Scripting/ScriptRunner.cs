@@ -5,8 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.ClearScript;
+using Microsoft.ClearScript.V8;
 using Python.Runtime;
 using sbtw.Common.Scripting;
 using sbtw.Game.Projects;
@@ -22,7 +25,7 @@ namespace sbtw.Game.Scripting
 
         public bool IsDisposed { get; private set; }
 
-        public ScriptRunner(Project project)
+        public ScriptRunner(Project project, V8ScriptEngine jsScriptEngine = null)
         {
             string assemblyOutputPath = Path.Combine(project.Path, "bin", "Debug", "net5.0");
             assemblyContext = new ScriptAssemblyContext(assemblyOutputPath);
@@ -36,9 +39,13 @@ namespace sbtw.Game.Scripting
                     loaded.Add(Activator.CreateInstance(type) as Script);
             }
 
-            // Load all JS scripts
-            foreach (var scriptPath in Directory.GetFiles(project.Path).Where(p => Path.GetExtension(p) == ".js"))
-                loaded.Add(new JSScript(scriptPath));
+            var jsScriptPaths = Directory.GetFiles(project.Path).Where(p => Path.GetExtension(p) == ".js");
+            if (jsScriptPaths.Any() && jsScriptEngine != null)
+            {
+                // Load all JS scripts
+                foreach (var scriptPath in jsScriptPaths)
+                    loaded.Add(new JSScript(scriptPath, jsScriptEngine));
+            }
 
             // Load all Python scripts
             foreach (var scriptPath in Directory.GetFiles(project.Path).Where(p => Path.GetExtension(p) == ".py"))

@@ -43,7 +43,7 @@ namespace sbtw.Game.Screens.Edit.Menus
         public Action<string> RequestOpenProject;
         public Action RequestGenerateStoryboard;
         public Action<BeatmapInfo> RequestDifficultyChange;
-        public readonly Bindable<bool> InterfaceVisibility = new Bindable<bool>();
+        public readonly Bindable<bool> InterfaceVisibility = new Bindable<bool>(true);
 
         public TopMenuBar()
             : base(Direction.Horizontal, true)
