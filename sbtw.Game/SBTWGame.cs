@@ -7,8 +7,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
+using osu.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
+using osu.Framework.Development;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
@@ -28,9 +30,12 @@ using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.Volume;
 using osu.Game.Screens;
+using osu.Game.Updater;
 using Python.Runtime;
+using sbtw.Game.Overlays;
 using sbtw.Game.Projects;
 using sbtw.Game.Screens.Edit;
+using sbtw.Game.Updater;
 using sbtw.Game.Utils;
 
 namespace sbtw.Game
@@ -39,7 +44,10 @@ namespace sbtw.Game
     {
         protected OsuScreenStack ScreenStack;
 
+        private UpdateManager updateManager;
+        private Container mainContent;
         private VolumeOverlay volume;
+        private SBTWSettingsOverlay settings;
         private SBTWOutputManager channelManager;
         private DependencyContainer dependencies;
         private NotificationOverlay notifications;
@@ -54,6 +62,16 @@ namespace sbtw.Game
 
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
             => dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
+        public override string Version
+        {
+            get
+            {
+                if (IsDeployedBuild)
+                    return $"{AssemblyVersion.Major}.{AssemblyVersion.Minor}.{AssemblyVersion.Build}";
+
+                return "local " + (DebugUtils.IsDebugBuild ? "debug" : "release");
+            }
+        }
 
         [BackgroundDependencyLoader]
         private void load()
@@ -92,7 +110,7 @@ namespace sbtw.Game
             jsScriptEngine.AddHostType(typeof(Common.Scripting.LoopType));
             dependencies.CacheAs(jsScriptEngine);
 
-            Add(new OsuContextMenuContainer
+            Add(mainContent = new OsuContextMenuContainer
             {
                 RelativeSizeAxes = Axes.Both,
                 Children = new Drawable[]
@@ -143,21 +161,34 @@ namespace sbtw.Game
                             {
                                 RelativeSizeAxes = Axes.Both,
                             },
+                            settings = new SBTWSettingsOverlay(),
                         }
-                    }
+                    },
                 }
             });
 
             dependencies.CacheAs(notifications);
             dependencies.CacheAs(chatOverlay);
+            dependencies.CacheAs(settings);
+
+            mainContent.Add(updateManager = create_update_manager());
 
             ScreenStack.ScreenPushed += screenPushed;
             ScreenStack.ScreenExited += screenExited;
 
             SkinManager.CurrentSkinInfo.Value = SkinManager.DefaultLegacySkin.SkinInfo;
+        }
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            if (IsDeployedBuild)
+                Task.Run(updateManager.CheckForUpdateAsync);
 
             if (!checkAndReportForDependencies())
                 return;
+
             ScreenStack.Push(new SBTWEditor());
         }
 
@@ -230,6 +261,19 @@ namespace sbtw.Game
 
         public void OnReleased(KeyBindingReleaseEvent<GlobalAction> e)
         {
+        }
+
+        private static UpdateManager create_update_manager()
+        {
+            switch (RuntimeInfo.OS)
+            {
+                case RuntimeInfo.Platform.Windows:
+                case RuntimeInfo.Platform.Linux:
+                    return new GitHubUpdateManager();
+
+                default:
+                    throw new PlatformNotSupportedException();
+            }
         }
 
         private void screenChanged(IScreen _, IScreen newScreen)

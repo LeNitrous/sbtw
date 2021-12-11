@@ -114,6 +114,7 @@ namespace sbtw.Game.Screens.Edit
             try
             {
                 Project.Value = projectManager.Load(path);
+                Project.Value.FileChanged += handleProjectFileChange;
 
                 var beatmapInfo = Project.Value.BeatmapSet.Beatmaps.FirstOrDefault();
 
@@ -172,6 +173,14 @@ namespace sbtw.Game.Screens.Edit
 
         public void OnReleased(KeyBindingReleaseEvent<GlobalAction> e)
         {
+        }
+
+        private void handleProjectFileChange(ProjectFileType type)
+        {
+            if (type != ProjectFileType.Script || !topMenuBar.EnableHotReload.Value)
+                return;
+
+            editor?.GenerateStoryboard();
         }
     }
 }

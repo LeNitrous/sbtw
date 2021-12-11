@@ -25,6 +25,9 @@ namespace sbtw.Desktop.IO
         [DllImport(library, CallingConvention = CallingConvention.Cdecl)]
         private static extern void tinyfd_beep();
 
+        // False Positive: https://github.com/dotnet/roslyn-analyzers/issues/5479
+#pragma warning disable CA2101
+
         [DllImport(library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         private static extern int tinyfd_notifyPopup(string aTitle, string aMessage, string aIconType);
 
@@ -45,6 +48,8 @@ namespace sbtw.Desktop.IO
 
         [DllImport(library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr tinyfd_colorChooser(string aTitle, string aDefaultHexRGB, byte[] aDefaultRGB, byte[] aoResultRGB);
+
+#pragma warning restore CA2101
 
         [DllImport(library, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         private static extern int tinyfd_notifyPopupW(string aTitle, string aMessage, string aIconType);

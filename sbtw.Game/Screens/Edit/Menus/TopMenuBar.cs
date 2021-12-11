@@ -4,19 +4,23 @@
 using System;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
+using osu.Framework.Configuration;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.UserInterface;
+using osu.Framework.Graphics.Video;
 using osu.Framework.Input.Events;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
+using osu.Game.Configuration;
 using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Overlays;
 using osu.Game.Screens.Edit.Components.Menus;
 using osuTK;
 using osuTK.Graphics;
+using sbtw.Game.Overlays;
 using sbtw.Game.Projects;
 
 namespace sbtw.Game.Screens.Edit.Menus
@@ -35,6 +39,9 @@ namespace sbtw.Game.Screens.Edit.Menus
         [Resolved(canBeNull: true)]
         private NotificationOverlay notifications { get; set; }
 
+        [Resolved]
+        private SBTWSettingsOverlay settings { get; set; }
+
         private Bindable<WorkingBeatmap> beatmap;
         private Bindable<IProject> project;
 
@@ -44,6 +51,7 @@ namespace sbtw.Game.Screens.Edit.Menus
         public Action RequestGenerateStoryboard;
         public Action<BeatmapInfo> RequestDifficultyChange;
         public readonly Bindable<bool> InterfaceVisibility = new Bindable<bool>(true);
+        public readonly Bindable<bool> EnableHotReload = new Bindable<bool>();
 
         public TopMenuBar()
             : base(Direction.Horizontal, true)
@@ -96,13 +104,17 @@ namespace sbtw.Game.Screens.Edit.Menus
                 },
                 new ProjectMenuItems(host, project.Value, RequestGenerateStoryboard),
                 new BeatmapMenuItems(host, beatmap?.Value, project.Value, RequestDifficultyChange),
-                new MenuItem("View")
+                new MenuItem("Editor")
                 {
                     Items = new MenuItem[]
                     {
+                        new EditorMenuItem("Settings", MenuItemType.Standard, () => settings?.Show()),
                         new ToggleMenuItem("Show Interface") { State = { BindTarget = InterfaceVisibility } },
                         new EditorMenuItemSpacer(),
-                        new EditorMenuItem("Show Logs", MenuItemType.Standard, () => chat?.Show()),
+                        new ToggleMenuItem("Hot Reload") { State = { BindTarget = EnableHotReload } },
+                        new ToggleMenuItem(""),
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("Show Output", MenuItemType.Standard, () => chat?.Show()),
                         new EditorMenuItem("Show Notifications", MenuItemType.Standard, () => notifications?.Show()),
                     }
                 }

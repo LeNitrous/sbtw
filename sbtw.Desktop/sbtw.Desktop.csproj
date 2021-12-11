@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>sbtw</AssemblyName>
+    <AssemblyVersion>0.0.0</AssemblyVersion>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <ApplicationIcon>icon.ico</ApplicationIcon>

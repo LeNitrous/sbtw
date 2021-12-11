@@ -187,7 +187,7 @@ namespace sbtw.Game.Screens.Edit
             if (project.Value is not Project workingProject)
                 return;
 
-            spinner.Show();
+            Schedule(() => spinner.Show());
             workingProject.Build(generateStoryboard);
         }
 
@@ -201,8 +201,9 @@ namespace sbtw.Game.Screens.Edit
 
             Task.Run(async () =>
             {
-                using var generator = new StoryboardGenerator(workingProject, beatmap.Value.BeatmapInfo, jsScriptEngine);
+                var generator = new StoryboardGenerator(workingProject, beatmap.Value.BeatmapInfo, jsScriptEngine);
                 var generated = await generator.GenerateAsync(generatorCancellationToken.Token);
+                generator.Dispose();
 
                 Schedule(() =>
                 {
@@ -261,6 +262,12 @@ namespace sbtw.Game.Screens.Edit
                 clock.SeekBackward(!trackPlaying, amount);
             else
                 clock.SeekForward(!trackPlaying, amount);
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            base.Dispose(isDisposing);
+            generatorCancellationToken?.Cancel();
         }
 
         int IBeatSnapProvider.BeatDivisor => beatDivisor.Value;
