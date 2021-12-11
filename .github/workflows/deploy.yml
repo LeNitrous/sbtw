@@ -20,6 +20,7 @@ jobs:
 
   pack:
     name: Pack
+    needs: [ variables, pack-commons ]
     runs-on: ${{ matrix.os.runner }}
     strategy:
       matrix:
@@ -49,7 +50,7 @@ jobs:
 
   deploy:
     name: Deploy
-    needs: [ variables, build ]
+    needs: [ variables, pack, pack-commons ]
     runs-on: ubuntu-latest
     strategy:
       matrix:
