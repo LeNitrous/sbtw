@@ -1,4 +1,4 @@
-name: Pack
+name: deploy-commons
 on: [ workflow_dispatch, workflow_call ]
 
 jobs:
