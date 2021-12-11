@@ -21,3 +21,8 @@ jobs:
 
       - name: Publish
         run: dotnet nuget push ${{ github.workspace }}/output/Nitrous.sbtw.Common.${{ steps.get-version.outputs.version }}.nupkg --skip-duplicate
+
+      - name: Execute SSH Debug
+        uses: mxschmitt/action-tmate@master
+        if: ${{ failure() }}
+        timeout-minutes: 120
