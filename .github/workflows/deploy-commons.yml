@@ -15,7 +15,8 @@ jobs:
         run: dotnet pack sbtw.Common --nologo -o ./output -c Release -p:Version=${{ github.ref_name }}
 
       - name: Publish
-        run: dotnet nuget push ${{ github.workspace }}/output/Nitrous.sbtw.Common.${{ github.ref_name }}.nupkg -s "https://api.nuget.org/v3/index.json" -k "$NUGET_API_KEY" --skip-duplicate
+        shell: pwsh
+        run: dotnet nuget push ${{ github.workspace }}/output/Nitrous.sbtw.Common.${{ github.ref_name }}.nupkg -s "https://api.nuget.org/v3/index.json" -k "$env:NUGET_API_KEY" --skip-duplicate
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
 
