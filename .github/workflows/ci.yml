@@ -24,7 +24,7 @@ jobs:
         dotnet-version: '5.0.x'
 
     - name: Test
-        run: dotnet test --logger "trx;LogFileName=TestResults-sbtw.Game.Tests.trx"
+      run: dotnet test --logger "trx;LogFileName=TestResults-sbtw.Game.Tests.trx"
 
     - name: Upload Results
       uses: actions/upload-artifact@v2
