@@ -4,26 +4,12 @@ on:
     types: [ released ]
 
 jobs:
-  variables:
-    name: Set Variables
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.get-version.outputs.version }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Get Verison
-        id: get-version
-        shell: pwsh
-        run: ${{ github.workspace }}/.github/workflows/version.ps1 ${{ github.repository }} ${{ github.token }}
-
   pack-commons:
     uses: lenitrous/sbtw/.github/workflows/deploy-commons.yml@master
 
   pack:
     name: Pack
-    needs: [ variables, pack-commons ]
+    needs: [ pack-commons ]
     runs-on: ${{ matrix.os.runner }}
     strategy:
       matrix:
@@ -41,19 +27,19 @@ jobs:
 
       - name: Build
         run: |
-          dotnet publish sbtw.Desktop --nologo -c Release -o ./output -r ${{ matrix.os.runtime }} --self-contained true -p:Version=${{ needs.variables.outputs.version }}
+          dotnet publish sbtw.Desktop --nologo -c Release -o ./output -r ${{ matrix.os.runtime }} --self-contained true -p:Version=${{ github.ref_name }}
           7z a -tzip sbtw-${{ matrix.os.runtime }}.zip output/*
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ needs.variables.outputs.version }}-${{ matrix.os.runtime }}
+          name: ${{ github.ref_name }}-${{ matrix.os.runtime }}
           path: ${{ github.workspace }}/sbtw-${{ matrix.os.runtime }}.zip
           retention-days: 1
 
   deploy:
     name: Deploy
-    needs: [ variables, pack, pack-commons ]
+    needs: [ pack, pack-commons ]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -62,7 +48,7 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v2
         with:
-          name: ${{ needs.variables.outputs.version }}-${{ matrix.runtime }}
+          name: ${{ github.ref_name }}-${{ matrix.runtime }}
           path: ${{ github.workspace }}
 
       - name: Upload

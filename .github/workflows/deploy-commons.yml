@@ -11,16 +11,11 @@ jobs:
         with:
           dotnet-version: 5.0.x
 
-      - id: get-version
-        name: Get Version
-        shell: pwsh
-        run: ${{ github.workspace }}/.github/workflows/version.ps1 ${{ github.repository }} ${{ github.token }}
-
       - id: Pack
-        run: dotnet pack sbtw.Common --nologo -o ./output -c Release -p:Version=${{ steps.get-version.outputs.version }}
+        run: dotnet pack sbtw.Common --nologo -o ./output -c Release -p:Version=${{ github.ref_name }}
 
       - name: Publish
-        run: dotnet nuget push ${{ github.workspace }}/output/Nitrous.sbtw.Common.${{ steps.get-version.outputs.version }}.nupkg --skip-duplicate
+        run: dotnet nuget push ${{ github.workspace }}/output/Nitrous.sbtw.Common.${{ steps.get-version.outputs.version }}.nupkg --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
 
       # - name: Execute SSH Debug
       #   uses: mxschmitt/action-tmate@master
