@@ -16,11 +16,7 @@ jobs:
         run: ./.github/workflows/version.ps1 ${{ github.repository }} ${{ github.token }}
 
   pack-commons:
-    name: Pack Commons
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dispatch
-        uses: lenitrous/sbtw/.github/workflows/deploy-commons.yml@master
+    uses: lenitrous/sbtw/.github/workflows/deploy-commons.yml@master
 
   pack:
     name: Pack
