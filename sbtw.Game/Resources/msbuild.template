@@ -8,4 +8,8 @@
     <None Include="Beatmap\**\*" CopyToOutputDirectory="Never"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Nitrous.sbtw.Common" Version="{0}" />
+  </ItemGroup>
+
 </Project>

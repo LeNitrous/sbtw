@@ -5,21 +5,15 @@ using osu.Framework.IO.Stores;
 
 namespace sbtw.Game.Projects.Generators
 {
-    public class VisualBasicProjectGenerator : ProjectGenerator, IMsBuildProjectGenerator
+    public class VisualBasicProjectGenerator : MsBuildProjectGenerator
     {
+        protected override string Extension => "vbproj";
+
         public VisualBasicProjectGenerator(IProject project, IResourceStore<byte[]> resources)
             : base(project, resources)
         {
         }
-
-        public override void Generate()
-        {
-            base.Generate();
-            CopyResourceToProject("msbuild.template", $"{Project.Name}.vbproj");
-            GenerateScript("MyScript");
-        }
-
-        public void GenerateScript(string name)
+        public override void GenerateScript(string name)
         {
             WriteTemplateToProject("script-vb.template", $"{name}.vb", Project.Name, name);
         }
