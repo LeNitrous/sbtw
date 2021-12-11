@@ -1,0 +1,35 @@
+name: ci
+on:
+  push:
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '**/*.sln'
+  pull_request:
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '**/*.sln'
+
+jobs:
+  name: Test
+  runs-on: ubuntu-latest
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '5.0.x'
+
+    - name: Test
+        run: dotnet test --logger "trx;LogFileName=TestResults-sbtw.Game.Tests.trx"
+
+    - name: Upload Results
+      uses: actions/upload-artifact@v2
+      if: ${{ always() }}
+      with:
+        name: TestResults-sbtw.Game.Tests
+        path: ${{ github.workspace }}/sbtw.Game.Tests/TestResults/TestResults-sbtw.Game.Tests.trx
+

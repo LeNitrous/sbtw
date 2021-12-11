@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceRoot}/sbtw.Desktop/bin/Debug/net5.0/sbtw.Desktop.dll"
+                "${workspaceRoot}/sbtw.Desktop/bin/Debug/net5.0/sbtw.dll"
             ],
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build sbtw (Debug)",
@@ -19,7 +19,7 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceRoot}/sbtw.Desktop/bin/Release/net5.0/sbtw.Desktop.dll"
+                "${workspaceRoot}/sbtw.Desktop/bin/Release/net5.0/sbtw.dll"
             ],
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build sbtw (Release)",

@@ -5,6 +5,23 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <Title>sbtw Common Library</Title>
+    <PackageId>Nitrous.sbtw.Common</PackageId>
+    <Description>Used in conjunction with sbtw! (Storyboard Translation Workspace) to create storyboard scripts using C# and Visual Basic</Description>
+    <PackageProjectUrl>https://github.com/lenitrous/sbtw</PackageProjectUrl>
+    <Version>0.0.0</Version>
+    <PackageIcon>icon.png</PackageIcon>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\logo.png">
+      <Pack>True</Pack>
+      <PackagePath>icon.png</PackagePath>
+    </None>
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="ppy.osu.Game" Version="2021.1207.0" PrivateAssets="All" />
   </ItemGroup>

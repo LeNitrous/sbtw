@@ -1,0 +1,66 @@
+name: deploy
+on:
+  release:
+    types: [ released ]
+
+jobs:
+  variables:
+    name: Set Variables
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - name: Get Verison
+        id: get-version
+        shell: pwsh
+        run: ./.github/workflows/version.ps1 ${{ github.repository }} ${{ github.token }}
+
+  pack-commons:
+    name: Pack Commons
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch
+        uses: lenitrous/sbtw/.github/workflows/deploy-commons.yml@master
+
+  pack:
+    name: Pack
+    runs-on: ${{ matrix.os.runner }}
+    strategy:
+      matrix:
+        os:
+          - { runner: windows-latest, runtime: win-x64 }
+          - { runner: ubuntu-latest, runtime: ubuntu.20.04-x64 }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1.7.2
+        with:
+          dotnet-version: '5.0.x'
+
+      - name: Build
+        run: |
+          dotnet publish sbtw.Desktop --nologo -c Release -o ./output -r ${{ matrix.os.runtime }} --self-contained true -p:Version=${{ needs.variables.outputs.version }}
+          7z a -tzip sbtw-${{ needs.variables.outputs.version }}-${{ matrix.os.runtime }}.zip output/*
+
+  deploy:
+    name: Deploy
+    needs: [ variables, build ]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: [ 'win-x64', 'ubuntu.20.04-x64' ]
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ needs.variables.outputs.version }}-${{ matrix.runtime }}
+          path: ${{ github.workspace }}
+
+      - name: Upload
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "sbtw-${{ needs.variables.outputs.verison }}-${{ matrix.runtime }}.zip"
+          allowUpdates: true
+          tag: ${{ github.event.release.tag_name }}
