@@ -16,7 +16,7 @@ jobs:
       - name: Get Verison
         id: get-version
         shell: pwsh
-        run: ./.github/workflows/version.ps1 ${{ github.repository }} ${{ github.token }}
+        run: ${{ github.workspace }}/.github/workflows/version.ps1 ${{ github.repository }} ${{ github.token }}
 
   pack-commons:
     uses: lenitrous/sbtw/.github/workflows/deploy-commons.yml@master
