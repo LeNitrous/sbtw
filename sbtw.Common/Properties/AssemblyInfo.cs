@@ -3,5 +3,5 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("SBTW.Game")]
-[assembly: InternalsVisibleTo("SBTW.Game.Tests")]
+[assembly: InternalsVisibleTo("sbtw.Game")]
+[assembly: InternalsVisibleTo("sbtw.Game.Tests")]

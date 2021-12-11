@@ -2,11 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ppy.osu.Game" Version="2021.1207.0" PrivateAssets="All" />
+    <None Include="Beatmap\**\*" CopyToOutputDirectory="Never"/>
   </ItemGroup>
 
 </Project>

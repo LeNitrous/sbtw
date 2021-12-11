@@ -5,21 +5,21 @@ using System;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Logging;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Chat;
-using osu.Game.Users;
 
 namespace sbtw.Game
 {
     public class SBTWOutputManager : ChannelManager
     {
-        private static readonly User user_verbose = new User
+        private static readonly APIUser user_verbose = new APIUser
         {
             Id = 0,
             Username = "verbose",
             Colour = @"425e8a",
         };
 
-        private static readonly User user_error = new User
+        private static readonly APIUser user_error = new APIUser
         {
             Id = 0,
             Username = "error",
@@ -37,7 +37,7 @@ namespace sbtw.Game
 
         public void Post(string message, LogLevel logLevel = LogLevel.Verbose)
         {
-            User user;
+            APIUser user;
 
             switch (logLevel)
             {

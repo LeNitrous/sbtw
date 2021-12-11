@@ -1,0 +1,10 @@
+Imports sbtw.Common.Scripting
+
+Namespace {0}
+    Public Class {1}
+        Inherits Script
+
+        Public Sub Generate()
+        End Sub
+    End Class
+End Namespace

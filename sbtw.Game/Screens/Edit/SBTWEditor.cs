@@ -1,6 +1,8 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System;
+using System.IO;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
@@ -8,9 +10,13 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Cursor;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
+using osu.Framework.Logging;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Input.Bindings;
+using osu.Game.Overlays;
+using osu.Game.Overlays.Notifications;
+using osu.Game.Rulesets;
 using osu.Game.Screens;
 using osu.Game.Screens.Backgrounds;
 using sbtw.Game.Projects;
@@ -19,6 +25,7 @@ using sbtw.Game.Screens.Edit.Setup;
 
 namespace sbtw.Game.Screens.Edit
 {
+    [Cached]
     public class SBTWEditor : SBTWScreen, IKeyBindingHandler<GlobalAction>
     {
         public override float BackgroundParallaxAmount => 0.0f;
@@ -40,6 +47,9 @@ namespace sbtw.Game.Screens.Edit
 
         [Resolved]
         private ProjectManager projectManager { get; set; }
+
+        [Resolved]
+        private NotificationOverlay notifications { get; set; }
 
         [BackgroundDependencyLoader]
         private void load()
@@ -66,9 +76,9 @@ namespace sbtw.Game.Screens.Edit
                     Child = topMenuBar = new TopMenuBar
                     {
                         RequestNewProject = () => setup?.Show(),
-                        RequestOpenProject = openProject,
-                        RequestCloseProject = closeProject,
-                        RequestDifficultyChange = openDifficulty,
+                        RequestOpenProject = OpenProject,
+                        RequestCloseProject = CloseProject,
+                        RequestDifficultyChange = OpenDifficulty,
                         RequestGenerateStoryboard = () => editor?.GenerateStoryboard(),
                     },
                 },
@@ -84,7 +94,7 @@ namespace sbtw.Game.Screens.Edit
             });
         }
 
-        private void closeProject()
+        public void CloseProject()
         {
             if (Project.Value is Project project)
                 project.Dispose();
@@ -96,24 +106,39 @@ namespace sbtw.Game.Screens.Edit
 
         }
 
-        private void openProject(string path)
+        public void OpenProject(string path)
         {
             if (Project.Value is Project project)
                 project.Dispose();
 
-            Project.Value = projectManager.Load(path);
+            try
+            {
+                Project.Value = projectManager.Load(path);
 
-            var beatmapInfo = Project.Value.BeatmapSet.Beatmaps.FirstOrDefault();
+                var beatmapInfo = Project.Value.BeatmapSet.Beatmaps.FirstOrDefault();
 
-            if (beatmapInfo == null)
-                Project.SetDefault();
+                if (beatmapInfo == null)
+                    Project.SetDefault();
 
-            openDifficulty(beatmapInfo);
+                OpenDifficulty(beatmapInfo);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, @"Failed to open project.");
+                notifications.Post(new SimpleErrorNotification { Text = @"Failed to open project." });
+            }
         }
 
-        private void openDifficulty(BeatmapInfo beatmapInfo)
+        public void OpenProject(IProject project)
         {
-            var working = Project.Value.GetWorkingBeatmap(beatmapInfo.Version);
+            string projectFilePath = Directory.GetFiles(project.Path).FirstOrDefault(f => f.LastIndexOf(".sbtw.json") > -1);
+            if (!string.IsNullOrEmpty(projectFilePath))
+                OpenProject(projectFilePath);
+        }
+
+        public void OpenDifficulty(IBeatmapInfo beatmapInfo)
+        {
+            var working = Project.Value.GetWorkingBeatmap(beatmapInfo.DifficultyName);
 
             if (working == null)
                 return;
@@ -122,7 +147,7 @@ namespace sbtw.Game.Screens.Edit
             Beatmap.SetDefault();
 
             Beatmap.Value = working;
-            Ruleset.Value = beatmapInfo.Ruleset;
+            Ruleset.Value = beatmapInfo.Ruleset as RulesetInfo;
 
             Schedule(spinner.Show);
 

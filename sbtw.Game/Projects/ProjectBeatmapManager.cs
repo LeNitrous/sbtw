@@ -43,7 +43,6 @@ namespace sbtw.Game.Projects
 
                 beatmapSet = new BeatmapSetInfo
                 {
-                    Beatmaps = new List<BeatmapInfo>(),
                     DateAdded = DateTimeOffset.Now,
                 };
 
@@ -102,14 +101,14 @@ namespace sbtw.Game.Projects
             project.FileChanged += handleFileEvent;
         }
 
-        public WorkingBeatmap GetWorkingBeatmap(string version)
-            => new ProjectWorkingBeatmap(this, getBeatmapInfoByVersion(version), getBeatmapByVersion(version), host, audio);
+        public WorkingBeatmap GetWorkingBeatmap(string difficultyName)
+            => new ProjectWorkingBeatmap(this, getBeatmapInfoByName(difficultyName), getBeatmapByName(difficultyName), host, audio);
 
-        private BeatmapInfo getBeatmapInfoByVersion(string version)
-            => BeatmapSet.Beatmaps.FirstOrDefault(b => b.Version == version);
+        private BeatmapInfo getBeatmapInfoByName(string difficultyName)
+            => BeatmapSet.Beatmaps.FirstOrDefault(b => b.DifficultyName == difficultyName);
 
-        private IBeatmap getBeatmapByVersion(string version)
-            => beatmaps.FirstOrDefault(b => b.BeatmapInfo.Version == version);
+        private IBeatmap getBeatmapByName(string difficultyName)
+            => beatmaps.FirstOrDefault(b => b.BeatmapInfo.DifficultyName == difficultyName);
 
         private void handleFileEvent(ProjectFileType type)
         {

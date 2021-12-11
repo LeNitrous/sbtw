@@ -1,0 +1,11 @@
+using sbtw.Common.Scripting;
+
+namespace {0}
+{{
+    public class {1} : Script
+    {{
+        public void Generate()
+        {{
+        }}
+    }}
+}}

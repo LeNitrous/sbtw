@@ -29,7 +29,7 @@ namespace sbtw.Game.Screens.Edit.Menus
                 new EditorMenuItem("Select Difficulty", MenuItemType.Standard)
                 {
                     Items = beatmap?.BeatmapInfo.BeatmapSet.Beatmaps?
-                        .Select(b => new DifficultyMenuItem(b, b.Version == beatmap.BeatmapInfo.Version, difficultyChange))
+                        .Select(b => new DifficultyMenuItem(b, b.DifficultyName == beatmap.BeatmapInfo.DifficultyName, difficultyChange))
                         .ToArray() ?? new MenuItem[] { new EditorMenuItemSpacer() }
                 },
                 new EditorMenuItemSpacer(),
@@ -59,7 +59,7 @@ namespace sbtw.Game.Screens.Edit.Menus
         private void openDifficultyFile()
         {
             string path = Directory.GetFiles(project.BeatmapPath)
-                .FirstOrDefault(f => f.Contains($"[{beatmap.BeatmapInfo.Version}]"));
+                .FirstOrDefault(f => f.Contains($"[{beatmap.BeatmapInfo.DifficultyName}]"));
 
             if (!string.IsNullOrEmpty(path))
                 host.OpenFileExternally(path);

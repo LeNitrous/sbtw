@@ -25,7 +25,14 @@ namespace sbtw.Game.Scripting
             using var stream = File.OpenRead(FilePath);
             using var reader = new StreamReader(stream);
 
-            string script = "import clr\nclr.AddReference(\"sbtw.Common.Scripting\")\n";
+            string script = @"import clr
+clr.AddReference(""sbtw.Common.Scripting"")
+clr.AddReference(""System.Numerics"")
+
+from System.Numerics import Vector2
+from sbtw.Common.Scripting import *
+";
+
             script += reader.ReadToEnd();
 
             try
@@ -36,6 +43,19 @@ namespace sbtw.Game.Scripting
             {
                 throw new PythonExecutionException(FilePath, e);
             }
+        }
+    }
+
+    public class PythonExecutionException : Exception
+    {
+        public PythonExecutionException(string file, PythonException e)
+            : base(get_message(file, e.Message), e)
+        {
+        }
+
+        private static string get_message(string file, string message)
+        {
+            return $"File \"{file}\" has errors:\n{message.Replace("\n", "\n\t")}";
         }
     }
 }

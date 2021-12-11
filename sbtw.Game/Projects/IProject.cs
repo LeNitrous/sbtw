@@ -4,6 +4,7 @@
 using System;
 using osu.Framework.Bindables;
 using osu.Framework.IO.Stores;
+using osu.Framework.Platform;
 using osu.Game.Beatmaps;
 
 namespace sbtw.Game.Projects
@@ -31,6 +32,11 @@ namespace sbtw.Game.Projects
         bool UseStablePath { get; }
 
         /// <summary>
+        /// The storage for this project.
+        /// </summary>
+        Storage Storage { get; }
+
+        /// <summary>
         /// Invoked when a file has been changed in either the project directory or the beatmap directory.
         /// </summary>
         event Action<ProjectFileType> FileChanged;
@@ -38,7 +44,7 @@ namespace sbtw.Game.Projects
         /// <summary>
         /// Gets the beatmap set for this project.
         /// </summary>
-        BeatmapSetInfo BeatmapSet { get; }
+        IBeatmapSetInfo BeatmapSet { get; }
 
         /// <summary>
         /// Gets the beatmap resources for this project.

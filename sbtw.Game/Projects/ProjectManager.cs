@@ -2,13 +2,13 @@
 // See LICENSE in the repository root for more details.
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using Newtonsoft.Json;
 using osu.Framework.Audio;
+using osu.Framework.IO.Stores;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets;
@@ -25,12 +25,14 @@ namespace sbtw.Game.Projects
         private readonly GameHost host;
         private readonly AudioManager audio;
         private readonly RulesetStore rulesets;
+        private readonly IResourceStore<byte[]> resources;
 
-        public ProjectManager(GameHost host, AudioManager audio, RulesetStore rulesets, WorkingBeatmap dummyWorkingBeatmap)
+        public ProjectManager(GameHost host, AudioManager audio, RulesetStore rulesets, IResourceStore<byte[]> resources, WorkingBeatmap dummyWorkingBeatmap)
         {
             this.host = host;
             this.audio = audio;
             this.rulesets = rulesets;
+            this.resources = resources;
             DefaultProject = new DummyProject(dummyWorkingBeatmap);
         }
 
@@ -42,18 +44,28 @@ namespace sbtw.Game.Projects
             using var stream = File.OpenRead(path);
             using var reader = new StreamReader(stream);
 
-            var project = new Project(host, audio, rulesets)
+            ProjectTemplateType type = ProjectTemplateType.Freeform;
+            foreach (var file in Directory.GetFiles(Path.GetDirectoryName(path)))
             {
-                Name = Path.GetFileNameWithoutExtension(path),
-                Path = Path.GetDirectoryName(path),
-            };
+                if (Path.GetExtension(file) == ".csproj")
+                {
+                    type = ProjectTemplateType.CSharp;
+                    break;
+                }
 
+                if (Path.GetExtension(file) == ".vbproj")
+                {
+                    type = ProjectTemplateType.VisualBasic;
+                    break;
+                }
+            }
+
+            var project = new Project(Path.GetFileNameWithoutExtension(path), Path.GetDirectoryName(path), host, audio, rulesets, resources, type);
             JsonConvert.PopulateObject(reader.ReadToEnd(), project);
+            project.Initialize();
 
             if (string.IsNullOrEmpty(project.BeatmapPath))
                 throw new InvalidBeatmapPathException(@"Beamtap path is malformed.");
-
-            project.Initialize();
 
             return project;
         }
@@ -92,70 +104,15 @@ namespace sbtw.Game.Projects
                 ZipFile.ExtractToDirectory(beatmapPath, Path.Combine(path, "Beatmap"));
             }
 
-            (string projectExtension, string scriptExtension, string scriptTemplate) = Templates.SCRIPT_TEMPLATE_MAP[type];
-
-            File.WriteAllText(Path.Combine(path, Path.ChangeExtension(name, projectExtension)), Templates.PROJECT);
-            File.WriteAllText(Path.Combine(path, Path.ChangeExtension("MyScript", scriptExtension)), scriptTemplate);
-
-            var project = new Project(host, audio, rulesets)
+            var project = new Project(name, path, host, audio, rulesets, resources, type)
             {
-                Name = name,
-                Path = path,
-                BeatmapPath = isFromArchive ? Path.Combine(path, "beatmap") : new DirectoryInfo(beatmapPath).Parent.Name,
-                UseStablePath = isFromArchive,
+                BeatmapPath = isFromArchive ? Path.Combine(path, "Beatmap") : new DirectoryInfo(beatmapPath).Parent.Name,
+                UseStablePath = !isFromArchive,
             };
 
-            project.Save();
-            project.Initialize();
-            project.Build();
+            project.Initialize(true);
 
             return project;
-        }
-
-        private static class Templates
-        {
-            public static readonly Dictionary<ProjectTemplateType, (string, string, string)> SCRIPT_TEMPLATE_MAP = new Dictionary<ProjectTemplateType, (string, string, string)>
-            {
-                { ProjectTemplateType.CSharp, (".csproj", ".cs", script_cs) },
-                { ProjectTemplateType.VisualBasic, (".vbproj", ".vb", script_vb) }
-            };
-
-            public static readonly string PROJECT = @"<Project Sdk=""Microsoft.NET.Sdk"">
-
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <None Include=""Beatmap\**\*"" CopyToOutputDirectory=""Never""/>
-  </ItemGroup>
-
-</Project>";
-
-            private static readonly string script_cs = @"using sbtw.Common.Scripting;
-
-namespace Project
-{
-    public class MyScript : Script
-    {
-        public void Generate()
-        {
-        }
-    }
-}
-";
-
-            private static readonly string script_vb = @"Imports sbtw.Common.Scripting
-
-Namespace Project
-    Public Class MyScript
-        Inherits Script
-
-        Public Sub Generate()
-        End Sub
-    End Class
-End Namespace
-";
         }
     }
 
@@ -165,7 +122,9 @@ End Namespace
         CSharp,
 
         [Description("Visual Basic")]
-        VisualBasic
+        VisualBasic,
+
+        Freeform
     }
 
     public class InvalidBeatmapPathException : Exception

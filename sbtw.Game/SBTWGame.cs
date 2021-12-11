@@ -16,6 +16,7 @@ using osu.Framework.IO.Stores;
 using osu.Framework.Logging;
 using osu.Framework.Screens;
 using osu.Game;
+using osu.Game.Beatmaps;
 using osu.Game.Graphics.Cursor;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Input.Bindings;
@@ -57,7 +58,7 @@ namespace sbtw.Game
         {
             Resources.AddStore(new NamespacedResourceStore<byte[]>(new DllResourceStore(typeof(SBTWGame).Assembly), "Resources"));
 
-            var projectManager = new ProjectManager(Host, Audio, RulesetStore, BeatmapManager.DefaultBeatmap);
+            var projectManager = new ProjectManager(Host, Audio, RulesetStore, Resources, BeatmapManager.DefaultBeatmap as DummyWorkingBeatmap);
             dependencies.CacheAs(projectManager);
             dependencies.CacheAs<Bindable<IProject>>(new NonNullableBindable<IProject>(projectManager.DefaultProject));
 

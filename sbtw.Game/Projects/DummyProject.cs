@@ -4,6 +4,7 @@
 using System;
 using osu.Framework.Bindables;
 using osu.Framework.IO.Stores;
+using osu.Framework.Platform;
 using osu.Game.Beatmaps;
 
 namespace sbtw.Game.Projects
@@ -14,7 +15,8 @@ namespace sbtw.Game.Projects
         public string Path => string.Empty;
         public string BeatmapPath => string.Empty;
         public bool UseStablePath => false;
-        public BeatmapSetInfo BeatmapSet => workingBeatmap.BeatmapSetInfo;
+        public Storage Storage => null;
+        public IBeatmapSetInfo BeatmapSet => workingBeatmap.BeatmapSetInfo;
         public IResourceStore<byte[]> Resources => null;
         public BindableList<string> Groups => null;
         public Bindable<bool> ShowBeatmapBackground => null;

@@ -43,6 +43,9 @@ namespace sbtw.Game.Screens.Edit.Menus
             foreach (var item in Items.Take(5))
                 item.Action.Disabled = !NetDriverHelper.HAS_DOTNET || project is DummyProject;
 
+            foreach (var item in Items.Skip(2).Take(3))
+                item.Action.Disabled = !(project as Project)?.IsMsBuildProject ?? false;
+
             openInCode.Action.Disabled = !CodeHelper.EDITORS.Any() || project is DummyProject;
             openInExplorer.Action.Disabled = project is DummyProject;
         }

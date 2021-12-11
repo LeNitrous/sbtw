@@ -10,6 +10,7 @@ using osu.Framework.IO.Stores;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets;
+using sbtw.Game.Projects.Generators;
 using sbtw.Game.Utils;
 
 namespace sbtw.Game.Projects
@@ -18,12 +19,15 @@ namespace sbtw.Game.Projects
     public class Project : IProject, IDisposable
     {
         [JsonIgnore]
-        public string Name { get; init; }
+        public string Name { get; private set; }
 
         [JsonIgnore]
-        public string Path { get; init; }
+        public string Path { get; private set; }
 
         public bool UseStablePath { get; set; }
+
+        [JsonIgnore]
+        public Storage Storage { get; }
 
         /// <summary>
         /// The path to the beatmap for this project.
@@ -52,10 +56,16 @@ namespace sbtw.Game.Projects
         public Bindable<bool> WidescreenStoryboard { get; private set; } = new Bindable<bool>();
 
         [JsonIgnore]
-        public BeatmapSetInfo BeatmapSet => beatmapManager.BeatmapSet;
+        public IBeatmapSetInfo BeatmapSet => beatmapManager.BeatmapSet;
 
         [JsonIgnore]
         public IResourceStore<byte[]> Resources => beatmapManager.Resources;
+
+        [JsonIgnore]
+        public bool IsMsBuildProject => Type != ProjectTemplateType.Freeform;
+
+        [JsonIgnore]
+        public readonly ProjectTemplateType Type;
 
         public event Action<ProjectFileType> FileChanged
         {
@@ -68,31 +78,75 @@ namespace sbtw.Game.Projects
         private readonly GameHost host;
         private readonly AudioManager audio;
         private readonly RulesetStore rulesets;
+        private readonly ProjectGenerator generator;
 
-        public Project(GameHost host, AudioManager audio, RulesetStore rulesets)
+        public Project(string name, string path, GameHost host, AudioManager audio, RulesetStore rulesets, IResourceStore<byte[]> resources, ProjectTemplateType type)
         {
+            Name = name;
+            Path = path;
+            Type = type;
+            Storage = (host as DesktopGameHost)?.GetStorage(path);
+
             this.host = host;
             this.audio = audio;
             this.rulesets = rulesets;
+
+            switch (type)
+            {
+                case ProjectTemplateType.CSharp:
+                    generator = new CSharpProjectGenerator(this, resources);
+                    break;
+
+                case ProjectTemplateType.VisualBasic:
+                    generator = new VisualBasicProjectGenerator(this, resources);
+                    break;
+
+                case ProjectTemplateType.Freeform:
+                    generator = new ProjectGenerator(this, resources);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type));
+            }
         }
 
-        public void Initialize()
+        public void Initialize(bool generateProjectFiles = false)
         {
             fileWatcher = new ProjectFileWatcher(this);
             beatmapManager = new ProjectBeatmapManager(this, host, audio, rulesets);
+
+            if (generateProjectFiles)
+                generator.Generate();
         }
 
         public void Build()
-            => NetDriverHelper.Build(Path);
+        {
+            if (IsMsBuildProject)
+                NetDriverHelper.Build(Path);
+        }
 
         public void Clean()
-            => NetDriverHelper.Clean(Path);
+        {
+            if (IsMsBuildProject)
+                NetDriverHelper.Clean(Path);
+        }
 
         public void Restore()
-            => NetDriverHelper.Restore(Path);
+        {
+            if (IsMsBuildProject)
+                NetDriverHelper.Restore(Path);
+        }
 
         public void Save()
-            => File.WriteAllText(System.IO.Path.Combine(Path, System.IO.Path.ChangeExtension(Name, ".sbtw.json")), JsonConvert.SerializeObject(this, Formatting.Indented));
+        {
+            using var stream = Storage.GetStream(System.IO.Path.ChangeExtension(Name, ".sbtw.json"), FileAccess.Write, FileMode.OpenOrCreate);
+            using var writer = new StreamWriter(stream);
+            stream.SetLength(0);
+            writer.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
+        }
+
+        public void GenerateScript(string name)
+            => (generator as IMsBuildProjectGenerator)?.GenerateScript(name);
 
         public WorkingBeatmap GetWorkingBeatmap(string version)
             => beatmapManager.GetWorkingBeatmap(version);

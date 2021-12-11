@@ -8,6 +8,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Logging;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.UserInterface;
@@ -28,6 +29,9 @@ namespace sbtw.Game.Screens.Edit.Setup
 
         [Resolved]
         private ProjectManager projectManager { get; set; }
+
+        [Resolved]
+        private SBTWEditor editor { get; set; }
 
         private BeatmapSection beatmapSection;
         private ProjectSection projectSection;
@@ -120,44 +124,58 @@ namespace sbtw.Game.Screens.Edit.Setup
             string beatmapPath = beatmapSection.BeatmapPath.Value;
             var template = projectSection.Template.Value;
 
+            IProject project = null;
             try
             {
-                projectManager?.Create(projectName, projectPath, beatmapPath, template);
+                project = projectManager?.Create(projectName, projectPath, beatmapPath, template);
             }
-            catch (InvalidBeatmapPathException)
+            catch (InvalidBeatmapPathException e)
             {
-                postErrorNotification("Beatmap path is not valid.");
+                postErrorNotification(e, "Beatmap path is not valid.");
             }
-            catch (FileNotFoundException)
+            catch (FileNotFoundException e)
             {
-                postErrorNotification("Beatmap file is not found on the given path.");
+                postErrorNotification(e, "Beatmap file is not found on the given path.");
             }
-            catch (PlatformNotSupportedException)
+            catch (PlatformNotSupportedException e)
             {
-                postErrorNotification("No stable installation found. Cannot import beatmap difficulty file.");
+                postErrorNotification(e, "No stable installation found. Cannot import beatmap difficulty file.");
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException e)
             {
-                postErrorNotification("Beatmap dificulty file must be imported from a stable installation.");
+                postErrorNotification(e, "Beatmap dificulty file must be imported from a stable installation.");
             }
-            catch (InvalidProjectPathException)
+            catch (InvalidProjectPathException e)
             {
-                postErrorNotification("Project path is not valid.");
+                postErrorNotification(e, "Project path is not valid.");
             }
-            catch (NonEmptyProjectPathException)
+            catch (NonEmptyProjectPathException e)
             {
-                postErrorNotification("Project path must be an empty directory.");
+                postErrorNotification(e, "Project path must be an empty directory.");
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                postErrorNotification("Failed to create project. This may be due to the operating system or antivirus' protection rules.");
+                postErrorNotification(e, "Failed to create project. This may be due to the operating system or antivirus' protection rules.");
             }
+
+            if (project == null)
+                return;
+
+            project.Save();
+            project.Build();
+
+            Hide();
+            editor.OpenProject(project);
         }
 
-        private void postErrorNotification(string reason) => notifications.Post(new SimpleErrorNotification
+        private void postErrorNotification(Exception e, string reason)
         {
-            Text = reason,
-            Icon = FontAwesome.Solid.ExclamationTriangle,
-        });
+            Logger.Error(e, reason);
+            notifications.Post(new SimpleErrorNotification
+            {
+                Text = reason,
+                Icon = FontAwesome.Solid.ExclamationTriangle,
+            });
+        }
     }
 }

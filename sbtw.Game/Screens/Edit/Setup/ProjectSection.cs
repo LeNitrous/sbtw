@@ -73,6 +73,6 @@ namespace sbtw.Game.Screens.Edit.Setup
         }
 
         private void getProjectLocationTask()
-            => game.SaveFileDialog(name.Current.Value, new[] { "*.csproj" }, "MSBuild Project", selected => Schedule(() => path.Text = Path.GetDirectoryName(selected)));
+            => game.SaveFileDialog(name.Current.Value, new[] { "*.sbtw.json" }, "sbtw Project", selected => Schedule(() => path.Text = Path.GetDirectoryName(selected)));
     }
 }
