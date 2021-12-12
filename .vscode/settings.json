@@ -1,0 +1,30 @@
+{
+    "psi-header.variables": [
+        [ "projectYear", "2021" ]
+    ],
+    "psi-header.lang-config": [
+        {
+            "language": "csharp",
+            "begin": "",
+            "end": "",
+            "prefix": "// ",
+            "blankLinesAfter": 1,
+            "forceToTop": true
+        }
+    ],
+    "psi-header.templates": [
+        {
+            "language": "csharp",
+            "template": [
+                "Copyright (c) <<projectYear>> Nathan Alo. Licensed under MIT License.",
+                "See LICENSE in the repository root for more details."
+            ]
+        }
+    ],
+    "psi-header.changes-tracking": {
+        "enforceHeader": true,
+        "autoHeader": "manualSave",
+        "includeGlob": [ "*.cs" ],
+        "excludeGlob": [ ".vscode/**.*", "bin/**/*", "obj/**/*" ]
+    }
+}
