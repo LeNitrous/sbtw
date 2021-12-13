@@ -25,12 +25,12 @@ jobs:
           dotnet-version: '5.0.x'
 
       - name: Test
-        run: dotnet test --logger "trx;LogFileName=TestResults-sbtw.Game.Tests.trx"
+        run: dotnet test --logger "trx;LogFileName=TestResults-sbtw.Editor.Tests.trx"
 
       - name: Upload Results
         uses: actions/upload-artifact@v2
         if: ${{ always() }}
         with:
-          name: TestResults-sbtw.Game.Tests
-          path: ${{ github.workspace }}/sbtw.Game.Tests/TestResults/TestResults-sbtw.Game.Tests.trx
+          name: TestResults-sbtw.Editor.Tests
+          path: ${{ github.workspace }}/sbtw.Editor.Tests/TestResults/TestResults-sbtw.Editor.Tests.trx
 

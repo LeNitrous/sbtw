@@ -12,7 +12,6 @@ namespace sbtw.Editor.Scripts.Elements
 {
     public class ScriptedSprite : IScriptedElementWithDuration
     {
-        public double EndTime { get; }
 
         public string Path { get; }
 
@@ -20,11 +19,13 @@ namespace sbtw.Editor.Scripts.Elements
 
         public Layer Layer { get; }
 
-        public double StartTime { get; }
-
         public Anchor Origin { get; }
 
         public Vector2 InitialPosition { get; }
+
+        public double StartTime { get; }
+
+        public double EndTime { get; }
 
         internal readonly List<ScriptedCommandLoop> Loops = new List<ScriptedCommandLoop>();
 

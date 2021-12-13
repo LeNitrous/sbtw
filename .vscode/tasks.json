@@ -7,7 +7,7 @@
             "command": "dotnet",
             "args": [
                 "build",
-                "sbtw.Desktop",
+                "sbtw.Editor",
                 "-p:GeneratedFullPaths=true",
                 "-m",
                 "-verbosity:m"
@@ -21,7 +21,7 @@
             "command": "dotnet",
             "args": [
                 "build",
-                "sbtw.Desktop",
+                "sbtw.Editor",
                 "-p:Configuration=Release",
                 "-p:GeneratedFullPaths=true",
                 "-m",
@@ -36,7 +36,7 @@
             "command": "dotnet",
             "args": [
                 "build",
-                "sbtw.Game.Tests",
+                "sbtw.Editor.Tests",
                 "-p:GeneratedFullPaths=true",
                 "-m",
                 "-verbosity:m"
@@ -50,7 +50,7 @@
             "command": "dotnet",
             "args": [
                 "build",
-                "sbtw.Game.Tests",
+                "sbtw.Editor.Tests",
                 "-p:Configuration=Release",
                 "-p:GeneratedFullPaths=true",
                 "-m",
