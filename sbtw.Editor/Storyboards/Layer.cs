@@ -5,11 +5,10 @@ namespace sbtw.Editor.Storyboards
 {
     public enum Layer
     {
-        Video,
         Background,
-        Foreground,
-        Passing,
         Failing,
+        Passing,
+        Foreground,
         Overlay,
     }
 }

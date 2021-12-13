@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using osu.Framework.Audio;
 using osu.Framework.Audio.Track;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Logging;
@@ -11,16 +10,15 @@ using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Formats;
 using osu.Game.IO;
 using osu.Game.Skinning;
-using sbtw.Editor.Skins;
 
 namespace sbtw.Editor.Beatmaps
 {
-    public class FileBasedWorkingBeatmap : WorkingBeatmap
+    public class StorageBackedWorkingBeatmap : WorkingBeatmap
     {
         private readonly IBeatmapResourceProvider resources;
 
-        public FileBasedWorkingBeatmap(IBeatmapResourceProvider resources, BeatmapInfo beatmapInfo, AudioManager audioManager)
-            : base(beatmapInfo, audioManager)
+        public StorageBackedWorkingBeatmap(IBeatmapResourceProvider resources, BeatmapInfo beatmapInfo)
+            : base(beatmapInfo, resources.AudioManager)
         {
             this.resources = resources;
         }
@@ -80,7 +78,7 @@ namespace sbtw.Editor.Beatmaps
         {
             try
             {
-                return new FileBasedBeatmapSkin(BeatmapInfo, resources);
+                return new LegacyBeatmapSkin(BeatmapInfo, resources.Files, resources);
             }
             catch (Exception e)
             {

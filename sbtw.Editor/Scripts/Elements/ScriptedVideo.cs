@@ -11,7 +11,7 @@ namespace sbtw.Editor.Scripts.Elements
 
         public Script Owner { get; }
 
-        public Layer Layer => Layer.Video;
+        public Layer Layer { get; }
 
         public double StartTime { get; }
 

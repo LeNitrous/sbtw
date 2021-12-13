@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace sbtw.Editor.Scripts
 {
-    public class Script
+    public abstract class Script
     {
         public readonly string Path;
 
@@ -38,6 +38,7 @@ namespace sbtw.Editor.Scripts
 
         public IEnumerable<ScriptElementGroup> Generate()
         {
+            Perform();
             return groups;
         }
 
@@ -48,5 +49,7 @@ namespace sbtw.Editor.Scripts
 
             return Task.Run(Generate);
         }
+
+        protected abstract void Perform();
     }
 }

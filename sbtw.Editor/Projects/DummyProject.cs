@@ -3,12 +3,11 @@
 
 namespace sbtw.Editor.Projects
 {
-    public interface IProject
+    public class DummyProject : IProject
     {
-        string Name { get; }
+        public string Name => @"No project";
+        public string Path => string.Empty;
 
-        string Path { get; }
-
-        bool Save();
+        public bool Save() => true;
     }
 }

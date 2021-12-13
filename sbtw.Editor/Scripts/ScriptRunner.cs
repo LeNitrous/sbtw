@@ -14,10 +14,9 @@ namespace sbtw.Editor.Scripts
     public abstract class ScriptRunner<T>
         where T : new()
     {
-        public async Task<T> GenerateAsync(CancellationToken token = default)
+        public async Task<T> GenerateAsync(IEnumerable<Script> scripts, CancellationToken token = default)
         {
             var context = CreateContext();
-            var scripts = new List<Script>();
 
             PreGenerate(context);
 
@@ -39,7 +38,7 @@ namespace sbtw.Editor.Scripts
             return context;
         }
 
-        public T Generate() => GenerateAsync().Result;
+        public T Generate(IEnumerable<Script> scripts) => GenerateAsync(scripts).Result;
 
         private bool videoHandled;
 

@@ -26,11 +26,11 @@ namespace sbtw.Editor.Scripts.Elements
 
         public Vector2 InitialPosition { get; }
 
-        internal readonly List<CommandLoop> Loops = new List<CommandLoop>();
+        internal readonly List<ScriptedCommandLoop> Loops = new List<ScriptedCommandLoop>();
 
-        internal readonly List<CommandTrigger> Triggers = new List<CommandTrigger>();
+        internal readonly List<ScriptedCommandTrigger> Triggers = new List<ScriptedCommandTrigger>();
 
-        internal readonly CommandTimelineGroup Timeline = new CommandTimelineGroup();
+        internal readonly ScriptedCommandTimelineGroup Timeline = new ScriptedCommandTimelineGroup();
 
         private CommandTimelineGroup context;
 
@@ -50,10 +50,7 @@ namespace sbtw.Editor.Scripts.Elements
         }
 
         public void Move(Easing easing, double startTime, double endTime, Vector2 startPosition, Vector2 endPosition)
-        {
-            MoveX(easing, startTime, endTime, startPosition.X, endPosition.X);
-            MoveY(easing, startTime, endTime, startPosition.Y, endPosition.Y);
-        }
+            => (currentContext as IScriptedCommandTimelineGroup)?.Move.Add(easing, startTime, endTime, startPosition, endPosition);
 
         public void Move(Easing easing, double startTime, double endTime, Vector2 startPosition, float endX, float endY)
             => Move(easing, startTime, endTime, startPosition, new Vector2(endX, endY));
@@ -200,10 +197,10 @@ namespace sbtw.Editor.Scripts.Elements
             => Color(easing, startTime, endTime, new Colour4(startRed, startGreen, startBlue, 255), new Colour4(endRed, endGreen, endBlue, 255));
 
         public void ColorRGB(double startTime, double endTime, byte startRed, byte startBlue, byte startGreen, byte endRed, byte endBlue, byte endGreen)
-            => Color(Easing.None, startTime, endTime, startRed, startGreen, startBlue, endRed, endGreen, endBlue);
+            => ColorRGB(Easing.None, startTime, endTime, startRed, startGreen, startBlue, endRed, endGreen, endBlue);
 
         public void ColorRGB(double time, byte red, byte blue, byte green)
-            => Color(time, time, red, blue, green, red, blue, green);
+            => ColorRGB(time, time, red, blue, green, red, blue, green);
 
         public void ColorHSL(Easing easing, double startTime, double endTime, float startHue, float startSaturation, float startLightness, float endHue, float endSaturation, float endLightness)
             => Color(easing, startTime, endTime, Colour4.FromHSL(startHue, startSaturation, startLightness), Colour4.FromHSL(endHue, endSaturation, endLightness));
@@ -226,17 +223,26 @@ namespace sbtw.Editor.Scripts.Elements
         public void FlipH(Easing easing, double startTime, double endTime)
             => currentContext.FlipH.Add(easing, startTime, endTime, true, startTime == endTime);
 
+        public void FlipH(double startTime, double endTime)
+            => FlipH(Easing.None, startTime, endTime);
+
         public void FlipH(double time)
-            => FlipH(Easing.None, time, time);
+            => FlipH(time, time);
 
         public void FlipV(Easing easing, double startTime, double endTime)
             => currentContext.FlipV.Add(easing, startTime, endTime, true, startTime == endTime);
+
+        public void FlipV(double startTime, double endTime)
+            => FlipV(Easing.None, startTime, endTime);
 
         public void FlipV(double time)
             => FlipV(Easing.None, time, time);
 
         public void Additive(Easing easing, double startTime, double endTime)
             => currentContext.BlendingParameters.Add(easing, startTime, endTime, BlendingParameters.Additive, startTime == endTime ? BlendingParameters.Additive : BlendingParameters.Inherit);
+
+        public void Additive(double startTime, double endTime)
+            => Additive(Easing.None, startTime, endTime);
 
         public void Additive(double time)
             => Additive(Easing.None, time, time);
@@ -246,7 +252,7 @@ namespace sbtw.Editor.Scripts.Elements
             if (context != null)
                 throw new InvalidOperationException("Cannot start a new group when an existing group is active.");
 
-            var loop = new CommandLoop(startTime, repeatCount - 1);
+            var loop = new ScriptedCommandLoop(startTime, repeatCount - 1);
             Loops.Add(loop);
             currentContext = loop;
         }
@@ -256,7 +262,7 @@ namespace sbtw.Editor.Scripts.Elements
             if (context != null)
                 throw new InvalidOperationException("Cannot start a new group when an existing group is active.");
 
-            var trigger = new CommandTrigger(triggerName, startTime, endTime, group);
+            var trigger = new ScriptedCommandTrigger(triggerName, startTime, endTime, group);
             Triggers.Add(trigger);
             currentContext = trigger;
         }
