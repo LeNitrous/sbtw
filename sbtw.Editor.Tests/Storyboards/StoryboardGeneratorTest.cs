@@ -23,7 +23,7 @@ namespace sbtw.Editor.Tests.Storyboards
             Assert.That(layer.Elements.Count, Is.EqualTo(1));
 
             var video = layer.Elements.FirstOrDefault() as StoryboardVideo;
-            Assert.That(video, Is.Not.EqualTo(null));
+            Assert.That(video, Is.Not.Null);
             Assert.That(video.Path, Is.EqualTo("test"));
             Assert.That(video.StartTime, Is.EqualTo(1000));
         }
@@ -44,7 +44,7 @@ namespace sbtw.Editor.Tests.Storyboards
             Assert.That(layer.Elements.Count, Is.EqualTo(2));
 
             var sprite = layer.Elements.FirstOrDefault() as StoryboardSprite;
-            Assert.That(sprite, Is.Not.EqualTo(null));
+            Assert.That(sprite, Is.Not.Null);
             Assert.That(sprite.Path, Is.EqualTo("a"));
             Assert.That(sprite.Origin, Is.EqualTo(Anchor.Centre));
             Assert.That(sprite.InitialPosition, Is.EqualTo(Vector2.One));
@@ -60,7 +60,7 @@ namespace sbtw.Editor.Tests.Storyboards
             Assert.That(layer.Elements.Count, Is.EqualTo(1));
 
             var sample = layer.Elements.FirstOrDefault() as StoryboardSampleInfo;
-            Assert.That(sample, Is.Not.EqualTo(null));
+            Assert.That(sample, Is.Not.Null);
             Assert.That(sample.Path, Is.EqualTo("a"));
             Assert.That(sample.Volume, Is.EqualTo(50));
             Assert.That(sample.StartTime, Is.EqualTo(1000));

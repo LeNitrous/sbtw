@@ -3,10 +3,11 @@
 
 using System;
 using System.IO;
-using System.IO.Compression;
 using Newtonsoft.Json;
+using osu.Framework.IO.Stores;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
+using sbtw.Editor.Resources;
 
 namespace sbtw.Editor.Projects
 {
@@ -16,9 +17,17 @@ namespace sbtw.Editor.Projects
 
         public readonly IProject DefaultProject;
 
-        public ProjectManager(GameHost host, IProject defaultProject)
+        private readonly IResourceStore<byte[]> resources;
+
+        public ProjectManager(GameHost host)
         {
             this.host = host;
+            resources = new NamespacedResourceStore<byte[]>(new DllResourceStore(EditorResources.ResourceAssembly), "Resources/Templates");
+        }
+
+        public ProjectManager(GameHost host, IProject defaultProject)
+            : this(host)
+        {
             DefaultProject = defaultProject;
         }
 
@@ -28,13 +37,13 @@ namespace sbtw.Editor.Projects
             {
                 var file = new FileInfo(path);
 
-                if (file.Extension != ".sbtw.json")
+                if (!file.FullName.Contains(".sbtw.json"))
                     throw new ArgumentException("File is not a project.");
 
                 using var stream = File.OpenRead(file.FullName);
                 using var reader = new StreamReader(stream);
 
-                var project = new Project(Path.GetFileNameWithoutExtension(file.Name), file.FullName, host);
+                var project = new Project(host.GetStorage(path), Path.GetFileNameWithoutExtension(file.Name));
                 JsonConvert.PopulateObject(reader.ReadToEnd(), project);
 
                 return project;
@@ -46,7 +55,7 @@ namespace sbtw.Editor.Projects
             }
         }
 
-        public IProject Create(string name, string path, string beatmapPath = null)
+        public IProject Create(string name, string path)
         {
             try
             {
@@ -56,17 +65,11 @@ namespace sbtw.Editor.Projects
                 if (projectPath.GetFiles().Length > 0)
                     throw new ArgumentException("Project directory is not empty.");
 
-                if (!string.IsNullOrEmpty(beatmapPath))
-                {
-                    var beatmapFile = new FileInfo(beatmapPath);
+                var project = new Project(host.GetStorage(path), name);
 
-                    if (beatmapFile.Extension != ".osz")
-                        throw new ArgumentException("Beatmap is not a beatmap archive.");
-
-                    ZipFile.ExtractToDirectory(beatmapFile.FullName, projectPath.CreateSubdirectory("beatmap").FullName);
-                }
-
-                var project = new Project(name, projectPath.FullName, host);
+                copy(project, "sbtw.d.ts");
+                copy(project, "jsconfig.json");
+                copy(project, "launch.json", "./.vscode/launch.json");
                 project.Save();
 
                 return project;
@@ -76,6 +79,13 @@ namespace sbtw.Editor.Projects
                 Logger.Error(e, "Failed to create project");
                 return null;
             }
+        }
+
+        private void copy(Project project, string resourceName, string targetDestination = null)
+        {
+            using var rStream = resources.GetStream(resourceName);
+            using var wStream = project.Storage.GetStream(targetDestination ?? resourceName, FileAccess.Write);
+            rStream.CopyTo(wStream);
         }
     }
 }

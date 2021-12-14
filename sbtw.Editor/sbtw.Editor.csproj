@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="ppy.osu.Game" Version="2021.1211.0" />
   </ItemGroup>
 

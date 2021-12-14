@@ -13,15 +13,15 @@ namespace sbtw.Editor.Projects
     {
         public string Name { get; }
         public string Path { get; }
+
+        [JsonIgnore]
         public readonly Storage Storage;
 
-        private readonly GameHost host;
-
-        public Project(string name, string path, GameHost host)
+        public Project(Storage storage, string name)
         {
             Name = name;
-            Path = path;
-            Storage = (host as DesktopGameHost)?.GetStorage(path);
+            Path = storage.GetFullPath(".");
+            Storage = storage;
         }
 
         public bool Save()
