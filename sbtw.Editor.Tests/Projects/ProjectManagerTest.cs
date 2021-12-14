@@ -2,12 +2,9 @@
 // See LICENSE in the repository root for more details.
 
 using System;
-using System.IO;
 using NUnit.Framework;
-using osu.Framework.IO.Stores;
 using osu.Framework.Platform;
 using osu.Framework.Testing;
-using osu.Game.Resources;
 using osu.Game.Tests;
 using sbtw.Editor.Projects;
 
