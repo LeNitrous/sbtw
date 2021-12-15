@@ -35,15 +35,11 @@ namespace sbtw.Editor
             dependencies.CacheAs<Bindable<IProject>>(new NonNullableBindable<IProject>(projectManager.DefaultProject));
 
             dependencies.CacheAs(LocalEditorConfig);
-
-            var studioManager = CreateStudioManager();
-            dependencies.CacheAs(studioManager);
-
+            dependencies.CacheAs(StudioManager = CreateStudioManager());
             dependencies.CacheAs(ScriptRuntime = CreateScriptRuntime());
         }
 
         protected abstract IScriptRuntime CreateScriptRuntime();
-
         protected abstract IStudioManager CreateStudioManager();
 
         public override void SetHost(GameHost host)

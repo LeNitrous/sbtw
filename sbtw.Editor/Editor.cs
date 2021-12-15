@@ -14,7 +14,7 @@ namespace sbtw.Editor
 {
     public class Editor : EditorBase
     {
-        protected override IScriptRuntime CreateScriptRuntime() => new JSScriptRuntime();
+        protected override IScriptRuntime CreateScriptRuntime() => new JSScriptRuntime(LocalEditorConfig);
         protected override IStudioManager CreateStudioManager() => new StudioManager(LocalEditorConfig);
 
         public override void SetHost(GameHost host)

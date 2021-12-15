@@ -8,5 +8,6 @@ namespace sbtw.Editor.Configuration
         PreferredStudio,
         HotReload,
         Recents,
+        DebugPort,
     }
 }

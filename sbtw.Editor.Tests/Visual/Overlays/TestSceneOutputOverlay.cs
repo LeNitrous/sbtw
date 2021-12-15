@@ -2,11 +2,13 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using NUnit.Framework;
 using osu.Game.Tests.Visual;
 using sbtw.Editor.Overlays;
 
 namespace sbtw.Editor.Tests.Visual.Overlays
 {
+    [Ignore("Visual-only test")]
     public class TestSceneOutputOverlay : OsuTestScene
     {
         public TestSceneOutputOverlay()

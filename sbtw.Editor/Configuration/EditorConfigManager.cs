@@ -20,6 +20,7 @@ namespace sbtw.Editor.Configuration
             SetDefault(EditorSetting.PreferredStudio, string.Empty);
             SetDefault(EditorSetting.HotReload, true);
             SetDefault(EditorSetting.Recents, string.Empty);
+            SetDefault(EditorSetting.DebugPort, 7270);
         }
     }
 }
