@@ -20,6 +20,9 @@ dotnet_diagnostic.IDE0051.severity = none
 # Require File Header
 dotnet_diagnostic.IDE0073.severity = error
 
+# Unused usings
+dotnet_diagnostic.IDE0005.severity = error
+
 # Language Style Rules
 csharp_style_var_for_built_in_types = false
 csharp_style_expression_bodied_methods =false:silent
