@@ -6,7 +6,7 @@ using osu.Framework.Testing;
 
 namespace sbtw.Editor.Tests
 {
-    public class EditorTestBrowser : EditorBase
+    public class EditorTestBrowser : TestEditor
     {
         protected override void LoadComplete()
         {

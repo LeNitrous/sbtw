@@ -12,9 +12,9 @@ namespace sbtw.Editor.Tests
 {
     public abstract class GameHostTest
     {
-        protected static TestEditor LoadEditor(GameHost host)
+        protected static GameHostTestEditor LoadEditor(GameHost host)
         {
-            var editor = new TestEditor();
+            var editor = new GameHostTestEditor();
             Task.Factory.StartNew(() => host.Run(editor), TaskCreationOptions.LongRunning)
                 .ContinueWith(t => Assert.Fail($"Host threw an exception ${t.Exception}"), TaskContinuationOptions.OnlyOnFaulted);
 
@@ -39,7 +39,7 @@ namespace sbtw.Editor.Tests
             Assert.IsTrue(task.Wait(timeout), @"Failed to load editor in time.");
         }
 
-        protected class TestEditor : EditorBase
+        protected class GameHostTestEditor : TestEditor
         {
             public new RulesetStore RulesetStore => base.RulesetStore;
         }

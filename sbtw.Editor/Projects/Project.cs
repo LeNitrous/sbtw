@@ -19,6 +19,12 @@ namespace sbtw.Editor.Projects
 
         public Project(Storage storage, string name)
         {
+            if (storage == null)
+                throw new ArgumentNullException(nameof(storage));
+
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentNullException(nameof(name));
+
             Name = name;
             Path = storage.GetFullPath(".");
             Storage = storage;

@@ -11,8 +11,6 @@ namespace sbtw.Editor.Scripts
 {
     public abstract class Script
     {
-        public readonly string Path;
-
         private readonly List<ScriptElementGroup> groups = new List<ScriptElementGroup>();
 
         public ScriptElementGroup GetGroup(string name)
@@ -47,7 +45,7 @@ namespace sbtw.Editor.Scripts
             if (token.IsCancellationRequested)
                 token.ThrowIfCancellationRequested();
 
-            return Task.Run(Generate);
+            return Task.Run(Generate, token);
         }
 
         protected abstract void Perform();

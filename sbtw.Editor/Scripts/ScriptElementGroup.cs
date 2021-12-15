@@ -1,7 +1,6 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System.Collections;
 using System.Collections.Generic;
 using osu.Framework.Graphics;
 using osu.Game.Storyboards;

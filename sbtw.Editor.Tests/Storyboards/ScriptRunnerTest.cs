@@ -2,9 +2,9 @@
 // See LICENSE in the repository root for more details.
 
 using System;
-using System.Collections.Generic;
 using NUnit.Framework;
 using sbtw.Editor.Scripts;
+using sbtw.Editor.Tests.Scripts;
 
 namespace sbtw.Editor.Tests.Storyboards
 {
@@ -29,17 +29,5 @@ namespace sbtw.Editor.Tests.Storyboards
         protected abstract TGenerator CreateRunner();
 
         protected TGenerated Generate(Action<Script> perform = null) => Encoder.Generate(new[] { new TestScript(perform) });
-
-        private class TestScript : Script
-        {
-            private readonly Action<Script> performAction;
-
-            public TestScript(Action<Script> performAction)
-            {
-                this.performAction = performAction;
-            }
-
-            protected override void Perform() => performAction?.Invoke(this);
-        }
     }
 }

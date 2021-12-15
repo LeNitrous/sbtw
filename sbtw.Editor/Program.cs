@@ -1,7 +1,7 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System;
+using osu.Framework;
 
 namespace sbtw.Editor
 {
@@ -9,7 +9,8 @@ namespace sbtw.Editor
     {
         public static void Main()
         {
-            Console.WriteLine("Hello World!");
+            using var host = Host.GetSuitableHost(@"sbtw", true);
+            host.Run(new Editor());
         }
     }
 }

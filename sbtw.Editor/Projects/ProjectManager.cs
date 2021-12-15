@@ -22,7 +22,7 @@ namespace sbtw.Editor.Projects
         public ProjectManager(GameHost host)
         {
             this.host = host;
-            resources = new NamespacedResourceStore<byte[]>(new DllResourceStore(EditorResources.ResourceAssembly), "Resources/Templates");
+            resources = new NamespacedResourceStore<byte[]>(new DllResourceStore(EditorResources.ResourceAssembly), "Editor/Resources/Templates");
         }
 
         public ProjectManager(GameHost host, IProject defaultProject)

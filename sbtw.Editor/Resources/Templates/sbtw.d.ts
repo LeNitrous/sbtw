@@ -1,6 +1,6 @@
 declare function SetVideo(path: string, offset: number): void;
-
 declare function GetGroup(name: string): ScriptElementGroup;
+declare function OpenFile(path: string): Uint8Array;
 
 declare class ScriptElementGroup {
     Name: string;

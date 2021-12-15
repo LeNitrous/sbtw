@@ -14,7 +14,6 @@ namespace sbtw.Editor.Configuration
         {
             ensure_default(SetDefault(SessionStatic.ShowInterface, true));
             ensure_default(SetDefault(SessionStatic.ShowPlayfield, true));
-            ensure_default(SetDefault(SessionStatic.HotReload, true));
         }
 
         private static void ensure_default<T>(Bindable<T> bindable) => bindable.SetDefault();
@@ -24,6 +23,5 @@ namespace sbtw.Editor.Configuration
     {
         ShowInterface,
         ShowPlayfield,
-        HotReload,
     }
 }
