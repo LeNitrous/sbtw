@@ -40,5 +40,5 @@ jobs:
         if: ${{ always() }}
         with:
           name: TestResults-sbtw.Editor.Tests
-          path: ${{ github.workspace }}/sbtw.Editor.Tests/TestResults/TestResults-sbtw.Editor.Tests.trx
+          path: ${{ github.workspace }}/tests/sbtw.Editor.Tests/TestResults/TestResults-sbtw.Editor.Tests.trx
 

@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceRoot}/sbtw.Editor/bin/Debug/net5.0/sbtw.dll"
+                "${workspaceRoot}/src/desktop/sbtw.Desktop/bin/Debug/net5.0/sbtw.dll"
             ],
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build sbtw (Debug)",
@@ -19,7 +19,7 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceRoot}/sbtw.Editor/bin/Release/net5.0/sbtw.dll"
+                "${workspaceRoot}/src/desktop/sbtw.Desktop/bin/Release/net5.0/sbtw.dll"
             ],
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build sbtw (Release)",
@@ -31,7 +31,7 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceRoot}/sbtw.Editor.Tests/bin/Debug/net5.0/sbtw.Editor.Tests.dll"
+                "${workspaceRoot}/tests/sbtw.Editor.Tests/bin/Debug/net5.0/sbtw.Editor.Tests.dll"
             ],
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build tests (Debug)",
@@ -43,16 +43,11 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceRoot}/sbtw.Editor.Tests/bin/Release/net5.0/sbtw.Editor.Tests.dll"
+                "${workspaceRoot}/tests/sbtw.Editor.Tests/bin/Release/net5.0/sbtw.Editor.Tests.dll"
             ],
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build tests (Release)",
             "console": "internalConsole"
-        },
-        {
-            "name": ".NET Core Attach",
-            "type": "coreclr",
-            "request": "attach"
         }
     ]
 }

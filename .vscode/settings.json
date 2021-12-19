@@ -26,5 +26,6 @@
         "autoHeader": "manualSave",
         "includeGlob": [ "*.cs" ],
         "excludeGlob": [ ".vscode/**.*", "bin/**/*", "obj/**/*" ]
-    }
+    },
+    "dotnet-test-explorer.testProjectPath": "**/*Tests.@(csproj|vbproj|fsproj)"
 }

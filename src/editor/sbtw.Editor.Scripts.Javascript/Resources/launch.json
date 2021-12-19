@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "name": "Attach to sbtw!",
+            "type": "node",
+            "request": "attach",
+            "protocol": "inspector",
+            "address": "localhost",
+            "port": 7270
+        }
+    ]
+}

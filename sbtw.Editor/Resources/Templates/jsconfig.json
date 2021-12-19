@@ -1,8 +1,0 @@
-{
-    "compilerOptions": {
-        "checkJs": true,
-        "lib": [ "es6" ],
-    },
-    "exclude": [ "node_modules" ],
-    "include": [ "**/*.js", "**/*.d.ts" ],
-}
