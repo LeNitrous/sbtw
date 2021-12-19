@@ -1,0 +1,16 @@
+{
+  "solution": {
+    "path": "sbtw.sln",
+    "projects": [
+      "src\\desktop\\sbtw.Desktop\\sbtw.Desktop.csproj",
+      "src\\editor\\sbtw.Editor.Scripts.Javascript\\sbtw.Editor.Scripts.Javascript.csproj",
+      "src\\editor\\sbtw.Editor.Scripts.Lua\\sbtw.Editor.Scripts.Lua.csproj",
+      "src\\editor\\sbtw.Editor.Scripts.Net\\sbtw.Editor.Scripts.Net.csproj",
+      "src\\editor\\sbtw.Editor.Scripts.Python\\sbtw.Editor.Scripts.Python.csproj",
+      "src\\editor\\sbtw.Editor.Scripts\\sbtw.Editor.Scripts.csproj",
+      "src\\editor\\sbtw.Editor\\sbtw.Editor.csproj",
+      "tests\\sbtw.Editor.Scripts.Javascript.Tests\\sbtw.Editor.Scripts.Javascript.Tests.csproj",
+      "tests\\sbtw.Editor.Tests\\sbtw.Editor.Tests.csproj"
+    ]
+  }
+}

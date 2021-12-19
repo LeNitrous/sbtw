@@ -33,7 +33,7 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
 
       - name: Test
-        run: dotnet test --logger "trx;LogFileName=TestResults-sbtw.Editor.Tests.trx"
+        run: dotnet test sbtw-desktop.slnf --logger "trx;LogFileName=TestResults-sbtw.Editor.Tests.trx"
 
       - name: Upload Results
         uses: actions/upload-artifact@v2

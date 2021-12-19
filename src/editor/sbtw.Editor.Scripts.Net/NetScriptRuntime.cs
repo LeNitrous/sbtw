@@ -2,19 +2,15 @@
 // See LICENSE in the repository root for more details.
 
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using osu.Framework.Platform;
-using sbtw.Editor.Configuration;
 
 namespace sbtw.Editor.Scripts.Net
 {
     public class NetScriptRuntime : ScriptRuntime
     {
-        public NetScriptRuntime(EditorConfigManager config)
-            : base(config)
-        {
-        }
-
-        public override IEnumerable<CompilableScript> Prepare(Storage storage)
+        public override Task<IEnumerable<Script>> PrepareAsync(Storage storage, CancellationToken token = default)
         {
             throw new System.NotImplementedException();
         }
