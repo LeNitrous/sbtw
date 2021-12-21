@@ -14,7 +14,7 @@ namespace sbtw.Editor.Scripts
 
         public string Path { get; }
 
-        public IScript Owner { get; }
+        public Script Owner { get; }
 
         public Layer Layer { get; }
 
@@ -40,7 +40,7 @@ namespace sbtw.Editor.Scripts
             set => context = value;
         }
 
-        public ScriptedSprite(IScript owner, Layer layer, string path, Anchor origin, Vector2 initialPosition)
+        public ScriptedSprite(Script owner, Layer layer, string path, Anchor origin, Vector2 initialPosition)
         {
             Owner = owner;
             Layer = layer;

@@ -3,20 +3,15 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using osu.Framework.Platform;
 
 namespace sbtw.Editor.Scripts
 {
-    public abstract class Script : IScript
+    public abstract class Script
     {
-        public string Path { get; internal init; }
         public virtual string Name => GetType().Name;
-
-        protected internal Storage Storage { get; init; }
         protected internal readonly List<ScriptVariableInfo> Variables = new List<ScriptVariableInfo>();
         protected internal readonly List<ScriptElementGroup> Groups = new List<ScriptElementGroup>();
 
@@ -41,14 +36,6 @@ namespace sbtw.Editor.Scripts
                 throw new InvalidOperationException("Cannot create another video in the same script.");
 
             GetGroup("Video").CreateVideo(path, offset);
-        }
-
-        public byte[] OpenFile(string path)
-        {
-            using var stream = Storage.GetStream(path, FileAccess.Read, FileMode.Open);
-            using var memory = new MemoryStream();
-            stream.CopyTo(memory);
-            return memory.ToArray();
         }
 
         public object SetValue(string name, object value)
@@ -97,6 +84,7 @@ namespace sbtw.Editor.Scripts
 
         internal ScriptGenerationResult Generate()
         {
+            Compile();
             Perform();
             return new ScriptGenerationResult { Name = Name, Groups = Groups, Variables = Variables };
         }
@@ -107,6 +95,10 @@ namespace sbtw.Editor.Scripts
                 token.ThrowIfCancellationRequested();
 
             return Task.Run(Generate, token);
+        }
+
+        protected internal virtual void Compile()
+        {
         }
     }
 }

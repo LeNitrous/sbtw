@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\editor\sbtw.Editor\sbtw.Editor.csproj" />
-    <ProjectReference Include="..\..\editor\sbtw.Editor.Scripts.Javascript\sbtw.Editor.Scripts.Javascript.csproj" />
+    <ProjectReference Include="..\..\editor\sbtw.Editor.Languages.Javascript\sbtw.Editor.Languages.Javascript.csproj" />
   </ItemGroup>
 
 </Project>

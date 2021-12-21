@@ -6,7 +6,8 @@ using System.Linq;
 using NUnit.Framework;
 using osu.Game.Beatmaps;
 using osu.Game.Storyboards;
-using sbtw.Editor.Storyboards;
+using sbtw.Editor.Generators;
+using sbtw.Editor.Tests.Generators;
 
 namespace sbtw.Editor.Tests.Scripts
 {

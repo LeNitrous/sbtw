@@ -12,11 +12,11 @@ namespace sbtw.Editor.Scripts
     {
         public readonly string Name;
 
-        public readonly IScript Owner;
+        public readonly Script Owner;
 
         public readonly List<IScriptedElement> Elements = new List<IScriptedElement>();
 
-        public ScriptElementGroup(IScript owner, string name)
+        public ScriptElementGroup(Script owner, string name)
         {
             Name = name;
             Owner = owner;

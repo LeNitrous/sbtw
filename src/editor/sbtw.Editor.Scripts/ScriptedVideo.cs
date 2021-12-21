@@ -7,13 +7,13 @@ namespace sbtw.Editor.Scripts
     {
         public string Path { get; }
 
-        public IScript Owner { get; }
+        public Script Owner { get; }
 
         public Layer Layer { get; }
 
         public double StartTime { get; }
 
-        public ScriptedVideo(IScript owner, string path, int offset)
+        public ScriptedVideo(Script owner, string path, int offset)
         {
             Owner = owner;
             Path = path;

@@ -7,7 +7,7 @@ namespace sbtw.Editor.Scripts
     {
         public string Path { get; }
 
-        public IScript Owner { get; }
+        public Script Owner { get; }
 
         public Layer Layer { get; }
 
@@ -15,7 +15,7 @@ namespace sbtw.Editor.Scripts
 
         public int Volume { get; }
 
-        public ScriptedSample(IScript owner, Layer layer, string path, double startTime, int volume)
+        public ScriptedSample(Script owner, Layer layer, string path, double startTime, int volume)
         {
             Owner = owner;
             Layer = layer;

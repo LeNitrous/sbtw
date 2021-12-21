@@ -8,8 +8,8 @@ using osu.Framework.Bindables;
 using osu.Framework.Platform;
 using osu.Game;
 using sbtw.Editor.Configuration;
+using sbtw.Editor.Languages;
 using sbtw.Editor.Projects;
-using sbtw.Editor.Scripts;
 using sbtw.Editor.Studios;
 
 namespace sbtw.Editor
@@ -22,7 +22,7 @@ namespace sbtw.Editor
             => dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
         protected EditorConfigManager LocalEditorConfig { get; private set; }
-        protected ScriptEnvironmentStore Environments { get; private set; }
+        protected LanguageStore Languages { get; private set; }
         protected StudioManager StudioManager { get; private set; }
 
         [BackgroundDependencyLoader]
@@ -32,9 +32,9 @@ namespace sbtw.Editor
 
             dependencies.CacheAs(LocalEditorConfig);
             dependencies.CacheAs(StudioManager = CreateStudioManager());
-            dependencies.CacheAs(Environments = new ScriptEnvironmentStore());
+            dependencies.CacheAs(Languages = new LanguageStore());
 
-            var projectManager = new ProjectManager(Host);
+            var projectManager = new ProjectStore(Host);
             dependencies.CacheAs(projectManager);
             dependencies.CacheAs<Bindable<IProject>>(new NonNullableBindable<IProject>(new DummyProject()));
         }
@@ -68,7 +68,7 @@ namespace sbtw.Editor
         protected override void Dispose(bool isDisposing)
         {
             base.Dispose(isDisposing);
-            Environments?.Dispose();
+            Languages?.Dispose();
             LocalEditorConfig?.Dispose();
         }
     }

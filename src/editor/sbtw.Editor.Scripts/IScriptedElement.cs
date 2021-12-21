@@ -7,7 +7,7 @@ namespace sbtw.Editor.Scripts
     {
         string Path { get; }
 
-        IScript Owner { get; }
+        Script Owner { get; }
 
         Layer Layer { get; }
 
