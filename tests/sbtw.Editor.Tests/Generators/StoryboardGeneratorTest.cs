@@ -8,9 +8,8 @@ using osu.Game.Beatmaps;
 using osu.Game.Storyboards;
 using osuTK;
 using sbtw.Editor.Generators;
-using sbtw.Editor.Tests.Generators;
 
-namespace sbtw.Editor.Tests.Storyboards
+namespace sbtw.Editor.Tests.Generators
 {
     public class StoryboardGeneratorTest : GeneratorTest<StoryboardGenerator, Storyboard, IStoryboardElement>
     {

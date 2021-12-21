@@ -17,8 +17,4 @@
     <ProjectReference Include="..\..\src\editor\sbtw.Editor\sbtw.Editor.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Resources/**/*" />
-  </ItemGroup>
-
 </Project>

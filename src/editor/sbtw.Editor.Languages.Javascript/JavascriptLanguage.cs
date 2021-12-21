@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using osu.Framework.Bindables;
 using osu.Game.Database;
@@ -24,6 +25,7 @@ namespace sbtw.Editor.Languages.Javascript
         public override IEnumerable<string> Extensions { get; } = new[] { "js", "ts" };
 
         private V8Runtime runtime;
+        private Typescript typescript;
         private readonly JavascriptConfigManager config;
         private readonly Bindable<int> debugPort;
         private readonly Bindable<bool> debugEnabled;
@@ -32,7 +34,7 @@ namespace sbtw.Editor.Languages.Javascript
         {
             config = new JavascriptConfigManager(this, realm);
             debugPort = config.GetBindable<int>(JavascriptSetting.DebugPort);
-            debugEnabled = config.GetBindable<bool>(Javascript.JavascriptSetting.DebugEnabled);
+            debugEnabled = config.GetBindable<bool>(JavascriptSetting.DebugEnabled);
 
             debugPort.ValueChanged += _ => createRuntime();
             debugEnabled.ValueChanged += _ => createRuntime();
@@ -43,13 +45,18 @@ namespace sbtw.Editor.Languages.Javascript
         private void createRuntime()
         {
             Clear();
+
             runtime?.Dispose();
+            typescript?.Dispose();
 
             var flags = V8RuntimeFlags.EnableDynamicModuleImports;
             if (debugEnabled.Value)
                 flags |= V8RuntimeFlags.EnableDebugging;
 
             runtime = new V8Runtime("sbtw", flags, debugPort.Value);
+            runtime.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableAllLoading;
+
+            typescript = new Typescript(runtime.CreateScriptEngine());
         }
 
         public override IProjectGenerator CreateProjectGenerator() => new JavascriptProjectGenerator();
@@ -63,7 +70,7 @@ namespace sbtw.Editor.Languages.Javascript
                     return new JavascriptScript(runtime.CreateScriptEngine(), name, path);
 
                 case ".ts":
-                    return new TypescriptScript(runtime.CreateScriptEngine(), name, path);
+                    return new TypescriptScript(runtime.CreateScriptEngine(), typescript, name, path);
 
                 default:
                     throw new ArgumentException(@"Cannot create a script for an unknown file type.");
@@ -81,6 +88,7 @@ namespace sbtw.Editor.Languages.Javascript
         protected override void Dispose(bool isDisposing)
         {
             base.Dispose(isDisposing);
+            typescript?.Dispose();
             runtime?.Dispose();
             config?.Dispose();
         }

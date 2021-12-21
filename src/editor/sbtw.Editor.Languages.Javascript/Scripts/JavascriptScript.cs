@@ -2,6 +2,8 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using sbtw.Editor.Scripts;
 
@@ -26,6 +28,7 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
             Engine.AddHostObject("SetValue", new Func<string, object, object>(SetValue));
             Engine.AddHostObject("SetVideo", new Action<string, int>(SetVideo));
             Engine.AddHostObject("GetGroup", new Func<string, ScriptElementGroup>(GetGroup));
+            Engine.DocumentSettings.SearchPath = System.IO.Path.GetDirectoryName(path);
         }
 
         protected override void Perform()
@@ -36,7 +39,11 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
         protected override void Compile()
         {
             Compiled?.Dispose();
-            Compiled = Engine.CompileDocument(Path);
+            // Compiled = Engine.CompileDocument(Path, ModuleCategory.Standard);
+            Compiled = Engine.Compile(new DocumentInfo(Name)
+            {
+                Category = ModuleCategory.Standard,
+            }, System.IO.File.ReadAllText(Path));
         }
 
         protected virtual void Dispose(bool disposing)

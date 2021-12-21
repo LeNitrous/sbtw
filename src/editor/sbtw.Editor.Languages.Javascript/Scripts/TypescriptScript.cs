@@ -1,6 +1,7 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System;
 using System.IO;
 using Microsoft.ClearScript.V8;
 using sbtw.Editor.Languages.Javascript.Resources;
@@ -9,24 +10,21 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
 {
     public class TypescriptScript : JavascriptScript
     {
-        private static readonly string typescriptCode = readAllLines("typescript.js");
+        private readonly Typescript typescript;
 
-        public TypescriptScript(V8ScriptEngine engine, string name, string path)
+        public TypescriptScript(V8ScriptEngine engine, Typescript typescript, string name, string path)
             : base(engine, name, path)
         {
-            engine.Execute("typescript.js", typescriptCode);
+            this.typescript = typescript;
         }
 
         protected override void Compile()
         {
             Compiled?.Dispose();
 
-            string source = File.ReadAllText(Path);
-            dynamic transpileOptions = Engine.Evaluate("{ compilerOptions: {}, reportDiagnostics: true }");
-            dynamic transpile = Engine.Evaluate("ts.transpile");
+            var transpiled = typescript.Transpile(Path, File.ReadAllText(Path), out string source);
 
-            dynamic output = transpile(source, transpileOptions);
-            Compiled = Engine.Compile(System.IO.Path.GetFileName(Path), output.outputText);
+            Compiled = Engine.Compile(transpiled, source);
         }
 
         private static string readAllLines(string path)
@@ -35,5 +33,21 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
             using var reader = new StreamReader(stream);
             return reader.ReadToEnd();
         }
+    }
+
+    public class TypescriptException : Exception
+    {
+        public TypescriptException(string message)
+            : base(message)
+        {
+        }
+    }
+
+    public enum TypescriptDiagnosticCategory
+    {
+        Warning,
+        Error,
+        Suggestion,
+        Message,
     }
 }
