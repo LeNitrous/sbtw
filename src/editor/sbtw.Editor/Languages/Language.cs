@@ -19,6 +19,7 @@ namespace sbtw.Editor.Languages
     {
         public abstract string Name { get; }
         public virtual IEnumerable<string> Extensions => Array.Empty<string>();
+        public virtual bool Enabled => true;
 
         protected bool IsDisposed { get; private set; }
         protected IReadOnlyList<T> Cache => cache.Select(c => c.Script).ToList();

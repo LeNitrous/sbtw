@@ -4,7 +4,7 @@
 using System.IO;
 using osu.Framework.IO.Stores;
 
-namespace sbtw.Editor.Languages.Javascript.Tests
+namespace sbtw.Editor.Languages.Lua.Tests
 {
     internal static class LuaTestResources
     {

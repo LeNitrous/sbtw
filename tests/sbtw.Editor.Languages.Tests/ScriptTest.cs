@@ -19,7 +19,7 @@ namespace sbtw.Editor.Languages.Tests
         protected abstract Script CreateScript(string path);
 
         [OneTimeSetUp]
-        public virtual void SetUp()
+        public void SetUp()
         {
             Storage = new TemporaryNativeStorage(GetType().Assembly.GetName().Name);
         }

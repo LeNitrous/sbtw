@@ -3,7 +3,6 @@
 
 using System.IO;
 using NUnit.Framework;
-using sbtw.Editor.Languages.Javascript.Tests;
 using sbtw.Editor.Languages.Lua.Scripts;
 using sbtw.Editor.Languages.Tests;
 using sbtw.Editor.Scripts;

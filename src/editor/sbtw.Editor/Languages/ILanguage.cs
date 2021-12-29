@@ -22,6 +22,7 @@ namespace sbtw.Editor.Languages
     public interface ILanguage : IDisposable
     {
         string Name { get; }
+        bool Enabled { get; }
         IProjectGenerator CreateProjectGenerator();
         ILanguageConfigManager CreateConfigManager(RealmContextFactory realm);
         Task<IEnumerable<Script>> CompileAsync(Storage storage, CancellationToken token = default);
