@@ -3,9 +3,6 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("sbtw.Editor")]
-[assembly: InternalsVisibleTo("sbtw.Editor.Tests")]
-[assembly: InternalsVisibleTo("sbtw.Editor.Languages.Tests")]
 [assembly: InternalsVisibleTo("sbtw.Editor.Languages.Lua.Tests")]
 [assembly: InternalsVisibleTo("sbtw.Editor.Languages.Javascript.Tests")]
 [assembly: InternalsVisibleTo("sbtw.Editor.Languages.Typescript.Tests")]

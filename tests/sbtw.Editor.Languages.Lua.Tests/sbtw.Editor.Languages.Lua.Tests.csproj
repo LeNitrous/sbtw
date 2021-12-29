@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\sbtw.Editor.Languages.Tests\sbtw.Editor.Languages.Tests.csproj" />
-    <ProjectReference Include="..\..\src\editor\sbtw.Editor.Languages.Javascript\sbtw.Editor.Languages.Javascript.csproj" />
+    <ProjectReference Include="..\..\src\editor\sbtw.Editor.Languages.Lua\sbtw.Editor.Languages.Lua.csproj" />
   </ItemGroup>
 
   <ItemGroup>

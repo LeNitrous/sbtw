@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\sbtw.Editor\sbtw.Editor.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NLua" Version="1.6.0" />
+  </ItemGroup>
+
+</Project>
