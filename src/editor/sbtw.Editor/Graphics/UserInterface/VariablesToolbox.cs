@@ -13,6 +13,7 @@ using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
 using osu.Framework.Threading;
 using osu.Game.Graphics;
+using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Overlays.Settings;
@@ -33,7 +34,7 @@ namespace sbtw.Editor.Graphics.UserInterface
             : base("Variables")
         {
             AddTab(@"Scripts", new ScriptListTab(handleScriptSelection));
-            Add(variablesTab = new VariablesTab());
+            Add(variablesTab = new VariablesTab { Alpha = 0 });
         }
 
         [BackgroundDependencyLoader]
@@ -85,7 +86,27 @@ namespace sbtw.Editor.Graphics.UserInterface
             }
         }
 
-        private class VariablesTab : FillFlowContainer
+        private abstract class VariablesToolboxTab : Container
+        {
+            protected override Container<Drawable> Content { get; }
+
+            public VariablesToolboxTab()
+            {
+                RelativeSizeAxes = Axes.Both;
+                InternalChild = new OsuScrollContainer
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Child = Content = new FillFlowContainer
+                    {
+                        RelativeSizeAxes = Axes.X,
+                        AutoSizeAxes = Axes.Y,
+                        Direction = FillDirection.Vertical,
+                    }
+                };
+            }
+        }
+
+        private class VariablesTab : VariablesToolboxTab
         {
             [Resolved]
             private Bindable<IProject> project { get; set; }
@@ -96,15 +117,12 @@ namespace sbtw.Editor.Graphics.UserInterface
             private string scriptName;
             private BindableDictionary<string, IEnumerable<ScriptVariableInfo>> variableMap;
 
+
             [BackgroundDependencyLoader]
             private void load(BindableDictionary<string, IEnumerable<ScriptVariableInfo>> variableMap)
             {
                 this.variableMap = variableMap.GetBoundCopy();
                 this.variableMap.BindCollectionChanged((_, __) => updateContents(), true);
-
-                RelativeSizeAxes = Axes.X;
-                AutoSizeAxes = Axes.Y;
-                Direction = FillDirection.Vertical;
             }
 
             public void SetTarget(string scriptName)
@@ -156,7 +174,7 @@ namespace sbtw.Editor.Graphics.UserInterface
             }
         }
 
-        private class ScriptListTab : FillFlowContainer
+        private class ScriptListTab : VariablesToolboxTab
         {
             private readonly Action<string> onClick;
 
@@ -168,9 +186,6 @@ namespace sbtw.Editor.Graphics.UserInterface
             [BackgroundDependencyLoader]
             private void load(BindableDictionary<string, IEnumerable<ScriptVariableInfo>> variableMap)
             {
-                RelativeSizeAxes = Axes.X;
-                AutoSizeAxes = Axes.Y;
-                Direction = FillDirection.Vertical;
                 variableMap.BindCollectionChanged((_, args) =>
                 {
                     Children = variableMap.Select(p => new ScriptListItem(p.Key, onClick)).ToList();

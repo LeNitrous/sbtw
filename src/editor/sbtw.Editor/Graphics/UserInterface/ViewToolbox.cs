@@ -49,22 +49,15 @@ namespace sbtw.Editor.Graphics.UserInterface
             }
         }
 
-        private abstract class ViewToolboxTab : FillFlowContainer
+        private class LayersToolboxTab : FillFlowContainer
         {
-            public ViewToolboxTab()
+            [BackgroundDependencyLoader]
+            private void load(EditorSessionStatics statics)
             {
                 RelativeSizeAxes = Axes.X;
                 AutoSizeAxes = Axes.Y;
                 Direction = FillDirection.Vertical;
                 Spacing = new Vector2(0, 5);
-            }
-        }
-
-        private class LayersToolboxTab : ViewToolboxTab
-        {
-            [BackgroundDependencyLoader]
-            private void load(EditorSessionStatics statics)
-            {
                 Children = new Drawable[]
                 {
                     new PlayerCheckbox { LabelText = @"Video", Current = statics.GetBindable<bool>(EditorSessionStatic.StoryboardShowVideo) },
@@ -78,18 +71,20 @@ namespace sbtw.Editor.Graphics.UserInterface
             }
         }
 
-        private class GroupsToolboxTab : ViewToolboxTab
+        private class GroupsToolboxTab : Container
         {
             private Bindable<IProject> project;
 
             [BackgroundDependencyLoader]
             private void load(Bindable<IProject> project)
             {
+                RelativeSizeAxes = Axes.Both;
                 this.project = project.GetBoundCopy();
                 this.project.BindValueChanged(e =>
                 {
                     Child = new GroupsList
                     {
+                        RelativeSizeAxes = Axes.Both,
                         Items = { BindTarget = e.NewValue.Groups }
                     };
                 }, true);

@@ -1,7 +1,9 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -114,14 +116,31 @@ namespace sbtw.Editor.Overlays
                 projectPath.Value.IndexOfAny(Path.GetInvalidPathChars()) != -1 &&
                 beatmapPath.Value.IndexOfAny(Path.GetInvalidPathChars()) != -1)
             {
-                Logger.Log("Failed to create project as there were invalid arguments.", level: LogLevel.Error);
+                Logger.Log("Cannot create project as there are invalid arguments.", level: LogLevel.Error);
                 return;
             }
 
-            var project = projects.Create(projectName.Value, projectPath.Value, languages.Languages.Select(l => l.CreateProjectGenerator()));
-            project.Save();
+            if (Path.GetExtension(beatmapPath.Value) != ".osz")
+            {
+                Logger.Log("Beatmap path is not a beatmap archive.", level: LogLevel.Error);
+                return;
+            }
 
-            editor.OpenProject(project);
+            try
+            {
+                ZipFile.ExtractToDirectory(beatmapPath.Value, Path.Combine(projectPath.Value, "Beatmap"));
+                File.Delete(beatmapPath.Value);
+
+                var project = projects.Create(projectName.Value, projectPath.Value, languages.Languages.Select(l => l.CreateProjectGenerator()));
+                project.Save();
+
+                editor.OpenProject(project);
+                Hide();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, "An error has occured while creating a project.");
+            }
         }
 
         protected override void PopIn()

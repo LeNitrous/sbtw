@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using osu.Framework.Platform;
@@ -16,7 +17,8 @@ namespace sbtw.Editor.Languages
         where T : Script
     {
         public abstract string Name { get; }
-        public virtual IEnumerable<string> Extensions => Array.Empty<string>();
+        public virtual IEnumerable<string> Extensions { get; } = Array.Empty<string>();
+        public virtual IEnumerable<string> Exclude { get; } = Array.Empty<string>();
         public virtual bool Enabled => true;
 
         protected bool IsDisposed { get; private set; }
@@ -31,6 +33,9 @@ namespace sbtw.Editor.Languages
             {
                 foreach (string file in storage.GetFiles(".", $"*.{extension}"))
                 {
+                    if (Exclude.Contains(file))
+                        continue;
+
                     string fullPath = Path.Combine(storage.GetFullPath("."), file);
                     toCompile.Add(CreateScript(Path.GetFileNameWithoutExtension(file), fullPath));
                 }

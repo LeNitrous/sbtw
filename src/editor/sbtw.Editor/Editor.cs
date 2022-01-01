@@ -51,6 +51,7 @@ namespace sbtw.Editor
         private Container contentContainer;
         private Container controlContainer;
         private Container topControlContainer;
+        private Container middleControlContainer;
         private Container bottomControlContainer;
         private Bindable<bool> showInterface;
         private double lastTrackTime;
@@ -110,10 +111,13 @@ namespace sbtw.Editor
                                 RelativeSizeAxes = Axes.Both,
                                 Children = new Drawable[]
                                 {
-                                    new Container
+                                    middleControlContainer = new Container
                                     {
-                                        RelativeSizeAxes = Axes.Both,
-                                        Padding = new MarginPadding { Top = 50, Bottom = 90, Horizontal = 10 },
+                                        RelativeSizeAxes = Axes.X,
+                                        Padding = new MarginPadding { Horizontal = 10 },
+                                        Height = 600,
+                                        Anchor = Anchor.Centre,
+                                        Origin = Anchor.Centre,
                                         Children = new Drawable[]
                                         {
                                             new VariablesToolbox(),
@@ -168,14 +172,14 @@ namespace sbtw.Editor
             showInterface = Session.GetBindable<bool>(EditorSessionStatic.ShowInterface);
             showInterface.BindValueChanged(e => controlContainer.Alpha = e.NewValue ? 1 : 0, true);
 
-            Beatmap.ValueChanged += _ => reloadControls();
-            Project.ValueChanged += _ => reloadControls();
+            Beatmap.ValueChanged += _ => updateControls();
+            Project.ValueChanged += _ => updateControls();
 
             scriptLogger.Add("Welcome to sbtw!");
             scriptLogger.Add("Messages logged by your scripts are shown here.");
             scriptLogger.Add("Error messages that also happen during compilation are also logged here.");
 
-            reloadControls();
+            updateControls();
         }
 
         private CancellationTokenSource generatePreviewTokenSource;
@@ -243,13 +247,13 @@ namespace sbtw.Editor
             Beatmap.Disabled = true;
         }
 
-        public void OpenProject(string path)
+        public void OpenProject(string path) => OpenProject(Projects.Load(path));
+
+        public void OpenProject(IProject project)
         {
-            Project.Value = Projects.Load(path);
+            Project.Value = project;
             OpenBeatmap(Project.Value.BeatmapSet.BeatmapSetInfo.Beatmaps.FirstOrDefault());
         }
-
-        public void OpenProject(IProject project) => OpenProject(project.Path);
 
         public void OpenBeatmap(IBeatmapInfo beatmapInfo)
         {
@@ -309,7 +313,7 @@ namespace sbtw.Editor
             return generated;
         }
 
-        private void reloadControls()
+        private void updateControls()
         {
             reloadTokenSource?.Cancel();
             generatePreviewTokenSource?.Cancel();
@@ -326,9 +330,13 @@ namespace sbtw.Editor
             LoadComponentAsync(new MainMenuBar(), loaded => topControlContainer.Child = loaded, reloadTokenSource.Token);
 
             if (Project.Value is DummyProject || Beatmap.Value is DummyWorkingBeatmap)
+            {
+                middleControlContainer.Hide();
                 return;
+            }
 
             spinner.Show();
+            middleControlContainer.Show();
 
             LoadComponentAsync(new EditorPreview(), loaded =>
             {

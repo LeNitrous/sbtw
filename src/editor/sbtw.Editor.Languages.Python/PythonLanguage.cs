@@ -19,7 +19,7 @@ namespace sbtw.Editor.Languages.Python
         {
             if (RuntimeInfo.OS == RuntimeInfo.Platform.Windows)
             {
-                foreach (string path in Environment.GetEnvironmentVariable("PATH").Split(";"))
+                foreach (string path in Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User).Split(";"))
                 {
                     if (!path.Contains("Python"))
                         continue;

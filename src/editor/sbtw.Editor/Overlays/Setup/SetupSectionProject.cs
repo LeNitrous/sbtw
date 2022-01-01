@@ -46,9 +46,15 @@ namespace sbtw.Editor.Overlays.Setup
                 {
                     Text = "Browse",
                     Width = 200,
-                    Action = () => Task.Run(async () => projectPath.Value = await editor.RequestPathAsync("Select project path")),
+                    Action = browse,
                 },
             };
         }
+
+        private void browse() => Task.Run(async () =>
+        {
+            string path = await editor.RequestPathAsync("Select project path");
+            Schedule(() => projectPath.Value = path);
+        });
     }
 }

@@ -43,7 +43,7 @@ namespace sbtw.Editor.Graphics.UserInterface
                 Content = new Container
                 {
                     RelativeSizeAxes = Axes.X,
-                    AutoSizeAxes = Axes.Y,
+                    Height = 500,
                 },
             };
 

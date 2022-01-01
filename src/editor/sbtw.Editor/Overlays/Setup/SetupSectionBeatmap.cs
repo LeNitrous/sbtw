@@ -36,9 +36,15 @@ namespace sbtw.Editor.Overlays.Setup
                 {
                     Text = "Browse",
                     Width = 200,
-                    Action = () => Task.Run(async () => beatmapPath.Value = await editor.RequestSingleFileAsync("Open beatmap", null, extensions: new[] { ".osz" })),
+                    Action = browse,
                 },
             };
         }
+
+        private void browse() => Task.Run(async () =>
+        {
+            string path = await editor.RequestSingleFileAsync("Open beatmap", null, extensions: new[] { ".osz" });
+            Schedule(() => beatmapPath.Value = path ?? string.Empty);
+        });
     }
 }

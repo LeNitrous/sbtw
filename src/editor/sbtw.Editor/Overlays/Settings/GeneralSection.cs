@@ -55,6 +55,7 @@ namespace sbtw.Editor.Overlays.Settings
                         LabelText = @"Preferred Editor",
                         Current = studioManager.Current,
                         Items = studioManager.Studios,
+                        ShowsDefaultIndicator = false,
                     }
                 };
             }

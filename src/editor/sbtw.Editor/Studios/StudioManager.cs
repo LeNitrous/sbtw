@@ -21,7 +21,7 @@ namespace sbtw.Editor.Studios
         {
             foreach (var studio in Supported)
             {
-                if (!studios.Any(s => s?.Equals(s) ?? false) && IsSupported(studio))
+                if (IsSupported(studio))
                     studios.Add(studio);
             }
 

@@ -22,12 +22,7 @@ namespace sbtw.Desktop.Studios
             new Studio
             {
                 Name = "code",
-                FriendlyName = "Visual Studio Code",
-            },
-            new Studio
-            {
-                Name = "code_insiders",
-                FriendlyName = "Visual Studio Code Insiders",
+                FriendlyName = "Microsoft VS Code",
             },
             new Studio
             {
@@ -45,8 +40,13 @@ namespace sbtw.Desktop.Studios
         {
             if (RuntimeInfo.OS == RuntimeInfo.Platform.Windows)
             {
-                foreach (string path in Environment.GetEnvironmentVariable("PATH").Split(';'))
-                    return path.Contains(studio.FriendlyName);
+                foreach (string path in Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User).Split(';'))
+                {
+                    if (path.Contains(studio.FriendlyName))
+                        return true;
+                }
+
+                return false;
             }
 
             return RuntimeInfo.OS == RuntimeInfo.Platform.Linux &&

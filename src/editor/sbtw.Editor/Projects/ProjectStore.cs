@@ -64,7 +64,7 @@ namespace sbtw.Editor.Projects
                 if (generators != null)
                 {
                     foreach (var generator in generators)
-                        generator.Generate(project.Resources.Storage);
+                        generator?.Generate(project.Files);
                 }
 
                 project.Save();

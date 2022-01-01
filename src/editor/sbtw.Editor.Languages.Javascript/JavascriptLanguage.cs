@@ -22,6 +22,7 @@ namespace sbtw.Editor.Languages.Javascript
 
         public override string Name => @"Javascript";
         public override IEnumerable<string> Extensions { get; } = new[] { "js", "ts" };
+        public override IEnumerable<string> Exclude { get; } = new[] { "sbtw.d.ts" };
 
         private V8Runtime runtime;
         private Typescript typescript;
