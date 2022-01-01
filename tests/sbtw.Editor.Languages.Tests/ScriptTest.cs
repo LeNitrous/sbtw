@@ -60,13 +60,13 @@ namespace sbtw.Editor.Languages.Tests
             Assert.That(script.Variables.FirstOrDefault(v => v.Name == "TestVariable").Value, Is.EqualTo("Hello World"));
         }
 
-        internal ScriptGenerationResult Generate(string name)
+        public ScriptGenerationResult Generate(string name)
         {
             string filename = $"{name}.{Extension}";
             return CreateScript(Copy(filename)).Generate();
         }
 
-        internal string Copy(string file)
+        public string Copy(string file)
         {
             using var rStream = GetStream(file);
             using var wStream = Storage.GetStream(file, FileAccess.Write);

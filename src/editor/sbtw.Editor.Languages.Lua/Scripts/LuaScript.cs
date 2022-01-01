@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using sbtw.Editor.Scripts;
 using LuaState = NLua.Lua;
 
@@ -11,20 +10,14 @@ namespace sbtw.Editor.Languages.Lua.Scripts
 {
     public class LuaScript : Script, IDisposable
     {
-        public override string Name { get; }
-
         private readonly LuaState state = new LuaState();
         private readonly string code;
         private bool isDisposed;
 
         public LuaScript(string name, string path)
+            : base(name, path)
         {
-            Name = name;
-            code = File.ReadAllText(path);
-            state.RegisterFunction("GetValue", this, GetType().GetMethods().FirstOrDefault(m => m.ReturnType == typeof(object)));
-            state.RegisterFunction("SetValue", this, GetType().GetMethods().FirstOrDefault(m => m.ReturnType == typeof(object)));
-            state.RegisterFunction("SetVideo", this, GetType().GetMethod("SetVideo"));
-            state.RegisterFunction("GetGroup", this, GetType().GetMethod("GetGroup"));
+            code = File.ReadAllText(Path);
         }
 
         protected override void Perform()
@@ -48,5 +41,8 @@ namespace sbtw.Editor.Languages.Lua.Scripts
             Dispose(true);
             GC.SuppressFinalize(this);
         }
+
+        protected override void RegisterMethod(string name, Delegate method)
+            => state.RegisterFunction(name, this, method.Method);
     }
 }

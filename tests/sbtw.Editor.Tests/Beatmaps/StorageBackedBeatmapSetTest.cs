@@ -9,6 +9,7 @@ using osu.Framework.IO.Stores;
 using osu.Game.Resources;
 using osu.Game.Tests;
 using sbtw.Editor.Beatmaps;
+using sbtw.Editor.IO;
 
 namespace sbtw.Editor.Tests.Beatmaps
 {
@@ -18,7 +19,7 @@ namespace sbtw.Editor.Tests.Beatmaps
         public void TestPopulatedStorage()
         {
             using var store = new DllResourceStore(OsuResources.ResourceAssembly);
-            using var host = new CleanRunHeadlessGameHost(nameof(StorageBackedBeatmapSetTest));
+            using var host = new CleanRunHeadlessGameHost(callingMethodName: nameof(StorageBackedBeatmapSetTest));
 
             try
             {
@@ -33,7 +34,7 @@ namespace sbtw.Editor.Tests.Beatmaps
                 ZipFile.ExtractToDirectory(host.Storage.GetFullPath("./circles.osz"), host.Storage.GetFullPath("."));
                 host.Storage.Delete("circles.osz");
 
-                var beatmapSet = new StorageBackedBeatmapSet(host.Storage, host, editor.Audio, editor.RulesetStore);
+                var beatmapSet = new StorageBackedBeatmapSet(new DemanglingResourceProvider(host, editor.Audio, host.Storage), editor.RulesetStore);
                 Assert.That(beatmapSet.BeatmapSetInfo.Beatmaps, Is.Not.Empty);
 
                 var beatmap = beatmapSet.GetWorkingBeatmap(beatmapSet.BeatmapSetInfo.Beatmaps.FirstOrDefault());
@@ -57,12 +58,12 @@ namespace sbtw.Editor.Tests.Beatmaps
         [Test]
         public void TestUnpopulatedStorage()
         {
-            using var host = new CleanRunHeadlessGameHost(nameof(StorageBackedBeatmapSetTest));
+            using var host = new CleanRunHeadlessGameHost(callingMethodName: nameof(StorageBackedBeatmapSetTest));
 
             try
             {
                 var editor = LoadEditor(host);
-                var beatmapSet = new StorageBackedBeatmapSet(host.Storage, host, editor.Audio, editor.RulesetStore);
+                var beatmapSet = new StorageBackedBeatmapSet(new DemanglingResourceProvider(host, editor.Audio, host.Storage), editor.RulesetStore);
                 Assert.That(beatmapSet.BeatmapSetInfo.Beatmaps, Is.Empty);
             }
             finally

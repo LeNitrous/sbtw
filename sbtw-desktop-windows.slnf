@@ -4,7 +4,6 @@
     "projects": [
       "src\\desktop\\sbtw.Desktop\\sbtw.Desktop.Windows.csproj",
       "src\\editor\\sbtw.Editor.Languages.Javascript\\sbtw.Editor.Languages.Javascript.csproj",
-      "src\\editor\\sbtw.Editor.Scripts\\sbtw.Editor.Scripts.csproj",
       "src\\editor\\sbtw.Editor\\sbtw.Editor.csproj",
       "tests\\sbtw.Editor.Tests\\sbtw.Editor.Tests.csproj",
       "tests\\sbtw.Editor.Languages.JavascriptTests\\sbtw.Editor.Languages.JavascriptTests.csproj"

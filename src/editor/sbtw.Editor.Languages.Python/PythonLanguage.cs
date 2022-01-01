@@ -2,6 +2,7 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using osu.Framework;
 using Python.Runtime;
@@ -48,6 +49,7 @@ namespace sbtw.Editor.Languages.Python
         }
 
         public override string Name => @"Python";
+        public override IEnumerable<string> Extensions => new[] { "py" };
         public override bool Enabled => !string.IsNullOrEmpty(PYTHON_RUNTIME_PATH);
 
         public PythonLanguage()

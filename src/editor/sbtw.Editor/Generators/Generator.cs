@@ -14,13 +14,17 @@ namespace sbtw.Editor.Generators
     {
         public async Task<GeneratorResult<T, U>> GenerateAsync(GeneratorConfig config, CancellationToken token = default)
         {
+            var scriptNames = config.Scripts.Select(s => s.Name);
+            if (scriptNames.Count() != scriptNames.Distinct().Count())
+                throw new ArgumentException($"Generator {nameof(config)} has duplicate script names");
+
             var context = CreateContext();
 
             PreGenerate(context);
 
             var elements = new Dictionary<IScriptedElement, U>();
             var ordering = config.Ordering?.ToArray() ?? Array.Empty<string>();
-            var generated = await Task.WhenAll(config.Scripts.Select(s => apply(s, config.Variables?.GetValueOrDefault(s.Name), token)));
+            var generated = await Task.WhenAll(config.Scripts?.Select(s => apply(s, config.Variables?.GetValueOrDefault(s.Name), token)) ?? Array.Empty<Task<ScriptGenerationResult>>());
 
             var groups = generated
                 .SelectMany(r => r.Groups)
@@ -44,7 +48,8 @@ namespace sbtw.Editor.Generators
                 Elements = elements,
                 Result = context,
                 Groups = groups.Select(g => g.Name),
-                Variables = generated.ToDictionary(k => k.Name, v => (IReadOnlyDictionary<string, object>)v.Variables.ToDictionary(i => i.Name, j => j.Value)),
+                Faulted = generated.Where(s => s.Faulted).Select(s => s.Name),
+                Variables = generated.ToDictionary(k => k.Name, v => v.Variables),
             };
         }
 
@@ -85,12 +90,14 @@ namespace sbtw.Editor.Generators
             }
         }
 
-        private static Task<ScriptGenerationResult> apply(Script script, IReadOnlyDictionary<string, object> variables = null, CancellationToken token = default)
+        private static Task<ScriptGenerationResult> apply(Script script, IEnumerable<ScriptVariableInfo> variables = null, CancellationToken token = default)
         {
             if (variables != null)
             {
-                foreach ((string name, object value) in variables)
-                    script.SetInternal(name, value);
+                foreach (var variable in variables)
+                {
+                    script.SetValueInternal(variable.Name, variable.Value);
+                }
             }
 
             return script.GenerateAsync(token);

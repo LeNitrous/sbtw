@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using osu.Framework.Platform;
-using osu.Game.Database;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
 
@@ -24,7 +23,7 @@ namespace sbtw.Editor.Languages
         string Name { get; }
         bool Enabled { get; }
         IProjectGenerator CreateProjectGenerator();
-        ILanguageConfigManager CreateConfigManager(RealmContextFactory realm);
+        ILanguageConfigManager CreateConfigManager();
         Task<IEnumerable<Script>> CompileAsync(Storage storage, CancellationToken token = default);
         IEnumerable<Script> Compile(Storage storage);
     }

@@ -5,6 +5,7 @@ using osu.Framework.Audio;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.IO.Stores;
 using osu.Framework.Platform;
+using osu.Game.Database;
 using osu.Game.IO;
 using FrameworkStorage = osu.Framework.Platform.Storage;
 
@@ -15,6 +16,8 @@ namespace sbtw.Editor.IO.Storage
         public AudioManager AudioManager { get; }
         public IResourceStore<byte[]> Files => Resources;
         public IResourceStore<byte[]> Resources { get; }
+        public RealmContextFactory RealmContextFactory { get; }
+
         public readonly FrameworkStorage Storage;
 
         private readonly GameHost host;

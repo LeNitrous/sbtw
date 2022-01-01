@@ -22,22 +22,28 @@ namespace sbtw.Editor
             => dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
         protected EditorConfigManager LocalEditorConfig { get; private set; }
+        protected EditorSessionStatics Session { get; private set; }
+
         protected LanguageStore Languages { get; private set; }
-        protected StudioManager StudioManager { get; private set; }
+        protected ProjectStore Projects { get; private set; }
+        protected StudioManager Studios { get; private set; }
+
+        public Bindable<Studio> Studio { get; private set; }
+        public Bindable<IProject> Project { get; private set; }
 
         [BackgroundDependencyLoader]
         private void load()
         {
             dependencies.CacheAs(this);
-
             dependencies.CacheAs(LocalEditorConfig);
-            dependencies.CacheAs(StudioManager = CreateStudioManager());
+            dependencies.CacheAs(Session = new EditorSessionStatics());
+            dependencies.CacheAs(Studios = CreateStudioManager());
+            dependencies.CacheAs(Projects = new ProjectStore(Host, Audio, RulesetStore));
             dependencies.CacheAs(Languages = new LanguageStore());
-
-            var projectManager = new ProjectStore(Host);
-            dependencies.CacheAs(projectManager);
-            dependencies.CacheAs<Bindable<IProject>>(new NonNullableBindable<IProject>(new DummyProject()));
+            dependencies.CacheAs(Studio = Studios.Current);
+            dependencies.CacheAs(Project = new NonNullableBindable<IProject>(new DummyProject()));
         }
+
         protected abstract StudioManager CreateStudioManager();
 
         public abstract Task<IEnumerable<string>> RequestMultipleFileAsync(string title = @"Open Files", string suggestedPath = null, IEnumerable<string> extensions = null);

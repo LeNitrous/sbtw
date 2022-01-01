@@ -7,7 +7,6 @@ using System.IO;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using osu.Framework.Bindables;
-using osu.Game.Database;
 using sbtw.Editor.Languages.Javascript.Projects;
 using sbtw.Editor.Languages.Javascript.Scripts;
 using sbtw.Editor.Projects;
@@ -30,9 +29,9 @@ namespace sbtw.Editor.Languages.Javascript
         private readonly Bindable<int> debugPort;
         private readonly Bindable<bool> debugEnabled;
 
-        public JavascriptLanguage(RealmContextFactory realm)
+        public JavascriptLanguage()
         {
-            config = new JavascriptConfigManager(this, realm);
+            config = new JavascriptConfigManager();
             debugPort = config.GetBindable<int>(JavascriptSetting.DebugPort);
             debugEnabled = config.GetBindable<bool>(JavascriptSetting.DebugEnabled);
 
@@ -44,8 +43,6 @@ namespace sbtw.Editor.Languages.Javascript
 
         private void createRuntime()
         {
-            Clear();
-
             runtime?.Dispose();
             typescript?.Dispose();
 
@@ -60,7 +57,7 @@ namespace sbtw.Editor.Languages.Javascript
         }
 
         public override IProjectGenerator CreateProjectGenerator() => new JavascriptProjectGenerator();
-        public override ILanguageConfigManager CreateConfigManager(RealmContextFactory realm) => config;
+        public override ILanguageConfigManager CreateConfigManager() => config;
 
         protected override JavascriptScript CreateScript(string name, string path)
         {
@@ -75,14 +72,6 @@ namespace sbtw.Editor.Languages.Javascript
                 default:
                     throw new ArgumentException(@"Cannot create a script for an unknown file type.");
             }
-        }
-
-        protected override void Clear()
-        {
-            foreach (var script in Cache)
-                script.Dispose();
-
-            base.Clear();
         }
 
         protected override void Dispose(bool isDisposing)

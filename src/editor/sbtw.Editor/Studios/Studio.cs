@@ -2,6 +2,7 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using System.Diagnostics;
 
 namespace sbtw.Editor.Studios
 {
@@ -24,5 +25,13 @@ namespace sbtw.Editor.Studios
 
         public override int GetHashCode()
             => HashCode.Combine(Name, FriendlyName);
+
+        public void Open(string path) => Process.Start(new ProcessStartInfo
+        {
+            FileName = Name,
+            Arguments = path,
+            WindowStyle = ProcessWindowStyle.Hidden,
+            UseShellExecute = true,
+        });
     }
 }

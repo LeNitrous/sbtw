@@ -7,6 +7,7 @@ using NUnit.Framework;
 using osu.Game.Beatmaps;
 using osu.Game.Storyboards;
 using sbtw.Editor.Generators;
+using sbtw.Editor.Scripts;
 using sbtw.Editor.Tests.Generators;
 
 namespace sbtw.Editor.Tests.Scripts
@@ -19,7 +20,7 @@ namespace sbtw.Editor.Tests.Scripts
         public void TestVariableSet()
         {
             var generated = Generate("TestScript", script => script.SetValue("TestVariable", true));
-            Assert.That(generated.Variables["TestScript"]["TestVariable"], Is.True);
+            Assert.That(generated.Variables["TestScript"].FirstOrDefault(v => v.Name == "TestVariable").Value, Is.True);
         }
 
         [Test]
@@ -31,7 +32,7 @@ namespace sbtw.Editor.Tests.Scripts
                 script.SetValue("TestVariable", 89);
             });
 
-            Assert.That(generated.Variables["TestScript"]["TestVariable"], Is.EqualTo(44));
+            Assert.That(generated.Variables["TestScript"].FirstOrDefault(v => v.Name == "TestVariable").Value, Is.EqualTo(44));
         }
 
         [Test]
@@ -40,21 +41,18 @@ namespace sbtw.Editor.Tests.Scripts
             var generated = Generate(
                 "TestScript",
                 script => script.SetValue("TestVariable", 1),
-                new Dictionary<string, IReadOnlyDictionary<string, object>>
+                new Dictionary<string, IEnumerable<ScriptVariableInfo>>
                 {
                     {
                         "TestScript",
-                        new Dictionary<string, object>
+                        new[]
                         {
-                            {
-                                "TestVariable",
-                                24
-                            }
+                            new ScriptVariableInfo("TestVariable", 24)
                         }
                     }
                 });
 
-            Assert.That(generated.Variables["TestScript"]["TestVariable"], Is.EqualTo(24));
+            Assert.That(generated.Variables["TestScript"].FirstOrDefault(v => v.Name == "TestVariable").Value, Is.EqualTo(24));
         }
 
         [Test]

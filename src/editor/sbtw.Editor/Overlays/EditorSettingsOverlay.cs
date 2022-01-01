@@ -23,7 +23,7 @@ namespace sbtw.Editor.Overlays
             new Settings.GeneralSection(),
             new Settings.InputSection(),
             new AudioSection(),
-            new GraphicsSection(),
+            new Settings.GraphicsSection(),
             new Settings.DebugSection(),
         };
     }

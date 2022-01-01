@@ -3,24 +3,24 @@
 
 using System;
 using NUnit.Framework;
-using osu.Framework.Platform;
 using osu.Framework.Testing;
 using osu.Game.Tests;
 using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Tests.Projects
 {
-    public class ProjectManagerTest
+    public class ProjectStoreTest : GameHostTest
     {
         [Test]
         public void TestProjectCreation()
         {
-            using var host = new CleanRunHeadlessGameHost(nameof(ProjectManagerTest));
+            using var host = new CleanRunHeadlessGameHost(callingMethodName: nameof(ProjectStoreTest));
             using var storage = new TemporaryNativeStorage($"project-{Guid.NewGuid()}", host);
 
             try
             {
-                var manager = new ProjectStore(host);
+                var editor = LoadEditor(host);
+                var manager = new ProjectStore(host, editor.Audio, editor.RulesetStore);
                 var project = manager.Create("project", storage.GetFullPath("."));
                 Assert.That(project, Is.Not.Null);
             }
@@ -33,38 +33,19 @@ namespace sbtw.Editor.Tests.Projects
         [Test]
         public void TestProjectLoading()
         {
-            using var host = new CleanRunHeadlessGameHost(nameof(ProjectManagerTest));
+            using var host = new CleanRunHeadlessGameHost(callingMethodName: nameof(ProjectStoreTest));
             using var storage = new TemporaryNativeStorage($"project-{Guid.NewGuid()}", host);
 
             try
             {
-                var manager = new ProjectStore(host);
+                var editor = LoadEditor(host);
+                var manager = new ProjectStore(host, editor.Audio, editor.RulesetStore);
                 var project = manager.Create("project", storage.GetFullPath("."));
 
                 Assert.That(project, Is.Not.Null);
 
                 var loaded = manager.Load(storage.GetFullPath("./project.sbtw.json"));
                 Assert.That(project, Is.Not.Null);
-            }
-            finally
-            {
-                host.Exit();
-            }
-        }
-
-        private void createProjectAndPerform(Action<ProjectStore, Storage> perform)
-        {
-            using var host = new CleanRunHeadlessGameHost(nameof(ProjectManagerTest));
-            using var storage = new TemporaryNativeStorage($"project-{Guid.NewGuid()}", host);
-
-            try
-            {
-                var manager = new ProjectStore(host);
-                var project = manager.Create("project", storage.GetFullPath("."));
-
-                Assert.That(project, Is.Not.Null);
-
-                perform.Invoke(manager, storage);
             }
             finally
             {

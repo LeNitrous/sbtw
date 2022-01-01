@@ -8,13 +8,11 @@ namespace sbtw.Editor.Tests.Scripts
 {
     public class TestScript : Script
     {
-        public override string Name { get; }
-
         private readonly Action<Script> performAction;
 
         public TestScript(string name, Action<Script> performAction)
+            : base(name, string.Empty)
         {
-            Name = name;
             this.performAction = performAction;
         }
 
@@ -24,5 +22,9 @@ namespace sbtw.Editor.Tests.Scripts
         }
 
         protected override void Perform() => performAction?.Invoke(this);
+
+        protected override void RegisterMethod(string name, Delegate method)
+        {
+        }
     }
 }

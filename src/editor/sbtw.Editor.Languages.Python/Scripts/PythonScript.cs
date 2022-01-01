@@ -8,27 +8,44 @@ using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Languages.Python.Scripts
 {
-    public class PythonScript : Script
+    public class PythonScript : Script, IDisposable
     {
-        public override string Name { get; }
-
         private readonly string code;
+        private readonly Py.GILState state;
+        private readonly PyModule context;
+        private bool isDisposed;
 
         public PythonScript(string name, string path)
+            : base(name, path)
         {
-            Name = name;
-            code = File.ReadAllText(path);
+            code = File.ReadAllText(Path);
+            state = Py.GIL();
+            context = Py.CreateScope(Name);
         }
 
         protected override void Perform()
         {
-            using var _ = Py.GIL();
-            using var ctx = Py.CreateScope(Name);
-            ctx.Set("SetValue", new Func<string, object, object>(SetValue));
-            ctx.Set("GetValue", new Func<string, object>(GetValue));
-            ctx.Set("SetVideo", new Action<string, int>(SetVideo));
-            ctx.Set("GetGroup", new Func<string, ScriptElementGroup>(GetGroup));
-            ctx.Exec(code);
+            context.Exec(code);
+        }
+
+        protected override void RegisterMethod(string name, Delegate method)
+            => context.Set(name, method);
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (isDisposed && !disposing)
+                return;
+
+            context.Dispose();
+            state.Dispose();
+
+            isDisposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -8,7 +8,7 @@
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/lenitrous/sbtw/deploy?label=deploy)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/lenitrous/sbtw)
 
-The Storyboard Translation Workspace (sbtw!) is an osu! storyboard editor for generating storyboards with scripts written in C#, Visual Basic, Lua, Python, Typescript, and Javascript. It uses [osu! (lazer)](https://github.com/ppy/osu) as its base. It is inspired by [storybrew](https://github.com/Damnae/storybrew) by Damnae.
+The Storyboard Translation Workspace (sbtw!) is an osu! storyboard editor for generating storyboards with scripts written in Lua, Python, Typescript, and Javascript. It uses [osu! (lazer)](https://github.com/ppy/osu) as its base. It is inspired by [storybrew](https://github.com/Damnae/storybrew) by Damnae.
 
 ## Running sbtw!
 Get a copy from the [releases](https://github.com/LeNitrous/sbtw/releases) page or get it from the links down below to get the latest version:
@@ -18,14 +18,17 @@ Get a copy from the [releases](https://github.com/LeNitrous/sbtw/releases) page 
 
 ### Notes
 - When running on Linux please install a system-wide FFmpeg installation available to support video decoding.
-- You can use any text editor that has syntax highlighting for Javascript for convenience however it is highly recommended to use [Visual Studio Code](https://code.visualstudio.com/) to support Intellisense for built-in documentation support.
+- You can use any text editor that has syntax highlighting for convenience however it is highly recommended to use any of the supported code editors listed below to support Intellisense for built-in documentation support.
+   - [Visual Studio Code](https://code.visualstudio.com/)
+   - [Atom](https://atom.io/)
+   - [Sublime Text](https://www.sublimetext.com/)
 
 ## Building
 You can clone this repository using git or by downloading a copy. However there are some prerequisites that must be met before proceeding.
 - [.NET 5.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/5.0) or later
 - [Visual Studio Code](https://code.visualstudio.com/)
    - see [this article](https://code.visualstudio.com/docs/languages/csharp) for preparing Visual Studio Code in building C# projects.
-- [Visual Studio](https://visualstudio.microsoft.com/) (for building the Windows App)
+- [Visual Studio](https://visualstudio.microsoft.com/) (optionally for targeting Windows)
    - see [this article](https://docs.microsoft.com/en-us/windows/apps/windows-app-sdk/) for preparing Visual Studio in using the Windows App SDK.
 
 ## Contributing

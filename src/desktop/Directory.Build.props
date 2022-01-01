@@ -4,10 +4,13 @@
     <AssemblyVersion>0.0.0</AssemblyVersion>
     <OutputType>WinExe</OutputType>
     <ApplicationIcon>../../../assets/icon.ico</ApplicationIcon>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="../../../assets/icon.ico" />
+    <EmbeddedResource Include="../../../assets/icon.ico">
+      <LogicalName>icon.ico</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

@@ -5,18 +5,24 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using osu.Framework.Audio;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
+using osu.Game.Rulesets;
 
 namespace sbtw.Editor.Projects
 {
     public class ProjectStore
     {
         private readonly GameHost host;
+        private readonly AudioManager audio;
+        private readonly RulesetStore rulesets;
 
-        public ProjectStore(GameHost host)
+        public ProjectStore(GameHost host, AudioManager audio, RulesetStore rulesets)
         {
             this.host = host;
+            this.audio = audio;
+            this.rulesets = rulesets;
         }
 
         public IProject Load(string path)
@@ -31,7 +37,7 @@ namespace sbtw.Editor.Projects
                 using var stream = File.OpenRead(file.FullName);
                 using var reader = new StreamReader(stream);
 
-                var project = new Project(host.GetStorage(path), Path.GetFileNameWithoutExtension(file.Name));
+                var project = new Project(host, audio, rulesets, host.GetStorage(Path.GetDirectoryName(path)), Path.GetFileNameWithoutExtension(file.Name));
                 JsonConvert.PopulateObject(reader.ReadToEnd(), project);
 
                 return project;
@@ -53,12 +59,12 @@ namespace sbtw.Editor.Projects
                 if (projectPath.GetFiles().Length > 0)
                     throw new ArgumentException("Project directory is not empty.");
 
-                var project = new Project(host.GetStorage(path), name);
+                var project = new Project(host, audio, rulesets, host.GetStorage(path), name);
 
                 if (generators != null)
                 {
                     foreach (var generator in generators)
-                        generator.Generate(project.Storage);
+                        generator.Generate(project.Resources.Storage);
                 }
 
                 project.Save();

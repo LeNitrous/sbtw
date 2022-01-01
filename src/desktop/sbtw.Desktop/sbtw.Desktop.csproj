@@ -1,12 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <AssemblyName>sbtw</AssemblyName>
+    <AssemblyVersion>0.0.0</AssemblyVersion>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\editor\sbtw.Editor\sbtw.Editor.csproj" />
+    <ProjectReference Include="..\..\editor\sbtw.Editor.Languages.Lua\sbtw.Editor.Languages.Lua.csproj" />
+    <ProjectReference Include="..\..\editor\sbtw.Editor.Languages.Python\sbtw.Editor.Languages.Python.csproj" />
     <ProjectReference Include="..\..\editor\sbtw.Editor.Languages.Javascript\sbtw.Editor.Languages.Javascript.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="runtimes/**/*" Link="%(Filename)%(extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

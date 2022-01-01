@@ -2,39 +2,57 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using osu.Framework.Audio;
+using osu.Framework.Bindables;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
+using osu.Game.Rulesets;
+using sbtw.Editor.Beatmaps;
+using sbtw.Editor.IO;
+using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Projects
 {
     public class Project : IProject
     {
+        public BindableList<string> Groups { get; } = new BindableList<string>();
+        public BindableDictionary<string, IEnumerable<ScriptVariableInfo>> Variables { get; } = new BindableDictionary<string, IEnumerable<ScriptVariableInfo>>();
+
+        [JsonIgnore]
         public string Name { get; }
+
+        [JsonIgnore]
         public string Path { get; }
 
         [JsonIgnore]
-        public readonly Storage Storage;
+        public StorageBackedBeatmapSet BeatmapSet { get; }
 
-        public Project(Storage storage, string name)
+        [JsonIgnore]
+        public DemanglingResourceProvider Resources { get; }
+
+        [JsonIgnore]
+        public Storage Files { get; }
+
+        public Project(GameHost host, AudioManager audio, RulesetStore rulesets, Storage storage, string name)
         {
-            if (storage == null)
-                throw new ArgumentNullException(nameof(storage));
-
             if (string.IsNullOrEmpty(name))
                 throw new ArgumentNullException(nameof(name));
 
             Name = name;
             Path = storage.GetFullPath(".");
-            Storage = storage;
+            Files = storage;
+            Resources = new DemanglingResourceProvider(host, audio, storage.GetStorageForDirectory("Beatmap"));
+            BeatmapSet = new StorageBackedBeatmapSet(Resources, rulesets);
         }
 
         public bool Save()
         {
             try
             {
-                using var stream = Storage.GetStream(System.IO.Path.ChangeExtension(Name, ".sbtw.json"), FileAccess.Write);
+                using var stream = Files.GetStream(System.IO.Path.ChangeExtension(Name, ".sbtw.json"), FileAccess.Write);
                 using var writer = new StreamWriter(stream);
                 stream.SetLength(0);
                 writer.Write(JsonConvert.SerializeObject(this, Formatting.Indented));

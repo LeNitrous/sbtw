@@ -10,6 +10,7 @@ using Microsoft.UI.Windowing;
 using osu.Framework.Platform;
 using osu.Framework.Platform.Windows;
 using osu.Game.Extensions;
+using Windows.UI;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
@@ -63,6 +64,11 @@ namespace sbtw.Desktop.Windows
 
             var windowId = Win32Interop.GetWindowIdFromWindow(Window.WindowHandle);
             AppWindow = AppWindow.GetFromWindowId(windowId);
+
+            AppWindow.TitleBar.BackgroundColor = Color.FromArgb(255, 17, 17, 17);
+            AppWindow.TitleBar.ButtonBackgroundColor = Color.FromArgb(255, 17, 17, 17);
+            AppWindow.TitleBar.InactiveBackgroundColor = Color.FromArgb(255, 17, 17, 17);
+            AppWindow.TitleBar.ButtonInactiveBackgroundColor = Color.FromArgb(255, 17, 17, 17);
         }
     }
 }

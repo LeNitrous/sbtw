@@ -10,6 +10,6 @@ namespace sbtw.Editor.Generators
     {
         public IEnumerable<Script> Scripts { get; set; }
         public IEnumerable<string> Ordering { get; set; }
-        public IReadOnlyDictionary<string, IReadOnlyDictionary<string, object>> Variables { get; set; }
+        public IReadOnlyDictionary<string, IEnumerable<ScriptVariableInfo>> Variables { get; set; }
     }
 }

@@ -5,12 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ppy.osu.Game" Version="2021.1211.0" />
+    <PackageReference Include="ppy.osu.Game" Version="2021.1225.0" />
+    <PackageReference Include="ppy.osu.Game.Rulesets.Catch" Version="2021.1225.0" />
+    <PackageReference Include="ppy.osu.Game.Rulesets.Mania" Version="2021.1225.0" />
     <PackageReference Include="ppy.osu.Game.Rulesets.Osu" Version="2021.1211.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\sbtw.Editor.Scripts\sbtw.Editor.Scripts.csproj" />
+    <PackageReference Include="ppy.osu.Game.Rulesets.Taiko" Version="2021.1225.0" />
   </ItemGroup>
 
 </Project>

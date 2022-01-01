@@ -27,8 +27,18 @@ namespace sbtw.Desktop.Studios
             new Studio
             {
                 Name = "code_insiders",
-                FriendlyName = "Visual Studio Code Insiders"
-            }
+                FriendlyName = "Visual Studio Code Insiders",
+            },
+            new Studio
+            {
+                Name = "atom",
+                FriendlyName = "Atom",
+            },
+            new Studio
+            {
+                Name = "subl",
+                FriendlyName = "Sublime Text",
+            },
         };
 
         protected override bool IsSupported(Studio studio)
@@ -39,7 +49,8 @@ namespace sbtw.Desktop.Studios
                     return path.Contains(studio.FriendlyName);
             }
 
-            return RuntimeInfo.OS == RuntimeInfo.Platform.Linux && File.Exists($@"/usr/bin/{studio.Name}");
+            return RuntimeInfo.OS == RuntimeInfo.Platform.Linux &&
+                (File.Exists($@"/usr/bin/{studio.Name}") || File.Exists($@"/usr/local/bin/{studio.Name}"));
         }
     }
 }

@@ -66,7 +66,7 @@ namespace sbtw.Editor.Overlays.Settings
 
             private class StudioDropdownControl : DropdownControl
             {
-                protected override LocalisableString GenerateItemText(Studio item) => item.FriendlyName;
+                protected override LocalisableString GenerateItemText(Studio item) => item?.FriendlyName ?? "None";
             }
         }
     }
