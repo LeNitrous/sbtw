@@ -8,7 +8,6 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
 using osu.Framework.Threading;
@@ -23,15 +22,15 @@ using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Graphics.UserInterface
 {
-    public class VariablesToolbox : EditorTabbedToolbox<string>
+    public class ScriptsToolbox : EditorTabbedToolbox<string>
     {
         [Cached]
         private readonly BindableDictionary<string, IEnumerable<ScriptVariableInfo>> variableMap = new BindableDictionary<string, IEnumerable<ScriptVariableInfo>>();
         private readonly VariablesTab variablesTab;
         private string currentTarget;
 
-        public VariablesToolbox()
-            : base("Variables")
+        public ScriptsToolbox()
+            : base("Scripts")
         {
             AddTab(@"Scripts", new ScriptListTab(handleScriptSelection));
             Add(variablesTab = new VariablesTab { Alpha = 0 });
@@ -50,10 +49,10 @@ namespace sbtw.Editor.Graphics.UserInterface
         private void handleScriptSelection(string scriptName)
         {
             if (!string.IsNullOrEmpty(currentTarget))
-                RemoveTab(currentTarget);
+                RemoveTab(currentTarget + " (Variables)");
 
-            AddTab(scriptName, variablesTab);
-            SetTab(scriptName);
+            AddTab(scriptName + " (Variables)", variablesTab);
+            SetTab(scriptName + " (Variables)");
 
             variablesTab.SetTarget(currentTarget = scriptName);
         }
@@ -67,6 +66,7 @@ namespace sbtw.Editor.Graphics.UserInterface
         private class VariablesBreadcrumb : BreadcrumbControl<string>
         {
             protected override TabItem<string> CreateTabItem(string value) => new VariablesBreadcrumbItem(value);
+            protected override Dropdown<string> CreateDropdown() => null;
 
             private class VariablesBreadcrumbItem : BreadcrumbTabItem
             {
@@ -101,6 +101,7 @@ namespace sbtw.Editor.Graphics.UserInterface
                         RelativeSizeAxes = Axes.X,
                         AutoSizeAxes = Axes.Y,
                         Direction = FillDirection.Vertical,
+                        Spacing = new Vector2(0, 5),
                     }
                 };
             }
@@ -215,13 +216,6 @@ namespace sbtw.Editor.Graphics.UserInterface
                     {
                         Anchor = Anchor.CentreLeft,
                         Origin = Anchor.CentreLeft,
-                    },
-                    new IconButton
-                    {
-                        Size = new Vector2(30),
-                        Icon = FontAwesome.Solid.Sync,
-                        Anchor = Anchor.CentreRight,
-                        Origin = Anchor.CentreRight,
                     },
                 };
             }
