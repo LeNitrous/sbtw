@@ -14,8 +14,8 @@ namespace sbtw.Editor.Languages
     public interface ILanguage<T> : IDisposable
         where T : Script
     {
-        Task<IEnumerable<T>> CompileAsync(Storage storage, CancellationToken token = default);
-        IEnumerable<T> Compile(Storage storage);
+        Task<IEnumerable<T>> CompileAsync(Storage storage, IEnumerable<string> ignore = null, CancellationToken token = default);
+        IEnumerable<T> Compile(Storage storage, IEnumerable<string> ignore = null);
     }
 
     public interface ILanguage : IDisposable
@@ -24,7 +24,7 @@ namespace sbtw.Editor.Languages
         bool Enabled { get; }
         IProjectGenerator CreateProjectGenerator();
         ILanguageConfigManager CreateConfigManager();
-        Task<IEnumerable<Script>> CompileAsync(Storage storage, CancellationToken token = default);
-        IEnumerable<Script> Compile(Storage storage);
+        Task<IEnumerable<Script>> CompileAsync(Storage storage, IEnumerable<string> ignore = null, CancellationToken token = default);
+        IEnumerable<Script> Compile(Storage storage, IEnumerable<string> ignore = null);
     }
 }

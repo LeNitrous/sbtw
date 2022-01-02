@@ -3,18 +3,32 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Humanizer;
+using osu.Framework.Audio.Track;
 using osu.Framework.Logging;
+using osu.Framework.Platform;
+using osu.Game.Beatmaps;
 
 namespace sbtw.Editor.Scripts
 {
     public abstract class Script
     {
-        private static readonly Dictionary<MethodInfo, Type> visible_member_types = new Dictionary<MethodInfo, Type>();
+        private static readonly Dictionary<MethodInfo, Type> importable_methods = new Dictionary<MethodInfo, Type>();
+        private static readonly List<PropertyInfo> importable_properties = new List<PropertyInfo>();
+        private static readonly Type[] importable_types = new[]
+        {
+            typeof(Layer),
+            typeof(osuTK.Vector2),
+            typeof(osu.Framework.Graphics.Anchor),
+            typeof(osu.Framework.Graphics.Easing),
+            typeof(osu.Framework.Graphics.Colour4),
+            typeof(osu.Game.Storyboards.AnimationLoopType),
+        };
 
         static Script()
         {
@@ -46,8 +60,11 @@ namespace sbtw.Editor.Scripts
                     producedType = producedType.MakeGenericType(genericTypes.ToArray());
                 }
 
-                visible_member_types.Add(method, producedType);
+                importable_methods.Add(method, producedType);
             }
+
+            foreach (var property in members.OfType<PropertyInfo>())
+                importable_properties.Add(property);
         }
 
         public readonly string Name;
@@ -58,7 +75,13 @@ namespace sbtw.Editor.Scripts
         private readonly List<ScriptElementGroup> groups = new List<ScriptElementGroup>();
         protected readonly Logger Logger = Logger.GetLogger("script");
 
-        protected abstract void Perform();
+        private Storage storage;
+
+        [Visible]
+        public IBeatmap Beatmap { get; private set; }
+
+        [Visible]
+        public Waveform Waveform { get; private set; }
 
         protected Script(string name, string path)
         {
@@ -134,12 +157,34 @@ namespace sbtw.Editor.Scripts
         public void Log(string message)
             => Logger.Debug($"[{System.IO.Path.GetFileName(Path)}]: {message}");
 
+        [Visible]
+        public byte[] OpenFile(string path)
+        {
+            if (storage?.Exists(path) ?? false)
+                return null;
+
+            byte[] data = null;
+
+            using (var stream = storage.GetStream(path, mode: FileMode.Open))
+            {
+                using var reader = new MemoryStream();
+                stream.CopyTo(reader);
+                data = reader.ToArray();
+            }
+
+            return data;
+        }
+
         public void SetValueInternal(string name, object value)
             => internalVariables.Add(new ScriptVariableInfo(name, value));
 
-        public ScriptGenerationResult Generate()
+        public ScriptGenerationResult Generate(Storage storage = null, IBeatmap beatmap = null, Waveform waveform = null)
         {
-            shareVisibleMembers();
+            this.storage = storage;
+            this.Beatmap = beatmap;
+            this.Waveform = waveform;
+
+            importTypesAndMembers();
             Compile();
 
             bool faulted = false;
@@ -157,12 +202,12 @@ namespace sbtw.Editor.Scripts
             return new ScriptGenerationResult { Name = Name, Groups = groups, Variables = variables, Faulted = faulted };
         }
 
-        public Task<ScriptGenerationResult> GenerateAsync(CancellationToken token = default)
+        public Task<ScriptGenerationResult> GenerateAsync(Storage storage = null, IBeatmap beatmap = null, Waveform waveform = null, CancellationToken token = default)
         {
             if (token.IsCancellationRequested)
                 token.ThrowIfCancellationRequested();
 
-            return Task.Run(Generate, token);
+            return Task.Run(() => Generate(storage, beatmap, waveform), token);
         }
 
         protected virtual string FormatErrorMessage(Exception exception) => exception.ToString();
@@ -171,12 +216,21 @@ namespace sbtw.Editor.Scripts
         {
         }
 
+        protected abstract void Perform();
         protected abstract void RegisterMethod(string name, Delegate method);
+        protected abstract void RegisterField(string name, object value);
+        protected abstract void RegisterType(Type type);
 
-        private void shareVisibleMembers()
+        private void importTypesAndMembers()
         {
-            foreach ((MethodInfo method, Type methodType) in visible_member_types)
+            foreach ((MethodInfo method, Type methodType) in importable_methods)
                 RegisterMethod(method.Name, method.CreateDelegate(methodType, this));
+
+            foreach (PropertyInfo property in importable_properties)
+                RegisterField(property.Name, property.GetValue(this));
+
+            foreach (Type type in importable_types)
+                RegisterType(type);
         }
     }
 }

@@ -29,8 +29,6 @@ namespace sbtw.Editor.Graphics.UserInterface
     [Cached(typeof(ISamplePlaybackDisabler))]
     public class EditorPreview : CompositeDrawable, IBeatSnapProvider, ISamplePlaybackDisabler
     {
-        public PlaybackControl Controls { get; private set; }
-
         private readonly BindableBeatDivisor beatDivisor = new BindableBeatDivisor();
         private readonly Bindable<bool> samplePlaybackDisabled = new Bindable<bool>();
 
@@ -50,6 +48,9 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         [Resolved]
         private LanguageStore languages { get; set; }
+
+        [Resolved]
+        private PlaybackControl controls { get; set; }
 
         private DependencyContainer dependencies;
 
@@ -112,10 +113,10 @@ namespace sbtw.Editor.Graphics.UserInterface
                 }
             });
 
-            AddInternal(Controls = new PlaybackControl());
-
             showPlayfield = statics.GetBindable<bool>(EditorSessionStatic.ShowPlayfield);
             showPlayfield.BindValueChanged(e => playfield.Alpha = e.NewValue ? 1 : 0, true);
+
+            controls.SetState(editorBeatmap, clock);
         }
 
         public void SetStoryboard(Storyboard storyboard, IResourceStore<byte[]> resources)
@@ -139,7 +140,8 @@ namespace sbtw.Editor.Graphics.UserInterface
         protected override void Update()
         {
             base.Update();
-            clock?.ProcessFrame();
+            if (beatmap.Value.Track.IsAlive)
+                clock?.ProcessFrame();
         }
 
         protected override bool OnKeyDown(KeyDownEvent e)

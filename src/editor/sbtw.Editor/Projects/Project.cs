@@ -20,6 +20,7 @@ namespace sbtw.Editor.Projects
     {
         public BindableList<string> Groups { get; } = new BindableList<string>();
         public BindableDictionary<string, IEnumerable<ScriptVariableInfo>> Variables { get; } = new BindableDictionary<string, IEnumerable<ScriptVariableInfo>>();
+        public List<string> Ignore { get; } = new List<string>();
 
         [JsonIgnore]
         public string Name { get; }

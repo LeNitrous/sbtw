@@ -23,9 +23,9 @@ namespace sbtw.Editor.Languages
 
         protected bool IsDisposed { get; private set; }
 
-        public IEnumerable<T> Compile(Storage storage) => CompileAsync(storage).Result;
+        public IEnumerable<T> Compile(Storage storage, IEnumerable<string> ignore = null) => CompileAsync(storage, ignore).Result;
 
-        public Task<IEnumerable<T>> CompileAsync(Storage storage, CancellationToken token = default)
+        public Task<IEnumerable<T>> CompileAsync(Storage storage, IEnumerable<string> ignore = null, CancellationToken token = default)
         {
             var toCompile = new List<T>();
 
@@ -33,7 +33,7 @@ namespace sbtw.Editor.Languages
             {
                 foreach (string file in storage.GetFiles(".", $"*.{extension}"))
                 {
-                    if (Exclude.Contains(file))
+                    if (Exclude.Contains(file) || ignore.Contains(file))
                         continue;
 
                     string fullPath = Path.Combine(storage.GetFullPath("."), file);
@@ -65,10 +65,10 @@ namespace sbtw.Editor.Languages
             GC.SuppressFinalize(this);
         }
 
-        async Task<IEnumerable<Script>> ILanguage.CompileAsync(Storage storage, CancellationToken token)
-            => await CompileAsync(storage, token);
+        async Task<IEnumerable<Script>> ILanguage.CompileAsync(Storage storage, IEnumerable<string> ignore, CancellationToken token)
+            => await CompileAsync(storage, ignore, token);
 
-        IEnumerable<Script> ILanguage.Compile(Storage storage)
-            => Compile(storage);
+        IEnumerable<Script> ILanguage.Compile(Storage storage, IEnumerable<string> ignore)
+            => Compile(storage, ignore);
     }
 }

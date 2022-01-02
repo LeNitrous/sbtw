@@ -5,7 +5,7 @@ using System;
 
 namespace sbtw.Editor.Scripts
 {
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)]
     public class VisibleAttribute : Attribute
     {
     }

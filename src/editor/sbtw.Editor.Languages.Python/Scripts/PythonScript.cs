@@ -31,6 +31,12 @@ namespace sbtw.Editor.Languages.Python.Scripts
         protected override void RegisterMethod(string name, Delegate method)
             => context.Set(name, method);
 
+        protected override void RegisterField(string name, object value)
+            => context.Set(name, value);
+
+        protected override void RegisterType(Type type)
+            => context.Set(type.Name, type.ToPython());
+
         protected virtual void Dispose(bool disposing)
         {
             if (isDisposed && !disposing)

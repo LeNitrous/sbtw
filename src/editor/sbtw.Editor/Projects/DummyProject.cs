@@ -14,6 +14,7 @@ namespace sbtw.Editor.Projects
     {
         public string Name => @"No project";
         public string Path => string.Empty;
+        public List<string> Ignore { get; } = new List<string>();
         public BindableList<string> Groups { get; } = new BindableList<string>();
         public BindableDictionary<string, IEnumerable<ScriptVariableInfo>> Variables { get; } = new BindableDictionary<string, IEnumerable<ScriptVariableInfo>>();
         public StorageBackedBeatmapSet BeatmapSet => null;

@@ -26,5 +26,13 @@ namespace sbtw.Editor.Tests.Scripts
         protected override void RegisterMethod(string name, Delegate method)
         {
         }
+
+        protected override void RegisterField(string name, object value)
+        {
+        }
+
+        protected override void RegisterType(Type type)
+        {
+        }
     }
 }

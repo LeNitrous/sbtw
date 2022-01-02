@@ -50,6 +50,18 @@ namespace sbtw.Editor.Graphics.UserInterface
         [Resolved(canBeNull: true)]
         private Editor editor { get; set; }
 
+        [Resolved(canBeNull: true)]
+        private EditorSettingsOverlay settings { get; set; }
+
+        [Resolved(canBeNull: true)]
+        private OutputOverlay output { get; set; }
+
+        [Resolved(canBeNull: true)]
+        private NotificationOverlay notifications { get; set; }
+
+        [Resolved(canBeNull: true)]
+        private SetupOverlay setup { get; set; }
+
         public MainMenuBar()
             : base(Direction.Horizontal, true)
         {
@@ -61,139 +73,143 @@ namespace sbtw.Editor.Graphics.UserInterface
         }
 
         [BackgroundDependencyLoader(true)]
-        private void load(EditorSettingsOverlay settings, OutputOverlay output, NotificationOverlay notifications, SetupOverlay setup)
+        private void load()
         {
             beatmap = resolvedBeatmap.GetBoundCopy();
             project = resolvedProject.GetBoundCopy();
             studio = resolvedStudio.GetBoundCopy();
-
             showInterface = statics.GetBindable<bool>(EditorSessionStatic.ShowInterface);
 
-            Items = new[]
-            {
-                new MenuItem("Project")
-                {
-                    Items = new[]
-                    {
-                        new EditorMenuItem("New", MenuItemType.Standard, () => setup?.Show()),
-                        new EditorMenuItemSpacer(),
-                        new EditorMenuItem("Save", MenuItemType.Standard)
-                        {
-                            Action =
-                            {
-                                Value = () => project.Value.Save(),
-                                Disabled = project.Value is DummyProject,
-                            }
-                        },
-                        new EditorMenuItemSpacer(),
-                        new EditorMenuItem("Open", MenuItemType.Standard, openProject),
-                        new EditorMenuItem("Open Recent", MenuItemType.Standard),
-                        new EditorMenuItemSpacer(),
-                        new EditorMenuItem("Close")
-                        {
-                            Action =
-                            {
-                                Value = () => editor?.CloseProject(),
-                                Disabled = project.Value is DummyProject,
-                            }
-                        },
-                        new EditorMenuItemSpacer(),
-                        new EditorMenuItem("Reveal in File Explorer")
-                        {
-                            Action =
-                            {
-                                Value = revealProject,
-                                Disabled = project.Value is DummyProject
-                            }
-                        },
-                        new EditorMenuItem("Reveal in Code")
-                        {
-                            Action =
-                            {
-                                Value = revealProjectWorkspace,
-                                Disabled = project.Value is DummyProject
-                            }
-                        },
-                        new EditorMenuItemSpacer(),
-                        new EditorMenuItem("Exit", MenuItemType.Standard) { Action = { Value = host.Exit } },
-                    }
-                },
-                new MenuItem("Beatmap")
-                {
-                    Items = new[]
-                    {
-                        new EditorMenuItem("Switch Difficulty")
-                        {
-                            Items = beatmap.Value?.BeatmapInfo.BeatmapSet.Beatmaps?
-                                .Select(b => new DifficultyMenuItem(b, b.DifficultyName == beatmap.Value.BeatmapInfo.DifficultyName, b => editor?.OpenBeatmap(b)))
-                                .ToArray() ?? new MenuItem[] { new EditorMenuItemSpacer() }
-                        },
-                        new EditorMenuItemSpacer(),
-                        new EditorMenuItem("Reload Beatmap")
-                        {
-                            Action =
-                            {
-                                Value = () => editor?.RefreshBeatmap(),
-                                Disabled = beatmap.Value is DummyWorkingBeatmap
-                            }
-                        },
-                        new EditorMenuItemSpacer(),
-                        new EditorMenuItem("Reveal Beatmap File")
-                        {
-                            Action =
-                            {
-                                Value = revealBeatmapFile,
-                                Disabled = beatmap.Value is DummyWorkingBeatmap
-                            }
-                        },
-                    },
-                },
-                new MenuItem("Storyboard")
-                {
-                    Items = new[]
-                    {
-                        new EditorMenuItem("Generate Preview")
-                        {
-                            Action =
-                            {
-                                Value = () => editor?.GeneratePreview(),
-                                Disabled = project.Value is DummyProject
-                            }
-                        },
-                        new EditorMenuItem("Generate .osb")
-                        {
-                            Action =
-                            {
-                                Value = () => editor?.GenerateOsb(),
-                                Disabled = project.Value is DummyProject
-                            }
-                        },
-                    }
-                },
-                new MenuItem("Editor")
-                {
-                    Items = new MenuItem[]
-                    {
-                        new ToggleMenuItem("Show Interface", MenuItemType.Standard) { State = { BindTarget = showInterface } },
-                        new EditorMenuItem("Show Output", MenuItemType.Standard, () => output?.Show()),
-                        new EditorMenuItem("Show Notifications", MenuItemType.Standard, () => notifications?.Show()),
-                        new EditorMenuItemSpacer(),
-                        new EditorMenuItem("Open Settings", MenuItemType.Standard, () => settings?.Show()),
-                    },
-                },
-                new MenuItem("Help")
-                {
-                    Items = new[]
-                    {
-                        new EditorMenuItem("Getting Started"),
-                        new EditorMenuItem("Tips and Tricks"),
-                        new EditorMenuItem("Documentation"),
-                        new EditorMenuItemSpacer(),
-                        new EditorMenuItem("sbtw! on GitHub") { Action = { Value = () => host.OpenUrlExternally("https://github.com/lenitrous/sbtw") } }
-                    }
-                }
-            };
+            beatmap.ValueChanged += _ => createItems();
+            project.ValueChanged += _ => createItems();
+
+            createItems();
         }
+
+        private void createItems() => Items = new[]
+        {
+            new MenuItem("Project")
+            {
+                Items = new[]
+                {
+                    new EditorMenuItem("New", MenuItemType.Standard, () => setup?.Show()),
+                    new EditorMenuItemSpacer(),
+                    new EditorMenuItem("Save", MenuItemType.Standard)
+                    {
+                        Action =
+                        {
+                            Value = () => project.Value.Save(),
+                            Disabled = project.Value is DummyProject,
+                        }
+                    },
+                    new EditorMenuItemSpacer(),
+                    new EditorMenuItem("Open", MenuItemType.Standard, openProject),
+                    new EditorMenuItem("Open Recent", MenuItemType.Standard),
+                    new EditorMenuItemSpacer(),
+                    new EditorMenuItem("Close")
+                    {
+                        Action =
+                        {
+                            Value = () => editor?.CloseProject(),
+                            Disabled = project.Value is DummyProject,
+                        }
+                    },
+                    new EditorMenuItemSpacer(),
+                    new EditorMenuItem("Reveal in File Explorer")
+                    {
+                        Action =
+                        {
+                            Value = revealProject,
+                            Disabled = project.Value is DummyProject
+                        }
+                    },
+                    new EditorMenuItem("Reveal in Code")
+                    {
+                        Action =
+                        {
+                            Value = revealProjectWorkspace,
+                            Disabled = project.Value is DummyProject
+                        }
+                    },
+                    new EditorMenuItemSpacer(),
+                    new EditorMenuItem("Exit", MenuItemType.Standard) { Action = { Value = host.Exit } },
+                }
+            },
+            new MenuItem("Beatmap")
+            {
+                Items = new[]
+                {
+                    new EditorMenuItem("Switch Difficulty")
+                    {
+                        Items = beatmap.Value?.BeatmapInfo.BeatmapSet.Beatmaps?
+                            .Select(b => new DifficultyMenuItem(b, b.DifficultyName == beatmap.Value.BeatmapInfo.DifficultyName, b => editor?.OpenBeatmap(b)))
+                            .ToArray() ?? new MenuItem[] { new EditorMenuItemSpacer() }
+                    },
+                    new EditorMenuItemSpacer(),
+                    new EditorMenuItem("Reload Beatmap")
+                    {
+                        Action =
+                        {
+                            Value = () => editor?.RefreshBeatmap(),
+                            Disabled = beatmap.Value is DummyWorkingBeatmap
+                        }
+                    },
+                    new EditorMenuItemSpacer(),
+                    new EditorMenuItem("Reveal Beatmap File")
+                    {
+                        Action =
+                        {
+                            Value = revealBeatmapFile,
+                            Disabled = beatmap.Value is DummyWorkingBeatmap
+                        }
+                    },
+                },
+            },
+            new MenuItem("Storyboard")
+            {
+                Items = new[]
+                {
+                    new EditorMenuItem("Generate Preview")
+                    {
+                        Action =
+                        {
+                            Value = () => editor?.GeneratePreview(),
+                            Disabled = project.Value is DummyProject
+                        }
+                    },
+                    new EditorMenuItem("Generate .osb")
+                    {
+                        Action =
+                        {
+                            Value = () => editor?.GenerateOsb(),
+                            Disabled = project.Value is DummyProject
+                        }
+                    },
+                }
+            },
+            new MenuItem("Editor")
+            {
+                Items = new MenuItem[]
+                {
+                    new ToggleMenuItem("Show Interface", MenuItemType.Standard) { State = { BindTarget = showInterface } },
+                    new EditorMenuItem("Show Output", MenuItemType.Standard, () => output?.Show()),
+                    new EditorMenuItem("Show Notifications", MenuItemType.Standard, () => notifications?.Show()),
+                    new EditorMenuItemSpacer(),
+                    new EditorMenuItem("Open Settings", MenuItemType.Standard, () => settings?.Show()),
+                },
+            },
+            new MenuItem("Help")
+            {
+                Items = new[]
+                {
+                    new EditorMenuItem("Getting Started"),
+                    new EditorMenuItem("Tips and Tricks"),
+                    new EditorMenuItem("Documentation"),
+                    new EditorMenuItemSpacer(),
+                    new EditorMenuItem("sbtw! on GitHub") { Action = { Value = () => host.OpenUrlExternally("https://github.com/lenitrous/sbtw") } }
+                }
+            }
+        };
 
         protected override Menu CreateSubMenu() => new SubMenu();
         protected override DrawableMenuItem CreateDrawableMenuItem(MenuItem item) => new DrawableEditorBarMenuItem(item);

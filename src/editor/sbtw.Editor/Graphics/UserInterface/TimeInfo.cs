@@ -21,15 +21,15 @@ namespace sbtw.Editor.Graphics.UserInterface
     public class TimeInfo : PlaybackControlItem, IHasContextMenu, IHasPopover
     {
         [Resolved]
-        private EditorClock clock { get; set; }
-
-        [Resolved]
         private GameHost host { get; set; }
 
+        private readonly EditorClock clock;
         private readonly OsuSpriteText display;
 
-        public TimeInfo()
+        public TimeInfo(EditorClock clock)
         {
+            this.clock = clock;
+
             Width = 100;
             Child = display = new OsuSpriteText
             {
@@ -97,7 +97,7 @@ namespace sbtw.Editor.Graphics.UserInterface
             private void onNumberBoxCommit(TextBox sender, bool newText)
             {
                 if (double.TryParse(sender.Text, out double time))
-                    clock.Seek(Math.Clamp(time, 0, clock.Track.Value.Length));
+                    clock.Seek(Math.Clamp(time, 0, clock.Track.Value?.Length ?? 0));
 
                 Hide();
             }

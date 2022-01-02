@@ -2,6 +2,7 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -25,6 +26,7 @@ using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.Volume;
 using osu.Game.Rulesets;
+using osu.Game.Rulesets.Mods;
 using sbtw.Editor.Configuration;
 using sbtw.Editor.Generators;
 using sbtw.Editor.Graphics.UserInterface;
@@ -48,11 +50,10 @@ namespace sbtw.Editor
         private NotificationOverlay notifications;
         private LoadingSpinner spinner;
         private EditorPreview preview;
+        private PlaybackControl controls;
         private Container contentContainer;
         private Container controlContainer;
-        private Container topControlContainer;
         private Container middleControlContainer;
-        private Container bottomControlContainer;
         private Bindable<bool> showInterface;
         private double lastTrackTime;
         private string lastTrackTitle;
@@ -64,6 +65,7 @@ namespace sbtw.Editor
             SkinManager.CurrentSkinInfo.Value = SkinManager.DefaultLegacySkin.SkinInfo;
 
             dependencies.CacheAs(this);
+            dependencies.CacheAs(controls = new PlaybackControl());
             dependencies.CacheAs(setup = new SetupOverlay());
             dependencies.CacheAs(output = new OutputOverlay());
             dependencies.CacheAs(settings = new EditorSettingsOverlay());
@@ -128,16 +130,20 @@ namespace sbtw.Editor
                                             },
                                         }
                                     },
-                                    bottomControlContainer = new Container
+                                    new Container
                                     {
                                         RelativeSizeAxes = Axes.X,
                                         AutoSizeAxes = Axes.Y,
+                                        Anchor = Anchor.BottomLeft,
+                                        Origin = Anchor.BottomLeft,
                                         Margin = new MarginPadding { Bottom = 10 },
+                                        Child = controls,
                                     },
-                                    topControlContainer = new Container
+                                    new Container
                                     {
                                         RelativeSizeAxes = Axes.X,
                                         Height = 40,
+                                        Child = new MainMenuBar(),
                                     },
                                 }
                             }
@@ -170,7 +176,7 @@ namespace sbtw.Editor
             };
 
             showInterface = Session.GetBindable<bool>(EditorSessionStatic.ShowInterface);
-            showInterface.BindValueChanged(e => controlContainer.Alpha = e.NewValue ? 1 : 0, true);
+            showInterface.BindValueChanged(e => controlContainer.FadeTo(e.NewValue ? 1 : 0, 250, Easing.OutQuint), true);
 
             Beatmap.ValueChanged += _ => updateControls();
             Project.ValueChanged += _ => updateControls();
@@ -283,6 +289,10 @@ namespace sbtw.Editor
                 case UnauthorizedAccessException uae:
                     Logger.Error(uae, "Failed to generate storyboard due to lack of permissions.");
                     break;
+
+                case Exception ex:
+                    Logger.Error(ex, "An unknown error has occured while attempting to generate.");
+                    break;
             }
 
             Schedule(() => spinner.Hide());
@@ -292,7 +302,10 @@ namespace sbtw.Editor
         {
             var generated = await generator.GenerateAsync(new GeneratorConfig
             {
-                Scripts = await Languages.CompileAsync(Project.Value.Files, token),
+                Storage = Project.Value.Files,
+                Beatmap = Beatmap.Value.GetPlayableBeatmap(Beatmap.Value.BeatmapInfo.Ruleset, new List<Mod>(), token),
+                Waveform = Beatmap.Value.Waveform,
+                Scripts = await Languages.CompileAsync(Project.Value.Files, Project.Value.Ignore, token),
                 Ordering = Project.Value.Groups,
                 Variables = Project.Value.Variables,
             }, token);
@@ -318,42 +331,40 @@ namespace sbtw.Editor
             reloadTokenSource?.Cancel();
             generatePreviewTokenSource?.Cancel();
 
-            preview?.Stop();
-            preview = null;
-
-            topControlContainer.Clear();
-            contentContainer.Clear();
-            bottomControlContainer.Clear();
-
-            reloadTokenSource = new CancellationTokenSource();
-
-            LoadComponentAsync(new MainMenuBar(), loaded => topControlContainer.Child = loaded, reloadTokenSource.Token);
-
             if (Project.Value is DummyProject || Beatmap.Value is DummyWorkingBeatmap)
             {
+                preview?.Stop();
+                preview = null;
+
                 middleControlContainer.Hide();
-                return;
+                contentContainer.Clear();
+                controls.SetState(null, null);
             }
-
-            spinner.Show();
-            middleControlContainer.Show();
-
-            LoadComponentAsync(new EditorPreview(), loaded =>
+            else
             {
-                contentContainer.Add(preview = loaded);
-                bottomControlContainer.Add(loaded.Controls.CreateProxy());
-                Schedule(() => spinner.Hide());
+                reloadTokenSource = new CancellationTokenSource();
 
-                if (Beatmap.Value.BeatmapInfo.Metadata.Title == lastTrackTitle)
+                spinner.Show();
+                middleControlContainer.Show();
+
+                LoadComponentAsync(new EditorPreview(), loaded =>
                 {
-                    preview.Seek(lastTrackTime);
+                    contentContainer.Clear();
+                    contentContainer.Add(preview = loaded);
 
-                    if (lastTrackState)
-                        preview.Start();
-                }
+                    Schedule(() => spinner.Hide());
 
-                GeneratePreview();
-            }, reloadTokenSource.Token);
+                    if (Beatmap.Value.BeatmapInfo.Metadata.Title == lastTrackTitle)
+                    {
+                        preview.Seek(lastTrackTime);
+
+                        if (lastTrackState)
+                            preview.Start();
+                    }
+
+                    GeneratePreview();
+                }, reloadTokenSource.Token);
+            }
         }
 
         public bool OnPressed(KeyBindingPressEvent<GlobalAction> e)

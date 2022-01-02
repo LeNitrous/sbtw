@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using osu.Framework.Audio.Track;
+using osu.Framework.Platform;
+using osu.Game.Beatmaps;
 using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Generators
@@ -24,7 +27,10 @@ namespace sbtw.Editor.Generators
 
             var elements = new Dictionary<IScriptedElement, U>();
             var ordering = config.Ordering?.ToArray() ?? Array.Empty<string>();
-            var generated = await Task.WhenAll(config.Scripts?.Select(s => apply(s, config.Variables?.GetValueOrDefault(s.Name), token)) ?? Array.Empty<Task<ScriptGenerationResult>>());
+            var generated = await Task.WhenAll(config.Scripts?.Select(s =>
+                apply(s, config.Storage, config.Beatmap, config.Waveform, config.Variables?.GetValueOrDefault(s.Name), token))
+                ?? Array.Empty<Task<ScriptGenerationResult>>()
+            );
 
             var groups = generated
                 .SelectMany(r => r.Groups)
@@ -90,7 +96,7 @@ namespace sbtw.Editor.Generators
             }
         }
 
-        private static Task<ScriptGenerationResult> apply(Script script, IEnumerable<ScriptVariableInfo> variables = null, CancellationToken token = default)
+        private static Task<ScriptGenerationResult> apply(Script script, Storage storage, IBeatmap beatmap, Waveform waveform, IEnumerable<ScriptVariableInfo> variables = null, CancellationToken token = default)
         {
             if (variables != null)
             {
@@ -100,7 +106,7 @@ namespace sbtw.Editor.Generators
                 }
             }
 
-            return script.GenerateAsync(token);
+            return script.GenerateAsync(storage, beatmap, waveform, token);
         }
 
         private class ScriptedElementComparer : IComparer<IScriptedElement>

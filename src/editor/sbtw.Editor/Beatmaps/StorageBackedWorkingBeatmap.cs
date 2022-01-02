@@ -86,5 +86,22 @@ namespace sbtw.Editor.Beatmaps
                 return null;
             }
         }
+
+        protected override Waveform GetWaveform()
+        {
+            if (string.IsNullOrEmpty(Metadata?.AudioFile))
+                return null;
+
+            try
+            {
+                var trackData = GetStream(BeatmapSetInfo.GetPathForFile(Metadata.AudioFile));
+                return trackData == null ? null : new Waveform(trackData);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, "Waveform failed to load");
+                return null;
+            }
+        }
     }
 }

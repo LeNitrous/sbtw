@@ -16,6 +16,8 @@ namespace sbtw.Editor.Projects
 
         string Path { get; }
 
+        List<string> Ignore { get; }
+
         BindableList<string> Groups { get; }
 
         BindableDictionary<string, IEnumerable<ScriptVariableInfo>> Variables { get; }

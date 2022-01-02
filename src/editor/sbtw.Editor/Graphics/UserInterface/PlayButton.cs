@@ -1,7 +1,7 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using osu.Framework.Allocation;
+using osu.Framework.Audio.Track;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
@@ -13,20 +13,20 @@ namespace sbtw.Editor.Graphics.UserInterface
 {
     public class PlayButton : PlaybackControlItem
     {
-        [Resolved]
-        private EditorClock clock { get; set; }
+        private readonly EditorClock clock;
+        private readonly IconButton button;
 
-        private IconButton button;
-
-        [BackgroundDependencyLoader]
-        private void load()
+        public PlayButton(EditorClock clock)
         {
+            this.clock = clock;
+
             Width = 40;
             Child = button = new IconButton
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
                 Action = togglePause,
+                Enabled = { Value = clock.Track.Value is TrackBass },
             };
         }
 

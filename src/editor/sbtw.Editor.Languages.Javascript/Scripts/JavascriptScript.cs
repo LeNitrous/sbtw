@@ -31,14 +31,17 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
         protected override void Compile()
         {
             Compiled?.Dispose();
-            Compiled = Engine.Compile(new DocumentInfo(Name)
-            {
-                Category = ModuleCategory.Standard,
-            }, System.IO.File.ReadAllText(Path));
+            Compiled = Engine.Compile(new DocumentInfo(Name) { Category = ModuleCategory.Standard }, System.IO.File.ReadAllText(Path));
         }
 
         protected override void RegisterMethod(string name, Delegate method)
             => Engine.AddHostObject(name, method);
+
+        protected override void RegisterField(string name, object value)
+            => Engine.Script[name] = value;
+
+        protected override void RegisterType(Type type)
+            => Engine.AddHostType(type);
 
         protected virtual void Dispose(bool disposing)
         {

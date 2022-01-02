@@ -24,11 +24,11 @@ namespace sbtw.Editor.Languages
         public void Unregister(ILanguage language)
             => languages.Remove(language);
 
-        public async Task<IEnumerable<Script>> CompileAsync(Storage storage, CancellationToken token = default)
-            => (await Task.WhenAll(languages.Select(s => s.CompileAsync(storage, token)))).SelectMany(c => c);
+        public async Task<IEnumerable<Script>> CompileAsync(Storage storage, IEnumerable<string> ignore = null, CancellationToken token = default)
+            => (await Task.WhenAll(languages.Select(s => s.CompileAsync(storage, ignore, token)))).SelectMany(c => c);
 
-        public IEnumerable<Script> Compile(Storage storage)
-            => CompileAsync(storage).Result;
+        public IEnumerable<Script> Compile(Storage storage, IEnumerable<string> ignore = null)
+            => CompileAsync(storage, ignore).Result;
 
         protected virtual void Dispose(bool disposing)
         {
