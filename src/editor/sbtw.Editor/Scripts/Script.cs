@@ -180,9 +180,9 @@ namespace sbtw.Editor.Scripts
 
         public ScriptGenerationResult Generate(Storage storage = null, IBeatmap beatmap = null, Waveform waveform = null)
         {
+            Beatmap = beatmap;
+            Waveform = waveform;
             this.storage = storage;
-            this.Beatmap = beatmap;
-            this.Waveform = waveform;
 
             importTypesAndMembers();
             Compile();
