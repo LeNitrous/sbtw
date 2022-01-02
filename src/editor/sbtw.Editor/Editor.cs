@@ -110,6 +110,7 @@ namespace sbtw.Editor
                             controlContainer = new Container
                             {
                                 Name = "Control",
+                                AlwaysPresent = true,
                                 RelativeSizeAxes = Axes.Both,
                                 Children = new Drawable[]
                                 {
@@ -122,7 +123,7 @@ namespace sbtw.Editor
                                         Origin = Anchor.Centre,
                                         Children = new Drawable[]
                                         {
-                                            new VariablesToolbox(),
+                                            new ScriptsToolbox(),
                                             new ViewToolbox
                                             {
                                                 Anchor = Anchor.TopRight,

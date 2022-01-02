@@ -32,6 +32,9 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         private void togglePause()
         {
+            if (!button.Enabled.Value)
+                return;
+
             if (clock.IsRunning)
                 clock.Stop();
             else
