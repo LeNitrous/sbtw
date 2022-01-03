@@ -17,6 +17,7 @@ namespace sbtw.Editor.Languages
         private bool isDisposed;
 
         public IReadOnlyList<ILanguage> Languages => languages;
+        public IEnumerable<string> Extensions => Languages.SelectMany(lang => lang.Extensions);
 
         public void Register(ILanguage language)
             => languages.Add(language);

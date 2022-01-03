@@ -19,14 +19,14 @@ namespace sbtw.Editor.Graphics.UserInterface
 {
     public class SeekBar : PlaybackControlItem
     {
-        private readonly EditorClock clock;
         private readonly Box progress;
         private const float visualisation_size = 5.0f;
 
-        public SeekBar(EditorBeatmap beatmap, EditorClock clock)
-        {
-            this.clock = clock;
+        [Resolved]
+        private Bindable<EditorClock> clock { get; set; }
 
+        public SeekBar()
+        {
             Width = 600;
             Content.Padding = new MarginPadding { Horizontal = 10 };
             Children = new Drawable[]
@@ -40,9 +40,9 @@ namespace sbtw.Editor.Graphics.UserInterface
                     Direction = FillDirection.Vertical,
                     Children = new Drawable[]
                     {
-                        new TimingVisualisationFlow(beatmap),
-                        new KiaiVisualisationFlow(beatmap),
-                        new BookmarksVisualisationFlow(beatmap),
+                        new TimingVisualisationFlow(),
+                        new KiaiVisualisationFlow(),
+                        new BookmarksVisualisationFlow(),
                     }
                 },
                 progress = new Box
@@ -53,7 +53,7 @@ namespace sbtw.Editor.Graphics.UserInterface
                     Origin = Anchor.CentreLeft,
                     RelativeSizeAxes = Axes.X,
                 },
-                new SeekArea(clock)
+                new SeekArea()
                 {
                     RelativeSizeAxes = Axes.Both
                 },
@@ -63,18 +63,15 @@ namespace sbtw.Editor.Graphics.UserInterface
         protected override void Update()
         {
             base.Update();
-            progress.Width = (float)(clock.CurrentTime / clock.TrackLength);
+            progress.Width = (float)(clock.Value.CurrentTime / clock.Value.TrackLength);
         }
 
         private class SeekArea : Container
         {
-            private readonly EditorClock clock;
             private ScheduledDelegate seekDelegate;
 
-            public SeekArea(EditorClock clock)
-            {
-                this.clock = clock;
-            }
+            [Resolved]
+            private Bindable<EditorClock> clock { get; set; }
 
             protected override bool OnDragStart(DragStartEvent e) => true;
 
@@ -88,34 +85,46 @@ namespace sbtw.Editor.Graphics.UserInterface
 
             private void seekToPosition(Vector2 screenSpacePosition)
             {
-                if (clock.Track.Value is not TrackBass)
+                if (clock.Value.Track.Value is not TrackBass)
                     return;
 
                 seekDelegate?.Cancel();
                 seekDelegate = Schedule(() =>
                 {
                     float pos = Math.Clamp(ToLocalSpace(screenSpacePosition).X, 0, DrawWidth);
-                    clock.SeekSmoothlyTo(pos / DrawWidth * clock.TrackLength);
+                    clock.Value.SeekSmoothlyTo(pos / DrawWidth * clock.Value.TrackLength);
                 });
             }
         }
 
-        private class VisualisationFlow : Container
+        private abstract class VisualisationFlow : Container
         {
-            protected readonly EditorBeatmap Beatmap;
+            [Resolved]
+            private Bindable<EditorBeatmap> beatmap { get; set; }
 
-            public VisualisationFlow(EditorBeatmap beatmap)
-            {
-                Beatmap = beatmap;
-            }
+            [Resolved]
+            private IBindable<WorkingBeatmap> working { get; set; }
 
             [BackgroundDependencyLoader]
-            private void load(IBindable<WorkingBeatmap> working)
+            private void load()
             {
                 Height = visualisation_size;
                 RelativeSizeAxes = Axes.X;
-                RelativeChildSize = new Vector2((float)Math.Max(1, working.Value.Track.Length), 1);
+
+                beatmap.ValueChanged += _ => rebuildVisualisation();
+                working.ValueChanged += _ => rebuildVisualisation();
+
+                rebuildVisualisation();
             }
+
+            protected abstract void CreateVisualisation(EditorBeatmap beatmap, WorkingBeatmap working);
+
+            private void rebuildVisualisation() => Schedule(() =>
+            {
+                Clear();
+                RelativeChildSize = new Vector2((float)Math.Max(1, working.Value.Track.Length), 1);
+                CreateVisualisation(beatmap.Value, working.Value);
+            });
         }
 
         private class PointVisualisation : Circle
@@ -142,33 +151,21 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         private class BookmarksVisualisationFlow : VisualisationFlow
         {
-            public BookmarksVisualisationFlow(EditorBeatmap beatmap)
-                : base(beatmap)
+            protected override void CreateVisualisation(EditorBeatmap beatmap, WorkingBeatmap working)
             {
-            }
-
-            [BackgroundDependencyLoader]
-            private void load()
-            {
-                foreach (int bookmark in Beatmap.BeatmapInfo.Bookmarks)
+                foreach (int bookmark in beatmap.BeatmapInfo.Bookmarks)
                     Add(new PointVisualisation(bookmark) { Colour = Colour4.Blue });
             }
         }
 
         private class KiaiVisualisationFlow : VisualisationFlow
         {
-            public KiaiVisualisationFlow(EditorBeatmap beatmap)
-                : base(beatmap)
+            protected override void CreateVisualisation(EditorBeatmap beatmap, WorkingBeatmap working)
             {
-            }
-
-            [BackgroundDependencyLoader]
-            private void load(IBindable<WorkingBeatmap> working)
-            {
-                var points = Beatmap.ControlPointInfo.EffectPoints;
+                var points = beatmap.ControlPointInfo.EffectPoints;
                 foreach (double startTime in points.Where(p => p.KiaiMode == true).Select(p => p.Time))
                 {
-                    double endTime = points.FirstOrDefault(p => p.Time > startTime && p.KiaiMode == false)?.Time ?? working.Value.Track.Length;
+                    double endTime = points.FirstOrDefault(p => p.Time > startTime && p.KiaiMode == false)?.Time ?? working.Track.Length;
                     Add(new DurationVisualisation(startTime, endTime) { Colour = Colour4.Orange });
                 }
             }
@@ -176,15 +173,9 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         private class TimingVisualisationFlow : VisualisationFlow
         {
-            public TimingVisualisationFlow(EditorBeatmap beatmap)
-                : base(beatmap)
+            protected override void CreateVisualisation(EditorBeatmap beatmap, WorkingBeatmap working)
             {
-            }
-
-            [BackgroundDependencyLoader]
-            private void load()
-            {
-                foreach (double time in Beatmap.ControlPointInfo.TimingPoints.Select(p => p.Time))
+                foreach (double time in beatmap.ControlPointInfo.TimingPoints.Select(p => p.Time))
                     Add(new PointVisualisation(time) { Colour = Colour4.Red });
             }
         }

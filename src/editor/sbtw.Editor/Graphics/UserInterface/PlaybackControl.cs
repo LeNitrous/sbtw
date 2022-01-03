@@ -3,8 +3,6 @@
 
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Game.Beatmaps;
-using osu.Game.Screens.Edit;
 using osuTK;
 
 namespace sbtw.Editor.Graphics.UserInterface
@@ -20,20 +18,13 @@ namespace sbtw.Editor.Graphics.UserInterface
             Origin = Anchor.BottomLeft;
             Padding = new MarginPadding(5);
             Spacing = new Vector2(5);
-        }
-
-        public void SetState(EditorBeatmap beatmap, EditorClock clock) => Schedule(() =>
-        {
-            clock ??= new EditorClock();
-            beatmap ??= new EditorBeatmap(new Beatmap());
-
             Children = new PlaybackControlItem[]
             {
-                new TimeInfo(clock),
-                new SeekBar(beatmap, clock),
-                new RateSelector(clock),
-                new PlayButton(clock),
+                new TimeInfo(),
+                new SeekBar(),
+                new RateSelector(),
+                new PlayButton(),
             };
-        });
+        }
     }
 }

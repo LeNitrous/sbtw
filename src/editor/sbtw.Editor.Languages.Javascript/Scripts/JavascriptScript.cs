@@ -31,7 +31,7 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
         protected override void Compile()
         {
             Compiled?.Dispose();
-            Compiled = Engine.Compile(new DocumentInfo(Name) { Category = ModuleCategory.Standard }, System.IO.File.ReadAllText(Path));
+            Compiled = Engine.Compile(new DocumentInfo(new Uri(Path)) { Category = ModuleCategory.Standard }, System.IO.File.ReadAllText(Path));
         }
 
         protected override void RegisterMethod(string name, Delegate method)

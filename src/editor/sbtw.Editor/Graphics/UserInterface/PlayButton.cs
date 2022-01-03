@@ -1,7 +1,9 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using osu.Framework.Allocation;
 using osu.Framework.Audio.Track;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
@@ -13,21 +15,26 @@ namespace sbtw.Editor.Graphics.UserInterface
 {
     public class PlayButton : PlaybackControlItem
     {
-        private readonly EditorClock clock;
         private readonly IconButton button;
 
-        public PlayButton(EditorClock clock)
-        {
-            this.clock = clock;
+        [Resolved]
+        private Bindable<EditorClock> clock { get; set; }
 
+        public PlayButton()
+        {
             Width = 40;
             Child = button = new IconButton
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
                 Action = togglePause,
-                Enabled = { Value = clock.Track.Value is TrackBass },
             };
+        }
+
+        [BackgroundDependencyLoader]
+        private void load()
+        {
+            clock.BindValueChanged(e => Schedule(() => button.Enabled.Value = clock.Value.Track.Value is TrackBass), true);
         }
 
         private void togglePause()
@@ -35,10 +42,10 @@ namespace sbtw.Editor.Graphics.UserInterface
             if (!button.Enabled.Value)
                 return;
 
-            if (clock.IsRunning)
-                clock.Stop();
+            if (clock.Value.IsRunning)
+                clock.Value.Stop();
             else
-                clock.Start();
+                clock.Value.Start();
         }
 
         protected override bool OnKeyDown(KeyDownEvent e)
@@ -56,7 +63,7 @@ namespace sbtw.Editor.Graphics.UserInterface
         protected override void Update()
         {
             base.Update();
-            button.Icon = clock.IsRunning ? FontAwesome.Regular.PauseCircle : FontAwesome.Regular.PlayCircle;
+            button.Icon = clock.Value.IsRunning ? FontAwesome.Regular.PauseCircle : FontAwesome.Regular.PlayCircle;
         }
     }
 }

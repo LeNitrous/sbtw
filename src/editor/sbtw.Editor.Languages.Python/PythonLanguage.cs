@@ -49,7 +49,7 @@ namespace sbtw.Editor.Languages.Python
         }
 
         public override string Name => @"Python";
-        public override IEnumerable<string> Extensions => new[] { "py" };
+        public override IEnumerable<string> Extensions => new[] { ".py" };
         public override bool Enabled => !string.IsNullOrEmpty(PYTHON_RUNTIME_PATH);
 
         public PythonLanguage()

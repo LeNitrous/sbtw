@@ -49,16 +49,13 @@ namespace sbtw.Editor.Graphics.UserInterface
         [Resolved]
         private LanguageStore languages { get; set; }
 
-        [Resolved]
-        private PlaybackControl controls { get; set; }
-
         private DependencyContainer dependencies;
 
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
             => dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
         [BackgroundDependencyLoader]
-        private void load(EditorSessionStatics statics, Bindable<RulesetInfo> rulesetInfo)
+        private void load(Bindable<EditorClock> clockBindable, Bindable<EditorBeatmap> beatmapBindable, EditorSessionStatics statics, Bindable<RulesetInfo> rulesetInfo)
         {
             RelativeSizeAxes = Axes.Both;
 
@@ -116,7 +113,8 @@ namespace sbtw.Editor.Graphics.UserInterface
             showPlayfield = statics.GetBindable<bool>(EditorSessionStatic.ShowPlayfield);
             showPlayfield.BindValueChanged(e => playfield.Alpha = e.NewValue ? 1 : 0, true);
 
-            controls.SetState(editorBeatmap, clock);
+            clockBindable.Value = clock;
+            beatmapBindable.Value = editorBeatmap;
         }
 
         public void SetStoryboard(Storyboard storyboard, IResourceStore<byte[]> resources)

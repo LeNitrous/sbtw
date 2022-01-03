@@ -31,7 +31,7 @@ namespace sbtw.Editor.Languages
 
             foreach (string extension in Extensions)
             {
-                foreach (string file in storage.GetFiles(".", $"*.{extension}"))
+                foreach (string file in storage.GetFiles(".", $"*{extension}"))
                 {
                     if (Exclude.Contains(file) || ignore.Contains(file))
                         continue;

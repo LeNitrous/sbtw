@@ -86,7 +86,7 @@ namespace sbtw.Editor.Graphics.UserInterface
             createItems();
         }
 
-        private void createItems() => Items = new[]
+        private void createItems() => Schedule(() => Items = new[]
         {
             new MenuItem("Project")
             {
@@ -209,7 +209,7 @@ namespace sbtw.Editor.Graphics.UserInterface
                     new EditorMenuItem("sbtw! on GitHub") { Action = { Value = () => host.OpenUrlExternally("https://github.com/lenitrous/sbtw") } }
                 }
             }
-        };
+        });
 
         protected override Menu CreateSubMenu() => new SubMenu();
         protected override DrawableMenuItem CreateDrawableMenuItem(MenuItem item) => new DrawableEditorBarMenuItem(item);

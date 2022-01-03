@@ -3,6 +3,7 @@
 
 using System;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Cursor;
@@ -23,13 +24,13 @@ namespace sbtw.Editor.Graphics.UserInterface
         [Resolved]
         private GameHost host { get; set; }
 
-        private readonly EditorClock clock;
+        [Resolved]
+        private Bindable<EditorClock> clock { get; set; }
+
         private readonly OsuSpriteText display;
 
-        public TimeInfo(EditorClock clock)
+        public TimeInfo()
         {
-            this.clock = clock;
-
             Width = 100;
             Child = display = new OsuSpriteText
             {
@@ -42,7 +43,7 @@ namespace sbtw.Editor.Graphics.UserInterface
         protected override void Update()
         {
             base.Update();
-            display.Text = clock.CurrentTime.ToEditorFormattedString();
+            display.Text = clock.Value.CurrentTime.ToEditorFormattedString();
         }
 
         protected override bool OnClick(ClickEvent e)
@@ -51,7 +52,7 @@ namespace sbtw.Editor.Graphics.UserInterface
             return true;
         }
 
-        public Popover GetPopover() => new SeekToPopover(clock);
+        public Popover GetPopover() => new SeekToPopover();
 
         public MenuItem[] ContextMenuItems => new[]
         {
@@ -59,8 +60,8 @@ namespace sbtw.Editor.Graphics.UserInterface
             {
                 Items = new[]
                 {
-                    new OsuMenuItem(@"Formatted time", MenuItemType.Standard, () => host.GetClipboard().SetText(clock.CurrentTime.ToEditorFormattedString())),
-                    new OsuMenuItem(@"Milliseconds", MenuItemType.Standard, () => host.GetClipboard().SetText(Math.Round(clock.CurrentTime).ToString())),
+                    new OsuMenuItem(@"Formatted time", MenuItemType.Standard, () => host.GetClipboard().SetText(clock.Value.CurrentTime.ToEditorFormattedString())),
+                    new OsuMenuItem(@"Milliseconds", MenuItemType.Standard, () => host.GetClipboard().SetText(Math.Round(clock.Value.CurrentTime).ToString())),
                 }
             },
             new OsuMenuItem(@"Seek to...", MenuItemType.Standard, () => this.ShowPopover()),
@@ -68,14 +69,13 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         private class SeekToPopover : OsuPopover
         {
-            private readonly EditorClock clock;
-
             public readonly OsuNumberBox NumberBox;
 
-            public SeekToPopover(EditorClock clock)
-            {
-                this.clock = clock;
+            [Resolved]
+            private Bindable<EditorClock> clock { get; set; }
 
+            public SeekToPopover()
+            {
                 Children = new Drawable[]
                 {
                     new OsuSpriteText
@@ -97,7 +97,7 @@ namespace sbtw.Editor.Graphics.UserInterface
             private void onNumberBoxCommit(TextBox sender, bool newText)
             {
                 if (double.TryParse(sender.Text, out double time))
-                    clock.Seek(Math.Clamp(time, 0, clock.Track.Value?.Length ?? 0));
+                    clock.Value.Seek(Math.Clamp(time, 0, clock.Value.Track.Value?.Length ?? 0));
 
                 Hide();
             }

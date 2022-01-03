@@ -22,6 +22,7 @@ namespace sbtw.Editor.Languages
     {
         string Name { get; }
         bool Enabled { get; }
+        IEnumerable<string> Extensions { get; }
         IProjectGenerator CreateProjectGenerator();
         ILanguageConfigManager CreateConfigManager();
         Task<IEnumerable<Script>> CompileAsync(Storage storage, IEnumerable<string> ignore = null, CancellationToken token = default);

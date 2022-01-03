@@ -27,6 +27,7 @@ using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.Volume;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
+using osu.Game.Screens.Edit;
 using sbtw.Editor.Configuration;
 using sbtw.Editor.Generators;
 using sbtw.Editor.Graphics.UserInterface;
@@ -50,11 +51,12 @@ namespace sbtw.Editor
         private NotificationOverlay notifications;
         private LoadingSpinner spinner;
         private EditorPreview preview;
-        private PlaybackControl controls;
         private Container contentContainer;
         private Container controlContainer;
         private Container middleControlContainer;
         private Bindable<bool> showInterface;
+        private Bindable<EditorClock> editorClock;
+        private Bindable<EditorBeatmap> editorBeatmap;
         private double lastTrackTime;
         private string lastTrackTitle;
         private bool lastTrackState;
@@ -65,11 +67,12 @@ namespace sbtw.Editor
             SkinManager.CurrentSkinInfo.Value = SkinManager.DefaultLegacySkin.SkinInfo;
 
             dependencies.CacheAs(this);
-            dependencies.CacheAs(controls = new PlaybackControl());
             dependencies.CacheAs(setup = new SetupOverlay());
             dependencies.CacheAs(output = new OutputOverlay());
             dependencies.CacheAs(settings = new EditorSettingsOverlay());
             dependencies.CacheAs(notifications = new NotificationOverlay());
+            dependencies.CacheAs(editorClock = new NonNullableBindable<EditorClock>(new EditorClock()));
+            dependencies.CacheAs(editorBeatmap = new NonNullableBindable<EditorBeatmap>(new EditorBeatmap(new Beatmap())));
 
             Logger.NewEntry += entry =>
             {
@@ -88,6 +91,7 @@ namespace sbtw.Editor
 
             Children = new Drawable[]
             {
+                new ProjectWatcher(),
                 new VolumeControlReceptor
                 {
                     RelativeSizeAxes = Axes.Both,
@@ -138,7 +142,7 @@ namespace sbtw.Editor
                                         Anchor = Anchor.BottomLeft,
                                         Origin = Anchor.BottomLeft,
                                         Margin = new MarginPadding { Bottom = 10 },
-                                        Child = controls,
+                                        Child = new PlaybackControl(),
                                     },
                                     new Container
                                     {
@@ -251,6 +255,8 @@ namespace sbtw.Editor
             Beatmap.Disabled = false;
             Project.SetDefault();
             Beatmap.SetDefault();
+            editorClock.SetDefault();
+            editorBeatmap.SetDefault();
             Beatmap.Disabled = true;
         }
 
@@ -258,6 +264,7 @@ namespace sbtw.Editor
 
         public void OpenProject(IProject project)
         {
+            CloseProject();
             Project.Value = project;
             OpenBeatmap(Project.Value.BeatmapSet.BeatmapSetInfo.Beatmaps.FirstOrDefault());
         }
@@ -327,7 +334,7 @@ namespace sbtw.Editor
             return generated;
         }
 
-        private void updateControls()
+        private void updateControls() => Schedule(() =>
         {
             reloadTokenSource?.Cancel();
             generatePreviewTokenSource?.Cancel();
@@ -339,7 +346,6 @@ namespace sbtw.Editor
 
                 middleControlContainer.Hide();
                 contentContainer.Clear();
-                controls.SetState(null, null);
             }
             else
             {
@@ -366,7 +372,7 @@ namespace sbtw.Editor
                     GeneratePreview();
                 }, reloadTokenSource.Token);
             }
-        }
+        });
 
         public bool OnPressed(KeyBindingPressEvent<GlobalAction> e)
         {

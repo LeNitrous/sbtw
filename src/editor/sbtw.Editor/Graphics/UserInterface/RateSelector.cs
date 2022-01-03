@@ -22,7 +22,6 @@ namespace sbtw.Editor.Graphics.UserInterface
 {
     public class RateSelector : PlaybackControlItem, IHasContextMenu
     {
-        private readonly EditorClock clock;
         private readonly OsuSpriteText text;
         private readonly Dictionary<double, TernaryStateRadioMenuItem> itemMap = new Dictionary<double, TernaryStateRadioMenuItem>();
         private readonly Bindable<double> tempo = new Bindable<double>(1);
@@ -31,10 +30,11 @@ namespace sbtw.Editor.Graphics.UserInterface
         private Bindable<bool> affectsTempo;
         private MenuItem[] menuItems;
 
-        public RateSelector(EditorClock clock)
-        {
-            this.clock = clock;
+        [Resolved]
+        private Bindable<EditorClock> clock { get; set; }
 
+        public RateSelector()
+        {
             Width = 60;
             Child = text = new OsuSpriteText
             {
@@ -64,8 +64,13 @@ namespace sbtw.Editor.Graphics.UserInterface
                 createMenuItem(0.25),
             };
 
-            clock.Track.Value?.AddAdjustment(AdjustableProperty.Frequency, frequency);
-            clock.Track.Value?.AddAdjustment(AdjustableProperty.Tempo, tempo);
+            clock.BindValueChanged(e =>
+            {
+                e.OldValue.Track.Value?.RemoveAdjustment(AdjustableProperty.Frequency, frequency);
+                e.OldValue.Track.Value?.RemoveAdjustment(AdjustableProperty.Tempo, tempo);
+                e.NewValue.Track.Value?.AddAdjustment(AdjustableProperty.Frequency, frequency);
+                e.NewValue.Track.Value?.AddAdjustment(AdjustableProperty.Tempo, tempo);
+            }, true);
 
             updateRate();
         }
@@ -97,8 +102,8 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         protected override void Dispose(bool isDisposing)
         {
-            clock.Track.Value?.RemoveAdjustment(AdjustableProperty.Frequency, frequency);
-            clock.Track.Value?.RemoveAdjustment(AdjustableProperty.Tempo, tempo);
+            clock.Value.Track.Value?.RemoveAdjustment(AdjustableProperty.Frequency, frequency);
+            clock.Value.Track.Value?.RemoveAdjustment(AdjustableProperty.Tempo, tempo);
             base.Dispose(isDisposing);
         }
 

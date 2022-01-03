@@ -30,7 +30,7 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
         {
             this.engine = engine;
             this.engine.Execute(typescriptCode);
-            this.engine.Execute("var opts = { compilerOptions: { inlineSourceMap: true, target: 99 }, reportDiagnostics: true }");
+            this.engine.Execute("var opts = { compilerOptions: { inlineSources: true, inlineSourceMap: true, target: 99 }, reportDiagnostics: true }");
 
             typescript = this.engine.Script.ts;
             transpileOptions = this.engine.Script.opts;
@@ -38,6 +38,8 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
 
         public DocumentInfo Transpile(string path, string typescriptSource, out string javascriptSource)
         {
+            transpileOptions.fileName = Path.GetFileName(path);
+
             dynamic output = typescript.transpileModule(typescriptSource, transpileOptions);
 
             if (output is Undefined)
@@ -51,7 +53,7 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
 
             javascriptSource = output.outputText;
 
-            return new DocumentInfo(Path.GetFileName(path))
+            return new DocumentInfo(new Uri(path))
             {
                 SourceMapUri = new Uri(javascriptSource[javascriptSource.IndexOf("//# sourceMappingURL=")..].Replace("//# sourceMappingURL=", string.Empty)),
                 Category = ModuleCategory.Standard,

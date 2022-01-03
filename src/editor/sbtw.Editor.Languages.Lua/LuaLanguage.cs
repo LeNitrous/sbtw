@@ -9,7 +9,7 @@ namespace sbtw.Editor.Languages.Lua
     public class LuaLanguage : Language<LuaScript>
     {
         public override string Name => @"Lua";
-        public override IEnumerable<string> Extensions => new[] { "lua" };
+        public override IEnumerable<string> Extensions => new[] { ".lua" };
         protected override LuaScript CreateScript(string name, string path) => new LuaScript(name, path);
     }
 }

@@ -14,9 +14,10 @@ namespace sbtw.Editor.Scripts
     {
         public CommandTimeline<Vector2> Move = new CommandTimeline<Vector2>();
 
+        private static readonly FieldInfo timelinesField = typeof(CommandTimelineGroup).GetField("timelines", BindingFlags.Instance | BindingFlags.NonPublic);
+
         public ScriptedCommandTimelineGroup()
         {
-            var timelinesField = typeof(CommandTimelineGroup).GetField("timelines", BindingFlags.Instance | BindingFlags.NonPublic);
             var timelines = timelinesField.GetValue(this) as ICommandTimeline[];
             timelinesField.SetValue(this, timelines.Concat(new[] { Move }).ToArray());
         }
