@@ -26,6 +26,11 @@ namespace sbtw.Desktop.Studios
             },
             new Studio
             {
+                Name = "code-insiders",
+                FriendlyName = "Microsoft VS Code Insiders",
+            },
+            new Studio
+            {
                 Name = "atom",
                 FriendlyName = "Atom",
             },
