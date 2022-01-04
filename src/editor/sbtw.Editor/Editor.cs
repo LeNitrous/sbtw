@@ -219,9 +219,8 @@ namespace sbtw.Editor
                     Project.Value.Variables.Clear();
                     Project.Value.Variables.AddRange(generated.Variables.ToList());
                     preview.SetStoryboard(generated.Result, Project.Value.Resources.Resources);
-                    spinner.Hide();
                 });
-            }, generatePreviewTokenSource.Token).ContinueWith(handleGeneratorExceptions, TaskContinuationOptions.OnlyOnFaulted);
+            }, generatePreviewTokenSource.Token).ContinueWith(handleGeneratorFinish);
         }
 
         public void GenerateOsb()
@@ -245,13 +244,13 @@ namespace sbtw.Editor
                 var generated = await generate(new OsbGenerator(), generateOsbTokenSource.Token);
 
                 await File.WriteAllTextAsync(path, generated.Result.ToString());
-
-                Schedule(() => spinner.Hide());
-            }, generateOsbTokenSource.Token).ContinueWith(handleGeneratorExceptions, TaskContinuationOptions.OnlyOnFaulted);
+            }, generateOsbTokenSource.Token).ContinueWith(handleGeneratorFinish);
         }
 
         public void CloseProject()
         {
+            preview?.Expire();
+            preview = null;
             Beatmap.Disabled = false;
             Project.SetDefault();
             Beatmap.SetDefault();
@@ -290,8 +289,13 @@ namespace sbtw.Editor
             OpenBeatmap(Project.Value.BeatmapSet.BeatmapSetInfo.Beatmaps.FirstOrDefault(b => b.DifficultyName == current));
         }
 
-        private void handleGeneratorExceptions(Task task)
+        private void handleGeneratorFinish(Task task)
         {
+            Schedule(() => spinner.Hide());
+
+            if (task.Exception == null)
+                return;
+
             switch (task.Exception.InnerException)
             {
                 case UnauthorizedAccessException uae:
@@ -302,8 +306,6 @@ namespace sbtw.Editor
                     Logger.Error(ex, "An unknown error has occured while attempting to generate.");
                     break;
             }
-
-            Schedule(() => spinner.Hide());
         }
 
         private async Task<GeneratorResult<T, U>> generate<T, U>(Generator<T, U> generator, CancellationToken token)
@@ -342,8 +344,6 @@ namespace sbtw.Editor
             if (Project.Value is DummyProject || Beatmap.Value is DummyWorkingBeatmap)
             {
                 preview?.Stop();
-                preview = null;
-
                 middleControlContainer.Hide();
                 contentContainer.Clear();
             }

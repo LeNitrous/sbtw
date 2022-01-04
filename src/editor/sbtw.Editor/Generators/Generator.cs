@@ -10,6 +10,7 @@ using osu.Framework.Audio.Track;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
 using sbtw.Editor.Scripts;
+using sbtw.Editor.Scripts.Elements;
 
 namespace sbtw.Editor.Generators
 {
@@ -31,6 +32,9 @@ namespace sbtw.Editor.Generators
                 apply(s, config.Storage, config.Beatmap, config.Waveform, config.Variables?.GetValueOrDefault(s.Name), token))
                 ?? Array.Empty<Task<ScriptGenerationResult>>()
             );
+
+            foreach (var script in config.Scripts)
+                script.Dispose();
 
             var groups = generated
                 .SelectMany(r => r.Groups)

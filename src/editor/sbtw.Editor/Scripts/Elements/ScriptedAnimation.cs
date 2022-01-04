@@ -5,7 +5,7 @@ using osu.Framework.Graphics;
 using osu.Game.Storyboards;
 using osuTK;
 
-namespace sbtw.Editor.Scripts
+namespace sbtw.Editor.Scripts.Elements
 {
     public class ScriptedAnimation : ScriptedSprite
     {

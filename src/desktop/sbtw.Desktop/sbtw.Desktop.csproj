@@ -9,8 +9,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\editor\sbtw.Editor\sbtw.Editor.csproj" />
-    <ProjectReference Include="..\..\editor\sbtw.Editor.Languages.Lua\sbtw.Editor.Languages.Lua.csproj" />
-    <ProjectReference Include="..\..\editor\sbtw.Editor.Languages.Python\sbtw.Editor.Languages.Python.csproj" />
     <ProjectReference Include="..\..\editor\sbtw.Editor.Languages.Javascript\sbtw.Editor.Languages.Javascript.csproj" />
   </ItemGroup>
 

@@ -2,56 +2,46 @@
 // See LICENSE in the repository root for more details.
 
 using System;
-using System.IO;
-using Python.Runtime;
+using Microsoft.Scripting.Hosting;
 using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Languages.Python.Scripts
 {
-    public class PythonScript : Script, IDisposable
+    public class PythonScript : Script
     {
-        private readonly string code;
-        private readonly Py.GILState state;
-        private readonly PyModule context;
-        private bool isDisposed;
+        private readonly ScriptScope scope;
+        private readonly ScriptEngine engine;
 
-        public PythonScript(string name, string path)
+        public PythonScript(ScriptScope scope, string name, string path)
             : base(name, path)
         {
-            code = File.ReadAllText(Path);
-            state = Py.GIL();
-            context = Py.CreateScope(Name);
+            this.scope = scope;
+            engine = scope.Engine;
         }
 
         protected override void Perform()
         {
-            context.Exec(code);
+            engine.SetSearchPaths(new[] { System.IO.Path.GetDirectoryName(Path) });
+            engine.ExecuteFile(Path, scope);
         }
 
         protected override void RegisterMethod(string name, Delegate method)
-            => context.Set(name, method);
+            => scope.SetVariable(name, method);
 
         protected override void RegisterField(string name, object value)
-            => context.Set(name, value);
+            => scope.SetVariable(name, value);
 
         protected override void RegisterType(Type type)
-            => context.Set(type.Name, type.ToPython());
-
-        protected virtual void Dispose(bool disposing)
         {
-            if (isDisposed && !disposing)
-                return;
-
-            context.Dispose();
-            state.Dispose();
-
-            isDisposed = true;
+            engine.Execute(@$"
+import clr
+clr.AddReference(""{type.Namespace}"")
+from {type.Namespace} import {type.Name}
+", scope);
         }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
         }
     }
 }

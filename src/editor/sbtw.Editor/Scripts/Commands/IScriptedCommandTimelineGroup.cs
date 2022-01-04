@@ -6,7 +6,7 @@ using osu.Game.Storyboards;
 using osuTK;
 using osuTK.Graphics;
 
-namespace sbtw.Editor.Scripts
+namespace sbtw.Editor.Scripts.Commands
 {
     public interface IScriptedCommandTimelineGroup
     {

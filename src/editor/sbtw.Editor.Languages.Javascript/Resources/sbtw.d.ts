@@ -35,6 +35,14 @@ declare function GetGroup(name: string): ScriptElementGroup;
 declare function OpenFile(path: string): number[];
 
 /**
+ * Generates an asset.
+ * @param path - The directory where the asset will be generated.
+ * @param asset - The asset to be generated.
+ * @returns The path to the generated asset.
+ */
+declare function GetAsset(path: string, asset: Asset): string;
+
+/**
  * Logs a message to the output.
  * @param message - The message to be logged.
  */
@@ -191,19 +199,19 @@ declare class ScriptedSprite implements IScriptedElementWithDuration {
     /**
      * Changes this element's color over time.
      */
-    Colour4(easing: Easing, startTime: number, endTime: number, start: Colour4, end: Colour4): void;
-    Colour4(easing: Easing, startTime: number, endTime: number, start: Colour4, endRed: number, endBlue: number, endGreen: number): void;
-    Colour4(easing: Easing, startTime: number, endTime: number, startRed: number, startBlue: number, startGreen: number, end: Colour4): void;
-    Colour4(easing: Easing, startTime: number, endTime: number, startRed: number, startBlue: number, startGreen: number, endRed: number, endBlue: number, endGreen: number): void;
-    Colour4(startTime: number, endTime: number, start: Colour4, end: Colour4): void;
-    Colour4(startTime: number, endTime: number, start: Colour4, endRed: number, endBlue: number, endGreen: number): void;
-    Colour4(startTime: number, endTime: number, startRed: number, startBlue: number, startGreen: number, end: Colour4): void;
-    Colour4(startTime: number, endTime: number, startRed: number, startBlue: number, startGreen: number, endRed: number, endBlue: number, endGreen: number): void;
-    Colour4(time: number, color: Colour4): void;
-    Colour4(time: number, red: number, blue: number, green: number): void;
-    Colour4(easing: Easing, startTime: number, endTime: number, startHex: string, endHex: string): void;
-    Colour4(startTime: number, endTime: number, startHex: string, endHex: string): void;
-    Colour4(time: number, hex: string): void;
+    Color(easing: Easing, startTime: number, endTime: number, start: Colour4, end: Colour4): void;
+    Color(easing: Easing, startTime: number, endTime: number, start: Colour4, endRed: number, endBlue: number, endGreen: number): void;
+    Color(easing: Easing, startTime: number, endTime: number, startRed: number, startBlue: number, startGreen: number, end: Colour4): void;
+    Color(easing: Easing, startTime: number, endTime: number, startRed: number, startBlue: number, startGreen: number, endRed: number, endBlue: number, endGreen: number): void;
+    Color(startTime: number, endTime: number, start: Colour4, end: Colour4): void;
+    Color(startTime: number, endTime: number, start: Colour4, endRed: number, endBlue: number, endGreen: number): void;
+    Color(startTime: number, endTime: number, startRed: number, startBlue: number, startGreen: number, end: Colour4): void;
+    Color(startTime: number, endTime: number, startRed: number, startBlue: number, startGreen: number, endRed: number, endBlue: number, endGreen: number): void;
+    Color(time: number, color: Colour4): void;
+    Color(time: number, red: number, blue: number, green: number): void;
+    Color(easing: Easing, startTime: number, endTime: number, startHex: string, endHex: string): void;
+    Color(startTime: number, endTime: number, startHex: string, endHex: string): void;
+    Color(time: number, hex: string): void;
 
     /**
      * Changes this element's color over time.
@@ -334,6 +342,59 @@ declare class ScriptedVideo implements IScriptedElement {
     readonly Path: string;
     readonly Layer: Layer;
     readonly StartTime: number;
+}
+
+/**
+ * A generatable asset.
+ */
+declare class Asset { }
+
+/**
+ * A rectangle.
+ */
+declare class Rectangle extends Asset {
+    /**
+     * Creates a rectangle.
+     * @param name - The unique name for this rectangle.
+     */
+    constructor(name: string);
+}
+
+/**
+ * Text shown on the storyboard.
+ */
+declare class Text extends Asset {
+    /**
+     * Creates text.
+     * @param text - The text to be displayed.
+     * @param font - The font configuration to be used.
+     */
+    constructor(text: string, font: FontConfiguration);
+}
+
+declare class FontConfiguration {
+    /**
+     * The path to the font file relative to the project.
+     */
+    Path: string;
+
+    /**
+     * The font's family name.
+     */
+    Name: string;
+
+    /**
+     * The font's size.
+     */
+    Size: number;
+
+    /**
+     * Creates a new font configuration.
+     * @param path - The path to the font file relative to the project.
+     * @param name - The font's family name.
+     * @param size - The font's size.
+     */
+    constructor(path: string, name: string, size: number);
 }
 
 /**

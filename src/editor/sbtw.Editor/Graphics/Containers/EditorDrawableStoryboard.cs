@@ -29,6 +29,8 @@ namespace sbtw.Editor.Graphics.Containers
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent) =>
             dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
+        public override bool RemoveCompletedTransforms => false;
+
         public EditorDrawableStoryboard(Storyboard storyboard, IResourceStore<byte[]> resources)
         {
             Storyboard = storyboard;

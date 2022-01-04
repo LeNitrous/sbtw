@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using osu.Framework.Graphics;
 using osu.Game.Storyboards;
 using osuTK;
+using sbtw.Editor.Scripts.Elements;
 
 namespace sbtw.Editor.Scripts
 {
@@ -45,6 +46,7 @@ namespace sbtw.Editor.Scripts
         public void CreateSample(string path, double time, int volume = 100, Layer layer = Layer.Background)
             => Elements.Add(new ScriptedSample(Owner, layer, path, time, volume));
 
-        public void CreateVideo(string path, int offset) => Elements.Add(new ScriptedVideo(Owner, path, offset));
+        public void CreateVideo(string path, int offset)
+            => Elements.Add(new ScriptedVideo(Owner, path, offset));
     }
 }

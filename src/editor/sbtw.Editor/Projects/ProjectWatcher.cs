@@ -6,6 +6,7 @@ using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
+using osu.Framework.Threading;
 using sbtw.Editor.Configuration;
 using sbtw.Editor.Languages;
 
@@ -71,13 +72,19 @@ namespace sbtw.Editor.Projects
             watcher.EnableRaisingEvents = true;
         }
 
+        private ScheduledDelegate debounce;
+
         private void handleChange(string path)
         {
-            if (languages.Extensions.Contains(Path.GetExtension(path)))
-                editor?.GeneratePreview();
+            debounce?.Cancel();
+            debounce = Scheduler.AddDelayed(() =>
+            {
+                if (languages.Extensions.Contains(Path.GetExtension(path)))
+                    editor?.GeneratePreview();
 
-            if (new FileInfo(path).Directory.Parent.Name == "Beatmap" && extensions.Contains(Path.GetExtension(path)))
-                editor?.RefreshBeatmap();
+                if (new FileInfo(path).Directory.Parent.Name == "Beatmap" && extensions.Contains(Path.GetExtension(path)))
+                    editor?.RefreshBeatmap();
+            }, 500);
         }
 
         private void clearWatcher()

@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using sbtw.Editor.Scripts;
+using sbtw.Editor.Scripts.Elements;
 
 namespace sbtw.Editor.Generators
 {

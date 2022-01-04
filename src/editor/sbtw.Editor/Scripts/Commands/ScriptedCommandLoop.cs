@@ -8,16 +8,16 @@ using osu.Game.Storyboards;
 using osuTK;
 using osuTK.Graphics;
 
-namespace sbtw.Editor.Scripts
+namespace sbtw.Editor.Scripts.Commands
 {
-    public class ScriptedCommandTimelineGroup : CommandTimelineGroup, IScriptedCommandTimelineGroup
+    public class ScriptedCommandLoop : CommandLoop, IScriptedCommandTimelineGroup
     {
         public CommandTimeline<Vector2> Move = new CommandTimeline<Vector2>();
 
-        private static readonly FieldInfo timelinesField = typeof(CommandTimelineGroup).GetField("timelines", BindingFlags.Instance | BindingFlags.NonPublic);
-
-        public ScriptedCommandTimelineGroup()
+        public ScriptedCommandLoop(double startTime, int repeatCount)
+            : base(startTime, repeatCount)
         {
+            var timelinesField = typeof(CommandTimelineGroup).GetField("timelines", BindingFlags.Instance | BindingFlags.NonPublic);
             var timelines = timelinesField.GetValue(this) as ICommandTimeline[];
             timelinesField.SetValue(this, timelines.Concat(new[] { Move }).ToArray());
         }

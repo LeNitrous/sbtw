@@ -138,8 +138,7 @@ namespace sbtw.Editor.Graphics.UserInterface
         protected override void Update()
         {
             base.Update();
-            if (beatmap.Value.Track.IsAlive)
-                clock?.ProcessFrame();
+            clock?.ProcessFrame();
         }
 
         protected override bool OnKeyDown(KeyDownEvent e)

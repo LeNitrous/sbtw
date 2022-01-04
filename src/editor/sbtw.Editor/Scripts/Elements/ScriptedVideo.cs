@@ -1,9 +1,9 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-namespace sbtw.Editor.Scripts
+namespace sbtw.Editor.Scripts.Elements
 {
-    public class ScriptedSample : IScriptedElement
+    public class ScriptedVideo : IScriptedElement
     {
         public string Path { get; }
 
@@ -13,15 +13,11 @@ namespace sbtw.Editor.Scripts
 
         public double StartTime { get; }
 
-        public int Volume { get; }
-
-        public ScriptedSample(Script owner, Layer layer, string path, double startTime, int volume)
+        public ScriptedVideo(Script owner, string path, int offset)
         {
             Owner = owner;
-            Layer = layer;
             Path = path;
-            StartTime = startTime;
-            Volume = volume;
+            StartTime = offset;
         }
     }
 }

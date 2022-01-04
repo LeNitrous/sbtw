@@ -8,8 +8,6 @@ using osu.Framework.Platform;
 using sbtw.Desktop.IO;
 using sbtw.Desktop.Studios;
 using sbtw.Editor.Languages.Javascript;
-using sbtw.Editor.Languages.Lua;
-using sbtw.Editor.Languages.Python;
 using sbtw.Editor.Studios;
 
 namespace sbtw.Desktop
@@ -20,8 +18,6 @@ namespace sbtw.Desktop
         private void load()
         {
             Languages.Register(new JavascriptLanguage());
-            Languages.Register(new PythonLanguage());
-            Languages.Register(new LuaLanguage());
         }
 
         public override void SetHost(GameHost host)

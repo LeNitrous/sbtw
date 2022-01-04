@@ -6,6 +6,7 @@ using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Testing;
 using sbtw.Editor.Scripts;
+using sbtw.Editor.Scripts.Elements;
 
 namespace sbtw.Editor.Languages.Tests
 {

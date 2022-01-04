@@ -9,22 +9,19 @@ using LuaState = NLua.Lua;
 
 namespace sbtw.Editor.Languages.Lua.Scripts
 {
-    public class LuaScript : Script, IDisposable
+    public class LuaScript : Script
     {
-        private readonly LuaState lua = new LuaState { State = { Encoding = Encoding.UTF8 } };
-        private readonly string code;
-        private bool isDisposed;
+        private LuaState lua = new LuaState { State = { Encoding = Encoding.UTF8 } };
 
         public LuaScript(string name, string path)
             : base(name, path)
         {
-            code = File.ReadAllText(Path);
         }
 
         protected override void Perform()
         {
             lua.DoString(@"import = function() end");
-            lua.DoString(code);
+            lua.DoString(File.ReadAllText(Path));
         }
 
         protected override void RegisterMethod(string name, Delegate method)
@@ -36,20 +33,11 @@ namespace sbtw.Editor.Languages.Lua.Scripts
         protected override void RegisterType(Type type)
             => lua.DoString($"{type.Name} = luanet.import_type('{type.Namespace}.{type.Name}')");
 
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
-            if (isDisposed && !disposing)
-                return;
-
-            lua.Dispose();
-
-            isDisposed = true;
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            lua?.Dispose();
+            lua = null;
+            base.Dispose(disposing);
         }
     }
 }

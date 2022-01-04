@@ -10,6 +10,7 @@
     <PackageReference Include="ppy.osu.Game.Rulesets.Mania" Version="2021.1225.0" />
     <PackageReference Include="ppy.osu.Game.Rulesets.Osu" Version="2021.1211.0" />
     <PackageReference Include="ppy.osu.Game.Rulesets.Taiko" Version="2021.1225.0" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta13" />
   </ItemGroup>
 
 </Project>

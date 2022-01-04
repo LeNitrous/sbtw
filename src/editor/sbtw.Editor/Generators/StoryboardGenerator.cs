@@ -5,6 +5,8 @@ using System;
 using osu.Game.Beatmaps;
 using osu.Game.Storyboards;
 using sbtw.Editor.Scripts;
+using sbtw.Editor.Scripts.Commands;
+using sbtw.Editor.Scripts.Elements;
 
 namespace sbtw.Editor.Generators
 {

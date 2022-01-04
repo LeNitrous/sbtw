@@ -9,11 +9,9 @@ using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Languages.Javascript.Scripts
 {
-    public class JavascriptScript : Script, IDisposable
+    public class JavascriptScript : Script
     {
-        protected readonly V8ScriptEngine Engine;
-        private bool isDisposed;
-
+        protected V8ScriptEngine Engine { get; private set; }
         protected V8Script Compiled { get; set; }
 
         public JavascriptScript(V8ScriptEngine engine, string name, string path)
@@ -43,21 +41,13 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
         protected override void RegisterType(Type type)
             => Engine.AddHostType(type);
 
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
-            if (isDisposed && !disposing)
-                return;
-
             Engine?.Dispose();
+            Engine = null;
             Compiled?.Dispose();
-
-            isDisposed = true;
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            Compiled = null;
+            base.Dispose(disposing);
         }
     }
 }

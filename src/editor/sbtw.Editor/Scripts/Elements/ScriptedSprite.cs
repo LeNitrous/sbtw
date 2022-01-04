@@ -6,8 +6,9 @@ using System.Collections.Generic;
 using osu.Framework.Graphics;
 using osu.Game.Storyboards;
 using osuTK;
+using sbtw.Editor.Scripts.Commands;
 
-namespace sbtw.Editor.Scripts
+namespace sbtw.Editor.Scripts.Elements
 {
     public class ScriptedSprite : IScriptedElementWithDuration
     {

@@ -11,6 +11,8 @@ using osu.Game.Storyboards;
 using osuTK;
 using osuTK.Graphics;
 using sbtw.Editor.Scripts;
+using sbtw.Editor.Scripts.Commands;
+using sbtw.Editor.Scripts.Elements;
 
 namespace sbtw.Editor.Generators
 {

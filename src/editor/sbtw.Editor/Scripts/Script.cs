@@ -13,16 +13,20 @@ using osu.Framework.Audio.Track;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
+using sbtw.Editor.Scripts.Graphics;
 
 namespace sbtw.Editor.Scripts
 {
-    public abstract class Script
+    public abstract class Script : IDisposable
     {
         private static readonly Dictionary<MethodInfo, Type> importable_methods = new Dictionary<MethodInfo, Type>();
         private static readonly List<PropertyInfo> importable_properties = new List<PropertyInfo>();
         private static readonly Type[] importable_types = new[]
         {
+            typeof(Text),
             typeof(Layer),
+            typeof(Rectangle),
+            typeof(FontConfiguration),
             typeof(osuTK.Vector2),
             typeof(osu.Framework.Graphics.Anchor),
             typeof(osu.Framework.Graphics.Easing),
@@ -75,7 +79,7 @@ namespace sbtw.Editor.Scripts
         private readonly List<ScriptElementGroup> groups = new List<ScriptElementGroup>();
         protected readonly Logger Logger = Logger.GetLogger("script");
 
-        private Storage storage;
+        public Storage Storage { get; private set; }
 
         [Visible]
         public IBeatmap Beatmap { get; private set; }
@@ -83,11 +87,16 @@ namespace sbtw.Editor.Scripts
         [Visible]
         public Waveform Waveform { get; private set; }
 
+        protected bool IsDisposed { get; private set; }
+
         protected Script(string name, string path)
         {
             Name = name.Pascalize();
             Path = path;
         }
+
+        [Visible]
+        public string GetAsset(string path, Asset asset) => asset.Generate(this, path);
 
         [Visible]
         public ScriptElementGroup GetGroup(string name)
@@ -153,19 +162,25 @@ namespace sbtw.Editor.Scripts
             return (T)obj;
         }
 
+        public void Log(string message, LogLevel level)
+            => Logger.Add($"[{System.IO.Path.GetFileName(Path)}]: {message}", level);
+
+        public void Error(string message)
+            => Log(message, LogLevel.Error);
+
         [Visible]
         public void Log(string message)
-            => Logger.Debug($"[{System.IO.Path.GetFileName(Path)}]: {message}");
+            => Log(message, LogLevel.Debug);
 
         [Visible]
         public byte[] OpenFile(string path)
         {
-            if (storage?.Exists(path) ?? false)
+            if (Storage?.Exists(path) ?? false)
                 return null;
 
             byte[] data = null;
 
-            using (var stream = storage.GetStream(path, mode: FileMode.Open))
+            using (var stream = Storage.GetStream(path, mode: FileMode.Open))
             {
                 using var reader = new MemoryStream();
                 stream.CopyTo(reader);
@@ -180,9 +195,12 @@ namespace sbtw.Editor.Scripts
 
         public ScriptGenerationResult Generate(Storage storage = null, IBeatmap beatmap = null, Waveform waveform = null)
         {
+            if (IsDisposed)
+                throw new ObjectDisposedException($"{this} is already disposed and cannot generate.");
+
             Beatmap = beatmap;
             Waveform = waveform;
-            this.storage = storage;
+            Storage = storage;
 
             importTypesAndMembers();
             Compile();
@@ -232,5 +250,18 @@ namespace sbtw.Editor.Scripts
             foreach (Type type in importable_types)
                 RegisterType(type);
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            IsDisposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        public override string ToString() => @$"{GetType().Name} ({Path})";
     }
 }
