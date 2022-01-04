@@ -33,6 +33,7 @@ using sbtw.Editor.Generators;
 using sbtw.Editor.Graphics.UserInterface;
 using sbtw.Editor.Overlays;
 using sbtw.Editor.Projects;
+using sbtw.Editor.Scripts.Graphics;
 
 namespace sbtw.Editor
 {
@@ -44,6 +45,7 @@ namespace sbtw.Editor
             => dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
         private readonly Logger scriptLogger = Logger.GetLogger("script");
+        private readonly List<Asset> assetCache = new List<Asset>();
         private VolumeOverlay volume;
         private EditorSettingsOverlay settings;
         private OutputOverlay output;
@@ -212,18 +214,7 @@ namespace sbtw.Editor
 
                 var generated = await generate(new StoryboardGenerator(Beatmap.Value.BeatmapInfo), GenerateTarget.All, false, generatePreviewTokenSource.Token);
 
-                Schedule(() =>
-                {
-                    var added = generated.Groups.Except(Project.Value.Groups.Select(g => g.Name));
-                    var removed = Project.Value.Groups.Select(g => g.Name).Except(generated.Groups);
-
-                    Project.Value.Groups.AddRange(added.Select(g => new ElementGroupSetting { Name = g }));
-                    Project.Value.Groups.RemoveAll(g => removed.Contains(g.Name));
-
-                    Project.Value.Variables.Clear();
-                    Project.Value.Variables.AddRange(generated.Variables.ToList());
-                    preview.SetStoryboard(generated.Result, Project.Value.Resources.Resources);
-                });
+                Schedule(() => preview.SetStoryboard(generated.Result, Project.Value.Resources.Resources));
             }, generatePreviewTokenSource.Token).ContinueWith(handleGeneratorFinish);
         }
 
@@ -238,11 +229,6 @@ namespace sbtw.Editor
 
             Task.Run(async () =>
             {
-                var path = await RequestSaveFileAsync(suggestedName: "generated.osb", extensions: new[] { "osb" });
-
-                if (string.IsNullOrEmpty(path))
-                    return;
-
                 Schedule(() => spinner.Show());
 
                 var difficulty = await generate(new OsbGenerator(), GenerateTarget.Difficulty, true, generateOsbTokenSource.Token);
@@ -345,6 +331,7 @@ namespace sbtw.Editor
 
             var generated = await generator.GenerateAsync(new GeneratorConfig
             {
+                Assets = assetCache,
                 Storage = Project.Value.Files,
                 Beatmap = Beatmap.Value.GetPlayableBeatmap(Beatmap.Value.BeatmapInfo.Ruleset, new List<Mod>(), token),
                 Waveform = Beatmap.Value.Waveform,
@@ -365,6 +352,21 @@ namespace sbtw.Editor
                 notification.Closed += () => output.Show();
                 notifications.Post(notification);
             }
+
+            var added = generated.Groups.Except(Project.Value.Groups.Select(g => g.Name));
+            var removed = Project.Value.Groups.Select(g => g.Name).Except(generated.Groups);
+
+            Schedule(() =>
+            {
+                Project.Value.Groups.AddRange(added.Select(g => new ElementGroupSetting { Name = g }));
+                Project.Value.Groups.RemoveAll(g => removed.Contains(g.Name));
+
+                Project.Value.Variables.Clear();
+                Project.Value.Variables.AddRange(generated.Variables.ToList());
+
+                assetCache.Clear();
+                assetCache.AddRange(generated.Assets);
+            });
 
             return generated;
         }

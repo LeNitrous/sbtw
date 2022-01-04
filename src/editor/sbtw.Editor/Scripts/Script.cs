@@ -24,8 +24,8 @@ namespace sbtw.Editor.Scripts
         private static readonly Type[] importable_types = new[]
         {
             typeof(Text),
-            typeof(Layer),
             typeof(Rectangle),
+            typeof(Layer),
             typeof(FontConfiguration),
             typeof(osuTK.Vector2),
             typeof(osu.Framework.Graphics.Anchor),
@@ -77,6 +77,7 @@ namespace sbtw.Editor.Scripts
         private readonly List<ScriptVariableInfo> internalVariables = new List<ScriptVariableInfo>();
         private readonly List<ScriptVariableInfo> variables = new List<ScriptVariableInfo>();
         private readonly List<ScriptElementGroup> groups = new List<ScriptElementGroup>();
+        private readonly List<Asset> assets = new List<Asset>();
         protected readonly Logger Logger = Logger.GetLogger("script");
 
         public Storage Storage { get; private set; }
@@ -96,7 +97,12 @@ namespace sbtw.Editor.Scripts
         }
 
         [Visible]
-        public string GetAsset(string path, Asset asset) => asset.Generate(this, path);
+        public string GetAsset(string path, Asset asset)
+        {
+            asset.Register(this, path);
+            assets.Add(asset);
+            return path;
+        }
 
         [Visible]
         public ScriptElementGroup GetGroup(string name)
@@ -217,7 +223,7 @@ namespace sbtw.Editor.Scripts
                 Logger.Add(FormatErrorMessage(ex), LogLevel.Error);
             }
 
-            return new ScriptGenerationResult { Name = Name, Groups = groups, Variables = variables, Faulted = faulted };
+            return new ScriptGenerationResult { Name = Name, Assets = assets, Groups = groups, Variables = variables, Faulted = faulted };
         }
 
         public Task<ScriptGenerationResult> GenerateAsync(Storage storage = null, IBeatmap beatmap = null, Waveform waveform = null, CancellationToken token = default)

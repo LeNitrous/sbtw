@@ -12,8 +12,6 @@ namespace sbtw.Editor.Scripts.Graphics
 {
     public class Text : Asset
     {
-        protected override string Extension => ".png";
-
         private readonly FontConfiguration config;
         private readonly string text;
 
