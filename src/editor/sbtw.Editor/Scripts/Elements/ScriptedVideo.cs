@@ -9,13 +9,16 @@ namespace sbtw.Editor.Scripts.Elements
 
         public Script Owner { get; }
 
+        public string Group { get; }
+
         public Layer Layer { get; }
 
         public double StartTime { get; }
 
-        public ScriptedVideo(Script owner, string path, int offset)
+        public ScriptedVideo(Script owner, string group, string path, int offset)
         {
             Owner = owner;
+            Group = group;
             Path = path;
             StartTime = offset;
         }

@@ -18,7 +18,7 @@ namespace sbtw.Editor.Projects
 {
     public class Project : IProject
     {
-        public BindableList<string> Groups { get; } = new BindableList<string>();
+        public BindableList<ElementGroupSetting> Groups { get; } = new BindableList<ElementGroupSetting>();
         public BindableDictionary<string, IEnumerable<ScriptVariableInfo>> Variables { get; } = new BindableDictionary<string, IEnumerable<ScriptVariableInfo>>();
         public List<string> Ignore { get; } = new List<string>();
 

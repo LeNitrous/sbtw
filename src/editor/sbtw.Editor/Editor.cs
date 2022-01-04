@@ -210,12 +210,16 @@ namespace sbtw.Editor
             {
                 Schedule(() => spinner.Show());
 
-                var generated = await generate(new StoryboardGenerator(Beatmap.Value.BeatmapInfo), generatePreviewTokenSource.Token);
+                var generated = await generate(new StoryboardGenerator(Beatmap.Value.BeatmapInfo), GenerateTarget.All, false, generatePreviewTokenSource.Token);
 
                 Schedule(() =>
                 {
-                    Project.Value.Groups.Clear();
-                    Project.Value.Groups.AddRange(generated.Groups);
+                    var added = generated.Groups.Except(Project.Value.Groups.Select(g => g.Name));
+                    var removed = Project.Value.Groups.Select(g => g.Name).Except(generated.Groups);
+
+                    Project.Value.Groups.AddRange(added.Select(g => new ElementGroupSetting { Name = g }));
+                    Project.Value.Groups.RemoveAll(g => removed.Contains(g.Name));
+
                     Project.Value.Variables.Clear();
                     Project.Value.Variables.AddRange(generated.Variables.ToList());
                     preview.SetStoryboard(generated.Result, Project.Value.Resources.Resources);
@@ -241,9 +245,27 @@ namespace sbtw.Editor
 
                 Schedule(() => spinner.Show());
 
-                var generated = await generate(new OsbGenerator(), generateOsbTokenSource.Token);
+                var difficulty = await generate(new OsbGenerator(), GenerateTarget.Difficulty, true, generateOsbTokenSource.Token);
+                var storyboard = await generate(new OsbGenerator(), GenerateTarget.Storyboard, true, generateOsbTokenSource.Token);
 
-                await File.WriteAllTextAsync(path, generated.Result.ToString());
+                string file = $"{Beatmap.Value.Metadata.Artist} - {Beatmap.Value.Metadata.Title} (${Beatmap.Value.Metadata.AuthorString})";
+
+                {
+                    using var stream = Project.Value.Resources.Storage.GetStream($"{file}.osb", FileAccess.Write);
+                    using var writer = new StreamWriter(stream);
+                    stream.Position = 0;
+                    await writer.WriteAsync(storyboard.ToString());
+                }
+
+                {
+                    using var stream = Project.Value.Resources.Storage.GetStream($"{file} [{Beatmap.Value.BeatmapInfo.DifficultyName}].osu", FileAccess.ReadWrite, FileMode.Open);
+                    using var reader = new StreamReader(stream);
+                    using var writer = new StreamWriter(stream);
+
+                    string diff = await reader.ReadToEndAsync();
+                    stream.Position = diff.IndexOf("[Events]");
+                    await writer.WriteAsync(difficulty.ToString());
+                }
             }, generateOsbTokenSource.Token).ContinueWith(handleGeneratorFinish);
         }
 
@@ -308,15 +330,26 @@ namespace sbtw.Editor
             }
         }
 
-        private async Task<GeneratorResult<T, U>> generate<T, U>(Generator<T, U> generator, CancellationToken token)
+        private async Task<GeneratorResult<T, U>> generate<T, U>(Generator<T, U> generator, GenerateTarget target, bool excludeNonVisible, CancellationToken token)
         {
+            IEnumerable<ElementGroupSetting> groups = Project.Value.Groups;
+
+            if (target == GenerateTarget.Difficulty)
+                groups = groups.Where(g => g.ExportToDifficulty.Value);
+
+            if (target == GenerateTarget.Storyboard)
+                groups = groups.Where(g => !g.ExportToDifficulty.Value);
+
+            if (excludeNonVisible)
+                groups = groups.Where(g => g.Visible.Value);
+
             var generated = await generator.GenerateAsync(new GeneratorConfig
             {
                 Storage = Project.Value.Files,
                 Beatmap = Beatmap.Value.GetPlayableBeatmap(Beatmap.Value.BeatmapInfo.Ruleset, new List<Mod>(), token),
                 Waveform = Beatmap.Value.Waveform,
                 Scripts = await Languages.CompileAsync(Project.Value.Files, Project.Value.Ignore, token),
-                Ordering = Project.Value.Groups,
+                Ordering = groups.Select(g => g.Name),
                 Variables = Project.Value.Variables,
             }, token);
 
@@ -334,6 +367,13 @@ namespace sbtw.Editor
             }
 
             return generated;
+        }
+
+        private enum GenerateTarget
+        {
+            All,
+            Difficulty,
+            Storyboard,
         }
 
         private void updateControls() => Schedule(() =>

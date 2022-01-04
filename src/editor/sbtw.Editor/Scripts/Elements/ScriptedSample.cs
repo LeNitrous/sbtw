@@ -9,15 +9,18 @@ namespace sbtw.Editor.Scripts.Elements
 
         public Script Owner { get; }
 
+        public string Group { get; }
+
         public Layer Layer { get; }
 
         public double StartTime { get; }
 
         public int Volume { get; }
 
-        public ScriptedSample(Script owner, Layer layer, string path, double startTime, int volume)
+        public ScriptedSample(Script owner, string group, Layer layer, string path, double startTime, int volume)
         {
             Owner = owner;
+            Group = group;
             Layer = layer;
             Path = path;
             StartTime = startTime;

@@ -9,6 +9,8 @@ namespace sbtw.Editor.Scripts.Elements
 
         Script Owner { get; }
 
+        string Group { get; }
+
         Layer Layer { get; }
 
         double StartTime { get; }

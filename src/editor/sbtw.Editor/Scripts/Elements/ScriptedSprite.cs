@@ -17,6 +17,8 @@ namespace sbtw.Editor.Scripts.Elements
 
         public Script Owner { get; }
 
+        public string Group { get; }
+
         public Layer Layer { get; }
 
         public Anchor Origin { get; }
@@ -41,9 +43,10 @@ namespace sbtw.Editor.Scripts.Elements
             set => context = value;
         }
 
-        public ScriptedSprite(Script owner, Layer layer, string path, Anchor origin, Vector2 initialPosition)
+        public ScriptedSprite(Script owner, string group, Layer layer, string path, Anchor origin, Vector2 initialPosition)
         {
             Owner = owner;
+            Group = group;
             Layer = layer;
             Path = path;
             Origin = origin;

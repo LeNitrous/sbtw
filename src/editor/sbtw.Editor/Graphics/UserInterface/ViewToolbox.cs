@@ -5,6 +5,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
 using osu.Game.Graphics.Containers;
@@ -90,20 +91,64 @@ namespace sbtw.Editor.Graphics.UserInterface
                 }, true);
             }
 
-            private class GroupsList : OsuRearrangeableListContainer<string>
+            private class GroupsList : OsuRearrangeableListContainer<ElementGroupSetting>
             {
-                protected override OsuRearrangeableListItem<string> CreateOsuDrawable(string item)
+                protected override OsuRearrangeableListItem<ElementGroupSetting> CreateOsuDrawable(ElementGroupSetting item)
                     => new GroupsListItem(item);
             }
 
-            private class GroupsListItem : OsuRearrangeableListItem<string>
+            private class GroupsListItem : OsuRearrangeableListItem<ElementGroupSetting>
             {
-                public GroupsListItem(string item)
+                public GroupsListItem(ElementGroupSetting item)
                     : base(item)
                 {
                 }
 
-                protected override Drawable CreateContent() => new OsuSpriteText { Text = Model };
+                protected override Drawable CreateContent() => new GroupsListItemContent(Model);
+            }
+
+            private class GroupsListItemContent : Container
+            {
+                private readonly IconButton target;
+                private readonly Bindable<bool> exportToDifficulty;
+
+                public GroupsListItemContent(ElementGroupSetting model)
+                {
+                    Height = 40;
+                    RelativeSizeAxes = Axes.X;
+                    Children = new Drawable[]
+                    {
+                        new OsuSpriteText
+                        {
+                            Text = model.Name,
+                            Anchor = Anchor.CentreLeft,
+                            Origin = Anchor.CentreLeft,
+                        },
+                        new FillFlowContainer
+                        {
+                            RelativeSizeAxes = Axes.Y,
+                            AutoSizeAxes = Axes.X,
+                            Direction = FillDirection.Horizontal,
+                            Anchor = Anchor.CentreRight,
+                            Origin = Anchor.CentreRight,
+                            Spacing = new Vector2(5, 0),
+                            Children = new Drawable[]
+                            {
+                                target = new IconButton
+                                {
+                                    Size = new Vector2(40),
+                                    Action = () => exportToDifficulty.Value = !exportToDifficulty.Value,
+                                }
+                            }
+                        }
+                    };
+
+                    exportToDifficulty = model.ExportToDifficulty.GetBoundCopy();
+                    exportToDifficulty.BindValueChanged(_ => handleTargetChange(), true);
+                }
+
+                private void handleTargetChange()
+                    => target.Icon = exportToDifficulty.Value ? FontAwesome.Solid.FileAlt : FontAwesome.Solid.Globe;
             }
         }
     }

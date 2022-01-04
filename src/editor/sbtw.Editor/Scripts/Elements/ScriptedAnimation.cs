@@ -15,8 +15,8 @@ namespace sbtw.Editor.Scripts.Elements
 
         public AnimationLoopType LoopType { get; }
 
-        public ScriptedAnimation(Script owner, Layer layer, string path, Anchor origin, Vector2 initialPosition, int frameCount, double frameDelay, AnimationLoopType loopType)
-            : base(owner, layer, path, origin, initialPosition)
+        public ScriptedAnimation(Script owner, string group, Layer layer, string path, Anchor origin, Vector2 initialPosition, int frameCount, double frameDelay, AnimationLoopType loopType)
+            : base(owner, group, layer, path, origin, initialPosition)
         {
             FrameCount = frameCount;
             FrameDelay = frameDelay;

@@ -31,22 +31,22 @@ namespace sbtw.Editor.Scripts
 
         public ScriptedSprite CreateSprite(string path, Anchor origin = Anchor.TopLeft, Vector2 initialPosition = default, Layer layer = Layer.Background)
         {
-            var sprite = new ScriptedSprite(Owner, layer, path, origin, initialPosition);
+            var sprite = new ScriptedSprite(Owner, Name, layer, path, origin, initialPosition);
             Elements.Add(sprite);
             return sprite;
         }
 
         public ScriptedAnimation CreateAnimation(string path, Anchor origin = Anchor.TopLeft, Vector2 initialPosition = default, int frameCount = 0, double frameDelay = 0, AnimationLoopType loopType = AnimationLoopType.LoopOnce, Layer layer = Layer.Background)
         {
-            var animation = new ScriptedAnimation(Owner, layer, path, origin, initialPosition, frameCount, frameDelay, loopType);
+            var animation = new ScriptedAnimation(Owner, Name, layer, path, origin, initialPosition, frameCount, frameDelay, loopType);
             Elements.Add(animation);
             return animation;
         }
 
         public void CreateSample(string path, double time, int volume = 100, Layer layer = Layer.Background)
-            => Elements.Add(new ScriptedSample(Owner, layer, path, time, volume));
+            => Elements.Add(new ScriptedSample(Owner, Name, layer, path, time, volume));
 
         public void CreateVideo(string path, int offset)
-            => Elements.Add(new ScriptedVideo(Owner, path, offset));
+            => Elements.Add(new ScriptedVideo(Owner, Name, path, offset));
     }
 }
