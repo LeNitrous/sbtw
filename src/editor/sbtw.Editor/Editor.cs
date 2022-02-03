@@ -33,7 +33,7 @@ using sbtw.Editor.Generators;
 using sbtw.Editor.Graphics.UserInterface;
 using sbtw.Editor.Overlays;
 using sbtw.Editor.Projects;
-using sbtw.Editor.Scripts.Graphics;
+using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor
 {
@@ -45,7 +45,6 @@ namespace sbtw.Editor
             => dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
         private readonly Logger scriptLogger = Logger.GetLogger("script");
-        private readonly List<Asset> assetCache = new List<Asset>();
         private VolumeOverlay volume;
         private EditorSettingsOverlay settings;
         private OutputOverlay output;
@@ -62,6 +61,9 @@ namespace sbtw.Editor
         private double lastTrackTime;
         private string lastTrackTitle;
         private bool lastTrackState;
+
+        [Cached(typeof(IBindableList<Script>))]
+        private readonly BindableList<Script> scripts = new BindableList<Script>();
 
         [BackgroundDependencyLoader]
         private void load()
@@ -129,7 +131,6 @@ namespace sbtw.Editor
                                         Origin = Anchor.Centre,
                                         Children = new Drawable[]
                                         {
-                                            new ScriptsToolbox(),
                                             new ViewToolbox
                                             {
                                                 Anchor = Anchor.TopRight,
@@ -234,7 +235,7 @@ namespace sbtw.Editor
                 var difficulty = await generate(new OsbGenerator(), GenerateTarget.Difficulty, true, generateOsbTokenSource.Token);
                 var storyboard = await generate(new OsbGenerator(), GenerateTarget.Storyboard, true, generateOsbTokenSource.Token);
 
-                string file = $"{Beatmap.Value.Metadata.Artist} - {Beatmap.Value.Metadata.Title} (${Beatmap.Value.Metadata.AuthorString})";
+                string file = $"{Beatmap.Value.Metadata.Artist} - {Beatmap.Value.Metadata.Title} ({Beatmap.Value.Metadata.AuthorString})";
 
                 {
                     using var stream = Project.Value.Resources.Storage.GetStream($"{file}.osb", FileAccess.Write);
@@ -260,8 +261,13 @@ namespace sbtw.Editor
             preview?.Expire();
             preview = null;
             Beatmap.Disabled = false;
-            Project.SetDefault();
             Beatmap.SetDefault();
+
+            if (Project.Value is IDisposable disposable)
+                disposable.Dispose();
+
+            Project.SetDefault();
+
             editorClock.SetDefault();
             editorBeatmap.SetDefault();
             Beatmap.Disabled = true;
@@ -329,16 +335,19 @@ namespace sbtw.Editor
             if (excludeNonVisible)
                 groups = groups.Where(g => g.Visible.Value);
 
+            var compiled = await Languages.CompileAsync(Project.Value.Files, null, token);
+
             var generated = await generator.GenerateAsync(new GeneratorConfig
             {
-                Assets = assetCache,
+                Scripts = compiled,
                 Storage = Project.Value.Files,
                 Beatmap = Beatmap.Value.GetPlayableBeatmap(Beatmap.Value.BeatmapInfo.Ruleset, new List<Mod>(), token),
                 Waveform = Beatmap.Value.Waveform,
-                Scripts = await Languages.CompileAsync(Project.Value.Files, Project.Value.Ignore, token),
                 Ordering = groups.Select(g => g.Name),
-                Variables = Project.Value.Variables,
             }, token);
+
+            if (generated.Assets.Any())
+                Project.Value.Assets.Generate(generated.Assets);
 
             if (generated.Faulted.Any())
             {
@@ -346,26 +355,22 @@ namespace sbtw.Editor
                 {
                     Icon = FontAwesome.Solid.Bomb,
                     Text = @"There are scripts that failed to run. See output for more details.",
-
                 };
 
                 notification.Closed += () => output.Show();
                 notifications.Post(notification);
             }
 
-            var added = generated.Groups.Except(Project.Value.Groups.Select(g => g.Name));
-            var removed = Project.Value.Groups.Select(g => g.Name).Except(generated.Groups);
-
             Schedule(() =>
             {
+                var added = generated.Groups.Except(Project.Value.Groups.Select(g => g.Name));
+                var removed = Project.Value.Groups.Select(g => g.Name).Except(generated.Groups);
+
                 Project.Value.Groups.AddRange(added.Select(g => new ElementGroupSetting { Name = g }));
                 Project.Value.Groups.RemoveAll(g => removed.Contains(g.Name));
 
-                Project.Value.Variables.Clear();
-                Project.Value.Variables.AddRange(generated.Variables.ToList());
-
-                assetCache.Clear();
-                assetCache.AddRange(generated.Assets);
+                scripts.Clear();
+                scripts.AddRange(compiled);
             });
 
             return generated;

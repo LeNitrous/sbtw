@@ -30,9 +30,16 @@ declare function GetGroup(name: string): ScriptElementGroup;
 /**
  * Opens a file.
  * @param path - The path to the file relative from the project.
- * @returns The file data as a byte array or null if the file is not found.
+ * @returns The file data as a byte array.
  */
 declare function OpenFile(path: string): number[];
+
+/**
+ * Opens a file as text.
+ * @param path - The path to the file relative from the project.
+ * @returns The file data as a string.
+ */
+declare function OpenFileAsText(path: string): string;
 
 /**
  * Generates an asset.
@@ -297,14 +304,6 @@ declare type InvalidOperationException = Error;
  * See {@link https://github.com/ppy/osu/blob/master/osu.Game/Beatmaps/IBeatmap.cs} for the implmenetation.
  */
 declare var Beatmap: any;
-
-/**
- * Represents a waveform. of the current beatmap.
- *
- * @remarks
- * See {@link https://github.com/ppy/osu-framework/blob/master/osu.Framework/Audio/Track/Waveform.cs} for the implementation.
- */
-declare var Waveform: any;
 
 /**
  * Represents a storyboard animation.

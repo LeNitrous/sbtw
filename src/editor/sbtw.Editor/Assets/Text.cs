@@ -8,7 +8,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
-namespace sbtw.Editor.Scripts.Graphics
+namespace sbtw.Editor.Assets
 {
     public class Text : Asset
     {

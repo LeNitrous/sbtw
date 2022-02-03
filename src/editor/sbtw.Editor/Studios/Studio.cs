@@ -29,7 +29,7 @@ namespace sbtw.Editor.Studios
         public void Open(string path) => Process.Start(new ProcessStartInfo
         {
             FileName = Name,
-            Arguments = path,
+            Arguments = $@"""{path}""",
             WindowStyle = ProcessWindowStyle.Hidden,
             UseShellExecute = true,
         });

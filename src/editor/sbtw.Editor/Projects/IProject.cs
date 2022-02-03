@@ -1,12 +1,11 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System.Collections.Generic;
 using osu.Framework.Bindables;
 using osu.Framework.Platform;
+using sbtw.Editor.Assets;
 using sbtw.Editor.Beatmaps;
 using sbtw.Editor.IO;
-using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Projects
 {
@@ -16,11 +15,9 @@ namespace sbtw.Editor.Projects
 
         string Path { get; }
 
-        List<string> Ignore { get; }
+        AssetGenerator Assets { get; }
 
         BindableList<ElementGroupSetting> Groups { get; }
-
-        BindableDictionary<string, IEnumerable<ScriptVariableInfo>> Variables { get; }
 
         StorageBackedBeatmapSet BeatmapSet { get; }
 

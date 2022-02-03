@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Humanizer;
@@ -13,13 +15,13 @@ using osu.Framework.Audio.Track;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
-using sbtw.Editor.Scripts.Graphics;
+using sbtw.Editor.Assets;
 
 namespace sbtw.Editor.Scripts
 {
     public abstract class Script : IDisposable
     {
-        private static readonly Dictionary<MethodInfo, Type> importable_methods = new Dictionary<MethodInfo, Type>();
+        private static readonly List<MethodInfo> importable_methods = new List<MethodInfo>();
         private static readonly List<PropertyInfo> importable_properties = new List<PropertyInfo>();
         private static readonly Type[] importable_types = new[]
         {
@@ -44,28 +46,7 @@ namespace sbtw.Editor.Scripts
             var members = typeof(Script).GetMembers().Where(m => m.GetCustomAttributes(typeof(VisibleAttribute), false).Length > 0);
 
             foreach (var method in members.OfType<MethodInfo>())
-            {
-                bool isFunc = method.ReturnType != typeof(void);
-                int parameterCount = method.GetParameters().Length;
-                int genericCount = isFunc ? parameterCount + 1 : parameterCount;
-
-                string key = isFunc ? "Func" : "Action";
-                key += parameterCount > 0 ? $"`{genericCount}" : string.Empty;
-
-                Type producedType = types[key];
-
-                if (parameterCount > 0)
-                {
-                    var genericTypes = method.GetParameters().Select(p => p.ParameterType);
-
-                    if (isFunc)
-                        genericTypes = genericTypes.Append(method.ReturnType);
-
-                    producedType = producedType.MakeGenericType(genericTypes.ToArray());
-                }
-
-                importable_methods.Add(method, producedType);
-            }
+                importable_methods.Add(method);
 
             foreach (var property in members.OfType<PropertyInfo>())
                 importable_properties.Add(property);
@@ -74,18 +55,15 @@ namespace sbtw.Editor.Scripts
         public readonly string Name;
         public readonly string Path;
 
-        private readonly List<ScriptVariableInfo> internalVariables = new List<ScriptVariableInfo>();
-        private readonly List<ScriptVariableInfo> variables = new List<ScriptVariableInfo>();
         private readonly List<ScriptElementGroup> groups = new List<ScriptElementGroup>();
         private readonly List<Asset> assets = new List<Asset>();
-        protected readonly Logger Logger = Logger.GetLogger("script");
+        private readonly Logger logger = Logger.GetLogger("script");
 
         public Storage Storage { get; private set; }
 
         [Visible]
         public IBeatmap Beatmap { get; private set; }
 
-        [Visible]
         public Waveform Waveform { get; private set; }
 
         protected bool IsDisposed { get; private set; }
@@ -127,62 +105,21 @@ namespace sbtw.Editor.Scripts
             GetGroup("Video").CreateVideo(path, offset);
         }
 
-        [Visible]
-        public object SetValue(string name, object value)
-        {
-            var variable = internalVariables.FirstOrDefault(v => v.Name == name);
-
-            if (variable != null)
-                variables.Add(variable);
-
-            variable ??= variables.FirstOrDefault(v => v.Name == name);
-
-            if (variable == null)
-                variables.Add(variable = new ScriptVariableInfo(name, value));
-
-            return variable.Value;
-        }
-
-        public T SetValue<T>(string name, T value)
-            => ensure<T>(SetValue(name, (object)value));
-
-        [Visible]
-        public object GetValue(string name)
-        {
-            var variable = internalVariables.FirstOrDefault(v => v.Name == name) ?? variables.FirstOrDefault(v => v.Name == name);
-
-            if (variable == null)
-                return null;
-
-            return variable.Value;
-        }
-
-        public T GetValue<T>(string name)
-            => ensure<T>(GetValue(name));
-
-        private static T ensure<T>(object obj)
-        {
-            if (obj is not T)
-                throw new InvalidCastException($"Cannot convert {obj.GetType()} to {typeof(T)}");
-
-            return (T)obj;
-        }
-
         public void Log(string message, LogLevel level)
-            => Logger.Add($"[{System.IO.Path.GetFileName(Path)}]: {message}", level);
-
-        public void Error(string message)
-            => Log(message, LogLevel.Error);
+            => logger.Add($"[{System.IO.Path.GetFileName(Path)}]: {message}", level);
 
         [Visible]
         public void Log(string message)
             => Log(message, LogLevel.Debug);
 
+        public void Error(string message)
+            => Log(message, LogLevel.Error);
+
         [Visible]
         public byte[] OpenFile(string path)
         {
             if (Storage?.Exists(path) ?? false)
-                return null;
+                throw new FileNotFoundException($@"File ""{path}"" does not exist.");
 
             byte[] data = null;
 
@@ -196,8 +133,9 @@ namespace sbtw.Editor.Scripts
             return data;
         }
 
-        public void SetValueInternal(string name, object value)
-            => internalVariables.Add(new ScriptVariableInfo(name, value));
+        [Visible]
+        public string OpenFileAsText(string path)
+            => Encoding.Default.GetString(OpenFile(path));
 
         public ScriptGenerationResult Generate(Storage storage = null, IBeatmap beatmap = null, Waveform waveform = null)
         {
@@ -220,10 +158,10 @@ namespace sbtw.Editor.Scripts
             catch (Exception ex)
             {
                 faulted = true;
-                Logger.Add(FormatErrorMessage(ex), LogLevel.Error);
+                Error(FormatErrorMessage(ex));
             }
 
-            return new ScriptGenerationResult { Name = Name, Assets = assets, Groups = groups, Variables = variables, Faulted = faulted };
+            return new ScriptGenerationResult { Name = Name, Assets = assets, Groups = groups, Faulted = faulted };
         }
 
         public Task<ScriptGenerationResult> GenerateAsync(Storage storage = null, IBeatmap beatmap = null, Waveform waveform = null, CancellationToken token = default)
@@ -247,8 +185,15 @@ namespace sbtw.Editor.Scripts
 
         private void importTypesAndMembers()
         {
-            foreach ((MethodInfo method, Type methodType) in importable_methods)
-                RegisterMethod(method.Name, method.CreateDelegate(methodType, this));
+            foreach (MethodInfo method in importable_methods)
+            {
+                var parameters = method.GetParameters().Select(p => p.ParameterType);
+                var type = method.ReturnType == typeof(void)
+                    ? Expression.GetActionType(parameters.ToArray())
+                    : Expression.GetFuncType(parameters.Append(method.ReturnType).ToArray());
+
+                RegisterMethod(method.Name, method.CreateDelegate(type, this));
+            }
 
             foreach (PropertyInfo property in importable_properties)
                 RegisterField(property.Name, property.GetValue(this));

@@ -1,6 +1,7 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -15,16 +16,18 @@ using osu.Game.Screens.Play.PlayerSettings;
 using osuTK;
 using sbtw.Editor.Configuration;
 using sbtw.Editor.Projects;
+using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Graphics.UserInterface
 {
     public class ViewToolbox : EditorTabbedToolbox<string>
     {
         public ViewToolbox()
-            : base("View")
+            : base("Tools")
         {
             AddTab(@"Layers", new LayersToolboxTab());
             AddTab(@"Groups", new GroupsToolboxTab());
+            AddTab(@"Scirpts", new ScriptsToolboxTab());
         }
 
         protected override TabControl<string> CreateTabControl() => new ViewToolboxTabControl { RelativeSizeAxes = Axes.Both };
@@ -46,6 +49,68 @@ namespace sbtw.Editor.Graphics.UserInterface
                         FadeHovered();
 
                     return false;
+                }
+            }
+        }
+
+        private class ScriptsToolboxTab : FillFlowContainer
+        {
+            private IBindableList<Script> scripts;
+
+            [BackgroundDependencyLoader]
+            private void load(IBindableList<Script> scripts)
+            {
+                this.scripts = scripts.GetBoundCopy();
+                this.scripts.BindCollectionChanged((_, args) => Schedule(() => Children = this.scripts.Select(s => new ScriptListItem(s)).ToList()));
+            }
+        }
+
+        private class ScriptListItem : CompositeDrawable
+        {
+            private readonly Script script;
+
+            public ScriptListItem(Script script)
+            {
+                this.script = script;
+            }
+
+            [BackgroundDependencyLoader]
+            private void load()
+            {
+                RelativeSizeAxes = Axes.X;
+                Height = 40;
+                InternalChildren = new Drawable[]
+                {
+                    new ScriptItemLabel(script.Name)
+                    {
+                        Anchor = Anchor.CentreLeft,
+                        Origin = Anchor.CentreLeft,
+                    },
+                };
+            }
+
+            private class ScriptItemLabel : CompositeDrawable
+            {
+                private readonly string name;
+
+                public ScriptItemLabel(string name)
+                {
+                    this.name = name;
+                }
+
+                [BackgroundDependencyLoader]
+                private void load()
+                {
+                    RelativeSizeAxes = Axes.Both;
+                    InternalChildren = new Drawable[]
+                    {
+                        new OsuSpriteText
+                        {
+                            Text = name,
+                            Anchor = Anchor.CentreLeft,
+                            Origin = Anchor.CentreLeft,
+                        },
+                    };
                 }
             }
         }

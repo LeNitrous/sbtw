@@ -30,14 +30,14 @@ namespace sbtw.Editor.Tests.Generators
 
         protected abstract TGenerator CreateRunner();
 
-        protected GeneratorResult<TResult, TGenerated> Generate(Action<Script> perform = null, IReadOnlyDictionary<string, IEnumerable<ScriptVariableInfo>> variables = null, IEnumerable<string> ordering = null)
-            => Generate(Guid.NewGuid().ToString(), perform, variables, ordering);
+        protected GeneratorResult<TResult, TGenerated> Generate(Action<Script> perform = null, IEnumerable<string> ordering = null)
+            => Generate(Guid.NewGuid().ToString(), perform, ordering);
 
-        protected GeneratorResult<TResult, TGenerated> Generate(string name, Action<Script> perform = null, IReadOnlyDictionary<string, IEnumerable<ScriptVariableInfo>> variables = null, IEnumerable<string> ordering = null)
-            => Generate(new Dictionary<string, Action<Script>> { { name, perform } }, variables, ordering);
+        protected GeneratorResult<TResult, TGenerated> Generate(string name, Action<Script> perform = null, IEnumerable<string> ordering = null)
+            => Generate(new Dictionary<string, Action<Script>> { { name, perform } }, ordering);
 
-        protected GeneratorResult<TResult, TGenerated> Generate(IReadOnlyDictionary<string, Action<Script>> scripts, IReadOnlyDictionary<string, IEnumerable<ScriptVariableInfo>> variables = null, IEnumerable<string> ordering = null)
-            => Generator.Generate(new GeneratorConfig { Scripts = scripts.Select(p => new TestScript(p.Key, p.Value)), Variables = variables, Ordering = ordering });
+        protected GeneratorResult<TResult, TGenerated> Generate(IReadOnlyDictionary<string, Action<Script>> scripts, IEnumerable<string> ordering = null)
+            => Generator.Generate(new GeneratorConfig { Scripts = scripts.Select(p => new TestScript(p.Key, p.Value)), Ordering = ordering });
     }
 
     public abstract class GeneratorTest<TGenerator, TResult> : GeneratorTest<TGenerator, TResult, TResult>

@@ -9,19 +9,19 @@ using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Tests.Projects
 {
-    public class ProjectStoreTest : GameHostTest
+    public class ProjectManagerTest : GameHostTest
     {
         [Test]
         public void TestProjectCreation()
         {
-            using var host = new CleanRunHeadlessGameHost(callingMethodName: nameof(ProjectStoreTest));
+            using var host = new CleanRunHeadlessGameHost(callingMethodName: nameof(ProjectManagerTest));
             using var storage = new TemporaryNativeStorage($"project-{Guid.NewGuid()}", host);
 
             try
             {
                 var editor = LoadEditor(host);
-                var manager = new ProjectStore(host, editor.Audio, editor.RulesetStore);
-                var project = manager.Create("project", storage.GetFullPath("."));
+                var manager = new ProjectManager(host, editor.Audio, editor.RulesetStore);
+                var project = manager.Create(storage.GetFullPath("./project.sbtw.json"));
                 Assert.That(project, Is.Not.Null);
             }
             finally
@@ -33,14 +33,14 @@ namespace sbtw.Editor.Tests.Projects
         [Test]
         public void TestProjectLoading()
         {
-            using var host = new CleanRunHeadlessGameHost(callingMethodName: nameof(ProjectStoreTest));
+            using var host = new CleanRunHeadlessGameHost(callingMethodName: nameof(ProjectManagerTest));
             using var storage = new TemporaryNativeStorage($"project-{Guid.NewGuid()}", host);
 
             try
             {
                 var editor = LoadEditor(host);
-                var manager = new ProjectStore(host, editor.Audio, editor.RulesetStore);
-                var project = manager.Create("project", storage.GetFullPath("."));
+                var manager = new ProjectManager(host, editor.Audio, editor.RulesetStore);
+                var project = manager.Create(storage.GetFullPath("./project.sbtw.json"));
 
                 Assert.That(project, Is.Not.Null);
 

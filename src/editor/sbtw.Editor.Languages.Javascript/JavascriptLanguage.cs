@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using osu.Framework.Bindables;
@@ -62,13 +63,17 @@ namespace sbtw.Editor.Languages.Javascript
 
         protected override JavascriptScript CreateScript(string name, string path)
         {
+            var engine = runtime.CreateScriptEngine();
+            engine.DocumentSettings.AccessFlags = runtime.DocumentSettings.AccessFlags;
+            engine.DocumentSettings.Loader = new TypescriptDocumentLoader();
+
             switch (Path.GetExtension(path))
             {
                 case ".js":
-                    return new JavascriptScript(runtime.CreateScriptEngine(), name, path);
+                    return new JavascriptScript(engine, name, path);
 
                 case ".ts":
-                    return new TypescriptScript(runtime.CreateScriptEngine(), typescript, name, path);
+                    return new TypescriptScript(engine, typescript, name, path);
 
                 default:
                     throw new ArgumentException(@"Cannot create a script for an unknown file type.");
@@ -81,6 +86,21 @@ namespace sbtw.Editor.Languages.Javascript
             typescript?.Dispose();
             runtime?.Dispose();
             config?.Dispose();
+        }
+
+        private class TypescriptDocumentLoader : DocumentLoader
+        {
+            public override async Task<Document> LoadDocumentAsync(DocumentSettings settings, DocumentInfo? sourceInfo, string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
+            {
+                Default.DiscardCachedDocuments();
+                var document = await Default.LoadDocumentAsync(settings, sourceInfo, specifier, category, contextCallback);
+
+                using var reader = new StreamReader(document.Contents);
+                using var typescript = new Typescript(new V8ScriptEngine());
+                var transpiled = typescript.Transpile(document.Info.Uri.AbsolutePath, await reader.ReadToEndAsync(), out string source);
+
+                return new StringDocument(transpiled, source);
+            }
         }
     }
 }

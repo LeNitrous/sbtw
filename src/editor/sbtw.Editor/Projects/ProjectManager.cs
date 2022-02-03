@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json;
 using osu.Framework.Audio;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
@@ -12,13 +11,13 @@ using osu.Game.Rulesets;
 
 namespace sbtw.Editor.Projects
 {
-    public class ProjectStore
+    public class ProjectManager
     {
         private readonly GameHost host;
         private readonly AudioManager audio;
         private readonly RulesetStore rulesets;
 
-        public ProjectStore(GameHost host, AudioManager audio, RulesetStore rulesets)
+        public ProjectManager(GameHost host, AudioManager audio, RulesetStore rulesets)
         {
             this.host = host;
             this.audio = audio;
@@ -29,18 +28,7 @@ namespace sbtw.Editor.Projects
         {
             try
             {
-                var file = new FileInfo(path);
-
-                if (!file.FullName.Contains(".sbtw.json"))
-                    throw new ArgumentException("File is not a project.");
-
-                using var stream = File.OpenRead(file.FullName);
-                using var reader = new StreamReader(stream);
-
-                var project = new Project(host, audio, rulesets, host.GetStorage(Path.GetDirectoryName(path)), Path.GetFileNameWithoutExtension(file.Name));
-                JsonConvert.PopulateObject(reader.ReadToEnd(), project);
-
-                return project;
+                return new Project(host, audio, rulesets, path);
             }
             catch (Exception e)
             {
@@ -49,7 +37,7 @@ namespace sbtw.Editor.Projects
             }
         }
 
-        public IProject Create(string name, string path, IEnumerable<IProjectGenerator> generators = null)
+        public IProject Create(string path, IEnumerable<IProjectGenerator> generators = null)
         {
             try
             {
@@ -59,7 +47,7 @@ namespace sbtw.Editor.Projects
                 if (projectPath.GetFiles().Length > 0)
                     throw new ArgumentException("Project directory is not empty.");
 
-                var project = new Project(host, audio, rulesets, host.GetStorage(path), name);
+                var project = new Project(host, audio, rulesets, path);
 
                 if (generators != null)
                 {

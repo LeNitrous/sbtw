@@ -3,16 +3,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using osu.Framework.Audio.Track;
-using osu.Framework.Platform;
-using osu.Game.Beatmaps;
 using sbtw.Editor.Scripts;
 using sbtw.Editor.Scripts.Elements;
-using sbtw.Editor.Scripts.Graphics;
 
 namespace sbtw.Editor.Generators
 {
@@ -20,21 +15,13 @@ namespace sbtw.Editor.Generators
     {
         public async Task<GeneratorResult<T, U>> GenerateAsync(GeneratorConfig config, CancellationToken token = default)
         {
-            var scriptNames = config.Scripts.Select(s => s.Name);
-
-            if (scriptNames.Count() != scriptNames.Distinct().Count())
-                throw new ArgumentException($"Generator {nameof(config)} has duplicate script names");
-
             var context = CreateContext();
 
             PreGenerate(context);
 
             var elements = new Dictionary<IScriptedElement, U>();
             var ordering = config.Ordering?.ToArray() ?? Array.Empty<string>();
-            var generated = await Task.WhenAll(config.Scripts?.Select(s =>
-                apply(s, config.Storage, config.Beatmap, config.Waveform, config.Variables?.GetValueOrDefault(s.Name), token))
-                ?? Array.Empty<Task<ScriptGenerationResult>>()
-            );
+            var generated = await Task.WhenAll(config.Scripts?.Select(s => s.GenerateAsync(config.Storage, config.Beatmap, config.Waveform, token)));
 
             foreach (var script in config.Scripts)
             {
@@ -57,56 +44,15 @@ namespace sbtw.Editor.Generators
                 }
             }
 
-            var cachedAssets = config.Assets ?? Enumerable.Empty<Asset>();
-            var generatedAssets = generated.SelectMany(g => g.Assets);
-
-            foreach (var asset in generatedAssets)
-            {
-                token.ThrowIfCancellationRequested();
-
-                // Find asset with cached hash
-                var configAssetByHash = cachedAssets.FirstOrDefault(a => a.Hash == asset.Hash);
-                if (configAssetByHash != null)
-                {
-                    // Directory changed
-                    if (File.Exists(configAssetByHash.FullPath) && asset.FullPath != configAssetByHash.FullPath)
-                    {
-                        File.Delete(configAssetByHash.FullPath);
-                        asset.Generate();
-                    }
-
-                    continue;
-                }
-
-                // Find asset with cached path
-                var configAssetByPath = cachedAssets.FirstOrDefault(a => a.FullPath == asset.FullPath);
-                if (configAssetByPath != null)
-                {
-                    // Asset identifier changed
-                    if (File.Exists(configAssetByPath.FullPath) && asset.Hash != configAssetByPath.Hash)
-                    {
-                        File.Delete(configAssetByPath.FullPath);
-                        asset.Generate();
-                    }
-
-                    continue;
-                }
-
-                // Generate if not exists
-                if (!File.Exists(asset.FullPath))
-                    asset.Generate();
-            }
-
             PostGenerate(context);
 
             return new GeneratorResult<T, U>
             {
-                Elements = elements,
                 Result = context,
-                Assets = generatedAssets,
+                Assets = generated.SelectMany(g => g.Assets),
                 Groups = groups.Select(g => g.Name),
                 Faulted = generated.Where(s => s.Faulted).Select(s => s.Name),
-                Variables = generated.ToDictionary(k => k.Name, v => v.Variables),
+                Elements = elements,
             };
         }
 
@@ -145,19 +91,6 @@ namespace sbtw.Editor.Generators
                 default:
                     return default;
             }
-        }
-
-        private static Task<ScriptGenerationResult> apply(Script script, Storage storage, IBeatmap beatmap, Waveform waveform, IEnumerable<ScriptVariableInfo> variables = null, CancellationToken token = default)
-        {
-            if (variables != null)
-            {
-                foreach (var variable in variables)
-                {
-                    script.SetValueInternal(variable.Name, variable.Value);
-                }
-            }
-
-            return script.GenerateAsync(storage, beatmap, waveform, token);
         }
 
         private class ScriptedElementComparer : IComparer<IScriptedElement>

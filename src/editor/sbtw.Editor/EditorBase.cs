@@ -25,7 +25,7 @@ namespace sbtw.Editor
         protected EditorSessionStatics Session { get; private set; }
 
         protected LanguageStore Languages { get; private set; }
-        protected ProjectStore Projects { get; private set; }
+        protected ProjectManager Projects { get; private set; }
         protected StudioManager Studios { get; private set; }
 
         public Bindable<Studio> Studio { get; private set; }
@@ -38,7 +38,7 @@ namespace sbtw.Editor
             dependencies.CacheAs(LocalEditorConfig);
             dependencies.CacheAs(Session = new EditorSessionStatics());
             dependencies.CacheAs(Studios = CreateStudioManager());
-            dependencies.CacheAs(Projects = new ProjectStore(Host, Audio, RulesetStore));
+            dependencies.CacheAs(Projects = new ProjectManager(Host, Audio, RulesetStore));
             dependencies.CacheAs(Languages = new LanguageStore());
             dependencies.CacheAs(Studio = Studios.Current);
             dependencies.CacheAs(Project = new NonNullableBindable<IProject>(new DummyProject()));

@@ -30,7 +30,7 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
         {
             this.engine = engine;
             this.engine.Execute(typescriptCode);
-            this.engine.Execute("var opts = { compilerOptions: { inlineSources: true, inlineSourceMap: true, target: 99 }, reportDiagnostics: true }");
+            this.engine.Execute("var opts = { compilerOptions: { inlineSources: true, inlineSourceMap: true, target: 99, allowJS: true }, reportDiagnostics: true }");
 
             typescript = this.engine.Script.ts;
             transpileOptions = this.engine.Script.opts;

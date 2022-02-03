@@ -2,9 +2,8 @@
 // See LICENSE in the repository root for more details.
 
 using System.Collections.Generic;
-using sbtw.Editor.Scripts;
+using sbtw.Editor.Assets;
 using sbtw.Editor.Scripts.Elements;
-using sbtw.Editor.Scripts.Graphics;
 
 namespace sbtw.Editor.Generators
 {
@@ -15,6 +14,5 @@ namespace sbtw.Editor.Generators
         public IEnumerable<string> Groups { get; set; }
         public IEnumerable<Asset> Assets { get; set; }
         public IReadOnlyDictionary<IScriptedElement, U> Elements { get; set; }
-        public IReadOnlyDictionary<string, IEnumerable<ScriptVariableInfo>> Variables { get; set; }
     }
 }

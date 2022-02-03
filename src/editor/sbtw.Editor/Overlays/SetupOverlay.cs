@@ -40,7 +40,7 @@ namespace sbtw.Editor.Overlays
         private Editor editor { get; set; }
 
         [Resolved]
-        private ProjectStore projects { get; set; }
+        private ProjectManager projects { get; set; }
 
         [Resolved]
         private LanguageStore languages { get; set; }
@@ -131,7 +131,7 @@ namespace sbtw.Editor.Overlays
                 ZipFile.ExtractToDirectory(beatmapPath.Value, Path.Combine(projectPath.Value, "Beatmap"));
                 File.Delete(beatmapPath.Value);
 
-                var project = projects.Create(projectName.Value, projectPath.Value, languages.Languages.Select(l => l.CreateProjectGenerator()));
+                var project = projects.Create(Path.Combine(projectPath.Value, Path.ChangeExtension(projectName.Value, ".sbtw.json")), languages.Languages.Select(l => l.CreateProjectGenerator()));
                 project.Save();
 
                 editor.OpenProject(project);

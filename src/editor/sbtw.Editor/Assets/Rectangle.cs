@@ -4,7 +4,7 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace sbtw.Editor.Scripts.Graphics
+namespace sbtw.Editor.Assets
 {
     public class Rectangle : Asset
     {

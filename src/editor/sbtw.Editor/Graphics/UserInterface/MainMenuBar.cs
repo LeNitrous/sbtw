@@ -132,6 +132,15 @@ namespace sbtw.Editor.Graphics.UserInterface
                         }
                     },
                     new EditorMenuItemSpacer(),
+                    new EditorMenuItem("Export as .osb")
+                    {
+                        Action =
+                        {
+                            Value = () => editor?.GenerateOsb(),
+                            Disabled = project.Value is DummyProject
+                        }
+                    },
+                    new EditorMenuItemSpacer(),
                     new EditorMenuItem("Exit", MenuItemType.Standard) { Action = { Value = host.Exit } },
                 }
             },
@@ -145,7 +154,6 @@ namespace sbtw.Editor.Graphics.UserInterface
                             .Select(b => new DifficultyMenuItem(b, b.DifficultyName == beatmap.Value.BeatmapInfo.DifficultyName, b => editor?.OpenBeatmap(b)))
                             .ToArray() ?? new MenuItem[] { new EditorMenuItemSpacer() }
                     },
-                    new EditorMenuItemSpacer(),
                     new EditorMenuItem("Reload Beatmap")
                     {
                         Action =
@@ -165,28 +173,6 @@ namespace sbtw.Editor.Graphics.UserInterface
                     },
                 },
             },
-            new MenuItem("Storyboard")
-            {
-                Items = new[]
-                {
-                    new EditorMenuItem("Generate Preview")
-                    {
-                        Action =
-                        {
-                            Value = () => editor?.GeneratePreview(),
-                            Disabled = project.Value is DummyProject
-                        }
-                    },
-                    new EditorMenuItem("Generate .osb")
-                    {
-                        Action =
-                        {
-                            Value = () => editor?.GenerateOsb(),
-                            Disabled = project.Value is DummyProject
-                        }
-                    },
-                }
-            },
             new MenuItem("Editor")
             {
                 Items = new MenuItem[]
@@ -194,6 +180,15 @@ namespace sbtw.Editor.Graphics.UserInterface
                     new ToggleMenuItem("Show Interface", MenuItemType.Standard) { State = { BindTarget = showInterface } },
                     new EditorMenuItem("Show Output", MenuItemType.Standard, () => output?.Show()),
                     new EditorMenuItem("Show Notifications", MenuItemType.Standard, () => notifications?.Show()),
+                    new EditorMenuItemSpacer(),
+                    new EditorMenuItem("Reload Preview")
+                    {
+                        Action =
+                        {
+                            Value = () => editor?.GeneratePreview(),
+                            Disabled = project.Value is DummyProject
+                        }
+                    },
                     new EditorMenuItemSpacer(),
                     new EditorMenuItem("Open Settings", MenuItemType.Standard, () => settings?.Show()),
                 },

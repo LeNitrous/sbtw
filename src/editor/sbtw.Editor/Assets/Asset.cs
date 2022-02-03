@@ -3,17 +3,24 @@
 
 using System.Security.Cryptography;
 using System.Text;
+using Newtonsoft.Json;
+using sbtw.Editor.Scripts;
 
-namespace sbtw.Editor.Scripts.Graphics
+namespace sbtw.Editor.Assets
 {
     public abstract class Asset
     {
         protected Script Script { get; private set; }
+
+        [JsonProperty]
         internal string Hash { get; private set; }
+
+        [JsonProperty]
         internal string Path { get; private set; }
+
         internal string FullPath => Script.Storage.GetStorageForDirectory("Beatmap").GetFullPath(Path, true);
 
-        protected virtual string CreateIdentifier() => null;
+        protected virtual string CreateIdentifier() => GetType().Name;
 
         internal void Register(Script script, string path)
         {
@@ -27,7 +34,7 @@ namespace sbtw.Editor.Scripts.Graphics
 
             if (!string.IsNullOrEmpty(identifier))
             {
-                foreach (byte part in md5.ComputeHash(Encoding.UTF8.GetBytes($"{identifier}@{FullPath}")))
+                foreach (byte part in md5.ComputeHash(Encoding.UTF8.GetBytes($"{identifier}@{Path}")))
                     hash += part.ToString("x2");
             }
 

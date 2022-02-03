@@ -52,15 +52,6 @@ namespace sbtw.Editor.Languages.Tests
             Assert.That(video.StartTime, Is.EqualTo(1000));
         }
 
-        [Test]
-        public void TestVariableCreation()
-        {
-            var script = Generate("variableCreation");
-            Assert.That(script.Variables, Is.Not.Empty);
-            Assert.That(script.Variables.Any(v => v.Name == "TestVariable"), Is.True);
-            Assert.That(script.Variables.FirstOrDefault(v => v.Name == "TestVariable").Value, Is.EqualTo("Hello World"));
-        }
-
         public ScriptGenerationResult Generate(string name)
         {
             string filename = $"{name}.{Extension}";
