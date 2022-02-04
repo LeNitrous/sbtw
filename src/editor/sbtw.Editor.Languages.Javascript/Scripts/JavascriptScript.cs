@@ -21,7 +21,7 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
         }
 
         protected override void Perform()
-            => Engine.Execute(new DocumentInfo(new Uri(Path)) { Category = ModuleCategory.Standard }, System.IO.File.ReadAllText(Path));
+            => Engine.Evaluate(new DocumentInfo(new Uri(Path)) { Category = ModuleCategory.Standard }, System.IO.File.ReadAllText(Path)).ToTask().Wait();
 
         protected override void RegisterMethod(string name, Delegate method) => Engine.AddHostObject(name, method);
         protected override void RegisterField(string name, object value) => Engine.Script[name] = value;

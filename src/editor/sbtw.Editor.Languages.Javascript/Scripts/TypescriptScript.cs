@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 
 namespace sbtw.Editor.Languages.Javascript.Scripts
@@ -18,7 +19,7 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
         }
 
         protected override void Perform()
-            => Engine.Execute(typescript.Transpile(Path, File.ReadAllText(Path), out string source), source);
+            => Engine.Evaluate(typescript.Transpile(Path, File.ReadAllText(Path), out string source), source).ToTask().Wait();
     }
 
     public class TypescriptException : Exception
