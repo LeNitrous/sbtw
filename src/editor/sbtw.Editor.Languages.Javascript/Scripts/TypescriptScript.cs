@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 
@@ -18,8 +19,8 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
             this.typescript = typescript;
         }
 
-        protected override void Perform()
-            => Engine.Evaluate(typescript.Transpile(Path, File.ReadAllText(Path), out string source), source).ToTask().Wait();
+        protected override Task PerformAsync()
+            => Engine.Evaluate(typescript.Transpile(Path, File.ReadAllText(Path), out string source), source).ToTask();
     }
 
     public class TypescriptException : Exception

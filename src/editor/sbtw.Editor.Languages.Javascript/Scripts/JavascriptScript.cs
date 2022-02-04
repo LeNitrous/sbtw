@@ -2,6 +2,7 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using System.Threading.Tasks;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
@@ -20,8 +21,8 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
             Engine.DocumentSettings.SearchPath = System.IO.Path.GetDirectoryName(path);
         }
 
-        protected override void Perform()
-            => Engine.Evaluate(new DocumentInfo(new Uri(Path)) { Category = ModuleCategory.Standard }, System.IO.File.ReadAllText(Path)).ToTask().Wait();
+        protected override Task PerformAsync()
+            => Engine.Evaluate(new DocumentInfo(new Uri(Path)) { Category = ModuleCategory.Standard }, System.IO.File.ReadAllText(Path)).ToTask();
 
         protected override void RegisterMethod(string name, Delegate method) => Engine.AddHostObject(name, method);
         protected override void RegisterField(string name, object value) => Engine.Script[name] = value;

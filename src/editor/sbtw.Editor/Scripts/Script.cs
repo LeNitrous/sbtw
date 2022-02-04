@@ -139,7 +139,13 @@ namespace sbtw.Editor.Scripts
             => Encoding.Default.GetString(OpenFile(path));
 
         public ScriptGenerationResult Generate(Storage storage = null, IBeatmap beatmap = null, Waveform waveform = null)
+            => GenerateAsync(storage, beatmap, waveform).Result;
+
+        public async Task<ScriptGenerationResult> GenerateAsync(Storage storage = null, IBeatmap beatmap = null, Waveform waveform = null, CancellationToken token = default)
         {
+            if (token.IsCancellationRequested)
+                token.ThrowIfCancellationRequested();
+
             if (IsDisposed)
                 throw new ObjectDisposedException($"{this} is already disposed and cannot generate.");
 
@@ -167,7 +173,7 @@ namespace sbtw.Editor.Scripts
 
             try
             {
-                Perform();
+                await PerformAsync();
                 faulted = false;
             }
             catch (AggregateException ae)
@@ -183,16 +189,8 @@ namespace sbtw.Editor.Scripts
             return new ScriptGenerationResult { Name = Name, Path = Path, Assets = assets, Groups = groups, Faulted = faulted };
         }
 
-        public Task<ScriptGenerationResult> GenerateAsync(Storage storage = null, IBeatmap beatmap = null, Waveform waveform = null, CancellationToken token = default)
-        {
-            if (token.IsCancellationRequested)
-                token.ThrowIfCancellationRequested();
-
-            return Task.Run(() => Generate(storage, beatmap, waveform), token);
-        }
-
         protected virtual string FormatException(Exception ex) => ex.Message;
-        protected abstract void Perform();
+        protected abstract Task PerformAsync();
         protected abstract void RegisterMethod(string name, Delegate method);
         protected abstract void RegisterField(string name, object value);
         protected abstract void RegisterType(Type type);
