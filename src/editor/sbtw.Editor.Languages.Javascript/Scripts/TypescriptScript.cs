@@ -17,14 +17,8 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
             this.typescript = typescript;
         }
 
-        protected override void Compile()
-        {
-            Compiled?.Dispose();
-
-            var transpiled = typescript.Transpile(Path, File.ReadAllText(Path), out string source);
-
-            Compiled = Engine.Compile(transpiled, source);
-        }
+        protected override void Perform()
+            => Engine.Execute(typescript.Transpile(Path, File.ReadAllText(Path), out string source), source);
     }
 
     public class TypescriptException : Exception

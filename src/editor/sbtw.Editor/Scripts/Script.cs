@@ -105,20 +105,21 @@ namespace sbtw.Editor.Scripts
             GetGroup("Video").CreateVideo(path, offset);
         }
 
-        public void Log(string message, LogLevel level)
+        public void Log(object message, LogLevel level)
             => logger.Add($"[{System.IO.Path.GetFileName(Path)}]: {message}", level);
 
         [Visible]
-        public void Log(string message)
+        public void Log(object message)
             => Log(message, LogLevel.Debug);
 
-        public void Error(string message)
+        [Visible]
+        public void Error(object message)
             => Log(message, LogLevel.Error);
 
         [Visible]
         public byte[] OpenFile(string path)
         {
-            if (Storage?.Exists(path) ?? false)
+            if (!Storage?.Exists(path) ?? false)
                 throw new FileNotFoundException($@"File ""{path}"" does not exist.");
 
             byte[] data = null;
@@ -143,48 +144,9 @@ namespace sbtw.Editor.Scripts
                 throw new ObjectDisposedException($"{this} is already disposed and cannot generate.");
 
             Beatmap = beatmap;
-            Waveform = waveform;
             Storage = storage;
+            Waveform = waveform;
 
-            importTypesAndMembers();
-            Compile();
-
-            bool faulted = false;
-
-            try
-            {
-                Perform();
-            }
-            catch (Exception ex)
-            {
-                faulted = true;
-                Error(FormatErrorMessage(ex));
-            }
-
-            return new ScriptGenerationResult { Name = Name, Assets = assets, Groups = groups, Faulted = faulted };
-        }
-
-        public Task<ScriptGenerationResult> GenerateAsync(Storage storage = null, IBeatmap beatmap = null, Waveform waveform = null, CancellationToken token = default)
-        {
-            if (token.IsCancellationRequested)
-                token.ThrowIfCancellationRequested();
-
-            return Task.Run(() => Generate(storage, beatmap, waveform), token);
-        }
-
-        protected virtual string FormatErrorMessage(Exception exception) => exception.ToString();
-
-        protected virtual void Compile()
-        {
-        }
-
-        protected abstract void Perform();
-        protected abstract void RegisterMethod(string name, Delegate method);
-        protected abstract void RegisterField(string name, object value);
-        protected abstract void RegisterType(Type type);
-
-        private void importTypesAndMembers()
-        {
             foreach (MethodInfo method in importable_methods)
             {
                 var parameters = method.GetParameters().Select(p => p.ParameterType);
@@ -200,7 +162,40 @@ namespace sbtw.Editor.Scripts
 
             foreach (Type type in importable_types)
                 RegisterType(type);
+
+            bool faulted = true;
+
+            try
+            {
+                Perform();
+                faulted = false;
+            }
+            catch (AggregateException ae)
+            {
+                foreach (var ex in ae.Flatten().InnerExceptions)
+                    Error(FormatException(ex));
+            }
+            catch (Exception ex)
+            {
+                Error(FormatException(ex));
+            }
+
+            return new ScriptGenerationResult { Name = Name, Path = Path, Assets = assets, Groups = groups, Faulted = faulted };
         }
+
+        public Task<ScriptGenerationResult> GenerateAsync(Storage storage = null, IBeatmap beatmap = null, Waveform waveform = null, CancellationToken token = default)
+        {
+            if (token.IsCancellationRequested)
+                token.ThrowIfCancellationRequested();
+
+            return Task.Run(() => Generate(storage, beatmap, waveform), token);
+        }
+
+        protected virtual string FormatException(Exception ex) => ex.Message;
+        protected abstract void Perform();
+        protected abstract void RegisterMethod(string name, Delegate method);
+        protected abstract void RegisterField(string name, object value);
+        protected abstract void RegisterType(Type type);
 
         protected virtual void Dispose(bool disposing)
         {

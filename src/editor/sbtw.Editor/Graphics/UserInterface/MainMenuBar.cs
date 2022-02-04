@@ -89,7 +89,7 @@ namespace sbtw.Editor.Graphics.UserInterface
         private void createItems() => Schedule(() => Items = new[]
         {
             new MenuItem("Project")
-            {
+        {
                 Items = new[]
                 {
                     new EditorMenuItem("New", MenuItemType.Standard, () => setup?.Show()),
@@ -136,7 +136,7 @@ namespace sbtw.Editor.Graphics.UserInterface
                     {
                         Action =
                         {
-                            Value = () => editor?.GenerateOsb(),
+                            Value = () => editor?.Generate(GenerateKind.Osb),
                             Disabled = project.Value is DummyProject
                         }
                     },
@@ -185,7 +185,7 @@ namespace sbtw.Editor.Graphics.UserInterface
                     {
                         Action =
                         {
-                            Value = () => editor?.GeneratePreview(),
+                            Value = () => editor?.Generate(GenerateKind.Storyboard),
                             Disabled = project.Value is DummyProject
                         }
                     },

@@ -12,7 +12,6 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
     public class JavascriptScript : Script
     {
         protected V8ScriptEngine Engine { get; private set; }
-        protected V8Script Compiled { get; set; }
 
         public JavascriptScript(V8ScriptEngine engine, string name, string path)
             : base(name, path)
@@ -22,31 +21,24 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
         }
 
         protected override void Perform()
+            => Engine.Execute(new DocumentInfo(new Uri(Path)) { Category = ModuleCategory.Standard }, System.IO.File.ReadAllText(Path));
+
+        protected override void RegisterMethod(string name, Delegate method) => Engine.AddHostObject(name, method);
+        protected override void RegisterField(string name, object value) => Engine.Script[name] = value;
+        protected override void RegisterType(Type type) => Engine.AddHostType(type);
+
+        protected override string FormatException(Exception ex)
         {
-            Engine.Execute(Compiled);
+            if (ex is ScriptEngineException sex)
+                return sex.ErrorDetails;
+
+            return base.FormatException(ex);
         }
-
-        protected override void Compile()
-        {
-            Compiled?.Dispose();
-            Compiled = Engine.Compile(new DocumentInfo(new Uri(Path)) { Category = ModuleCategory.Standard }, System.IO.File.ReadAllText(Path));
-        }
-
-        protected override void RegisterMethod(string name, Delegate method)
-            => Engine.AddHostObject(name, method);
-
-        protected override void RegisterField(string name, object value)
-            => Engine.Script[name] = value;
-
-        protected override void RegisterType(Type type)
-            => Engine.AddHostType(type);
 
         protected override void Dispose(bool disposing)
         {
             Engine?.Dispose();
             Engine = null;
-            Compiled?.Dispose();
-            Compiled = null;
             base.Dispose(disposing);
         }
     }

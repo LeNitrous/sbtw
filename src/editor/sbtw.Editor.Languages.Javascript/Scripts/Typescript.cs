@@ -2,6 +2,7 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
@@ -43,13 +44,22 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
             dynamic output = typescript.transpileModule(typescriptSource, transpileOptions);
 
             if (output is Undefined)
-                throw new Exception("Failed to transpile source");
+                throw new Exception("Failed to transpile source.");
+
+            var exceptions = new List<Exception>();
 
             foreach (var diagnostic in output.diagnostics)
             {
-                if (diagnostic.category == TypescriptDiagnosticCategory.Error)
-                    throw new TypescriptException($"A typescript compiler error has occured");
+                if (diagnostic.category == (int)TypescriptDiagnosticCategory.Error)
+                {
+                    var lineAndCharacter = typescript.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
+                    var message = typescript.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
+                    exceptions.Add(new TypescriptException($"{diagnostic.file.fileName} ({lineAndCharacter.line + 1},{lineAndCharacter.character + 1}): {message}"));
+                }
             }
+
+            if (exceptions.Count > 0)
+                throw new AggregateException("A typescript transpilation error has occured.", exceptions);
 
             javascriptSource = output.outputText;
 

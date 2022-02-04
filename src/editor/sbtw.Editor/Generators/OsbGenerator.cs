@@ -95,6 +95,7 @@ namespace sbtw.Editor.Generators
             commands.AddRange(group.FlipV.Commands.Select(cmd => new TimelineCommand("P", cmd, _ => "V")));
             commands.AddRange(group.BlendingParameters.Commands.Select(cmd => new TimelineCommand("P", cmd, _ => "A")));
             commands.AddRange(group.Scale.Commands.Select(cmd => new TimelineCommand("S", cmd)));
+            commands.AddRange(group.Rotation.Commands.Select(cmd => new TimelineCommand("R", cmd)));
             commands.AddRange(group.VectorScale.Commands.Select(cmd => new TimelineCommand("V", cmd, format_vector)));
 
             foreach (var command in commands)

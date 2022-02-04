@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Glob" Version="1.1.9" />
     <PackageReference Include="ppy.osu.Game" Version="2021.1225.0" />
     <PackageReference Include="ppy.osu.Game.Rulesets.Catch" Version="2021.1225.0" />
     <PackageReference Include="ppy.osu.Game.Rulesets.Mania" Version="2021.1225.0" />

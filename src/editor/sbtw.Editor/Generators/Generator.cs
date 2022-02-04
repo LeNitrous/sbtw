@@ -29,7 +29,9 @@ namespace sbtw.Editor.Generators
                 script.Dispose();
             }
 
-            var groups = generated
+            var performed = generated.Where(g => !g.Faulted);
+
+            var groups = performed
                 .SelectMany(r => r.Groups)
                 .GroupBy(k => k.Name, v => v.Elements, (k, v) => new ScriptElementGroup(k, v.SelectMany(a => a)))
                 .OrderBy(g => Array.IndexOf(ordering, g.Name));
@@ -49,9 +51,9 @@ namespace sbtw.Editor.Generators
             return new GeneratorResult<T, U>
             {
                 Result = context,
-                Assets = generated.SelectMany(g => g.Assets),
-                Groups = groups.Select(g => g.Name),
-                Faulted = generated.Where(s => s.Faulted).Select(s => s.Name),
+                Assets = performed.SelectMany(g => g.Assets),
+                Groups = performed.Select(g => g.Name),
+                Scripts = generated,
                 Elements = elements,
             };
         }

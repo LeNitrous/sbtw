@@ -80,7 +80,7 @@ namespace sbtw.Editor.Projects
             debounce = Scheduler.AddDelayed(() =>
             {
                 if (languages.Extensions.Contains(Path.GetExtension(path)))
-                    editor?.GeneratePreview();
+                    editor?.Generate(GenerateKind.Storyboard);
 
                 if (new FileInfo(path).Directory.Parent.Name == "Beatmap" && extensions.Contains(Path.GetExtension(path)))
                     editor?.RefreshBeatmap();

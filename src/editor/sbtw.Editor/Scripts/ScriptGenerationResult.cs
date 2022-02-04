@@ -9,6 +9,7 @@ namespace sbtw.Editor.Scripts
     public struct ScriptGenerationResult
     {
         public string Name { get; set; }
+        public string Path { get; set; }
         public bool Faulted { get; set; }
         public IEnumerable<Asset> Assets { get; set; }
         public IEnumerable<ScriptElementGroup> Groups { get; set; }

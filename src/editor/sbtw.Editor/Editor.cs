@@ -2,12 +2,8 @@
 // See LICENSE in the repository root for more details.
 
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
-using NuGet.Packaging;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -26,25 +22,22 @@ using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.Volume;
 using osu.Game.Rulesets;
-using osu.Game.Rulesets.Mods;
 using osu.Game.Screens.Edit;
 using sbtw.Editor.Configuration;
-using sbtw.Editor.Generators;
 using sbtw.Editor.Graphics.UserInterface;
 using sbtw.Editor.Overlays;
 using sbtw.Editor.Projects;
-using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor
 {
-    public abstract class Editor : EditorBase, IKeyBindingHandler<GlobalAction>
+    public abstract partial class Editor : EditorBase, IKeyBindingHandler<GlobalAction>
     {
         private DependencyContainer dependencies;
 
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
             => dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
-        private readonly Logger scriptLogger = Logger.GetLogger("script");
+        private readonly Logger logger = Logger.GetLogger("script");
         private VolumeOverlay volume;
         private EditorSettingsOverlay settings;
         private OutputOverlay output;
@@ -61,9 +54,6 @@ namespace sbtw.Editor
         private double lastTrackTime;
         private string lastTrackTitle;
         private bool lastTrackState;
-
-        [Cached(typeof(IBindableList<Script>))]
-        private readonly BindableList<Script> scripts = new BindableList<Script>();
 
         [BackgroundDependencyLoader]
         private void load()
@@ -189,71 +179,7 @@ namespace sbtw.Editor
             Beatmap.ValueChanged += _ => updateControls();
             Project.ValueChanged += _ => updateControls();
 
-            scriptLogger.Add("Welcome to sbtw!");
-            scriptLogger.Add("Messages logged by your scripts are shown here.");
-            scriptLogger.Add("Error messages that also happen during compilation are also logged here.");
-
             updateControls();
-        }
-
-        private CancellationTokenSource generatePreviewTokenSource;
-        private CancellationTokenSource generateOsbTokenSource;
-        private CancellationTokenSource reloadTokenSource;
-
-        public void GeneratePreview()
-        {
-            generatePreviewTokenSource?.Cancel();
-
-            if (Project.Value is DummyProject || Beatmap.Value is DummyWorkingBeatmap && (preview?.IsLoaded ?? false))
-                return;
-
-            generatePreviewTokenSource = new CancellationTokenSource();
-
-            Task.Run(async () =>
-            {
-                Schedule(() => spinner.Show());
-
-                var generated = await generate(new StoryboardGenerator(Beatmap.Value.BeatmapInfo), GenerateTarget.All, false, generatePreviewTokenSource.Token);
-
-                Schedule(() => preview.SetStoryboard(generated.Result, Project.Value.Resources.Resources));
-            }, generatePreviewTokenSource.Token).ContinueWith(handleGeneratorFinish);
-        }
-
-        public void GenerateOsb()
-        {
-            generateOsbTokenSource?.Cancel();
-
-            if (Project.Value is DummyProject || Beatmap.Value is DummyWorkingBeatmap && (preview?.IsLoaded ?? false))
-                return;
-
-            generateOsbTokenSource = new CancellationTokenSource();
-
-            Task.Run(async () =>
-            {
-                Schedule(() => spinner.Show());
-
-                var difficulty = await generate(new OsbGenerator(), GenerateTarget.Difficulty, true, generateOsbTokenSource.Token);
-                var storyboard = await generate(new OsbGenerator(), GenerateTarget.Storyboard, true, generateOsbTokenSource.Token);
-
-                string file = $"{Beatmap.Value.Metadata.Artist} - {Beatmap.Value.Metadata.Title} ({Beatmap.Value.Metadata.AuthorString})";
-
-                {
-                    using var stream = Project.Value.Resources.Storage.GetStream($"{file}.osb", FileAccess.Write);
-                    using var writer = new StreamWriter(stream);
-                    stream.Position = 0;
-                    await writer.WriteAsync(storyboard.ToString());
-                }
-
-                {
-                    using var stream = Project.Value.Resources.Storage.GetStream($"{file} [{Beatmap.Value.BeatmapInfo.DifficultyName}].osu", FileAccess.ReadWrite, FileMode.Open);
-                    using var reader = new StreamReader(stream);
-                    using var writer = new StreamWriter(stream);
-
-                    string diff = await reader.ReadToEndAsync();
-                    stream.Position = diff.IndexOf("[Events]");
-                    await writer.WriteAsync(difficulty.ToString());
-                }
-            }, generateOsbTokenSource.Token).ContinueWith(handleGeneratorFinish);
         }
 
         public void CloseProject()
@@ -278,6 +204,10 @@ namespace sbtw.Editor
         public void OpenProject(IProject project)
         {
             CloseProject();
+
+            if (project == null)
+                return;
+
             Project.Value = project;
             OpenBeatmap(Project.Value.BeatmapSet.BeatmapSetInfo.Beatmaps.FirstOrDefault());
         }
@@ -303,90 +233,11 @@ namespace sbtw.Editor
             OpenBeatmap(Project.Value.BeatmapSet.BeatmapSetInfo.Beatmaps.FirstOrDefault(b => b.DifficultyName == current));
         }
 
-        private void handleGeneratorFinish(Task task)
-        {
-            Schedule(() => spinner.Hide());
-
-            if (task.Exception == null)
-                return;
-
-            switch (task.Exception.InnerException)
-            {
-                case UnauthorizedAccessException uae:
-                    Logger.Error(uae, "Failed to generate storyboard due to lack of permissions.");
-                    break;
-
-                case Exception ex:
-                    Logger.Error(ex, "An unknown error has occured while attempting to generate.");
-                    break;
-            }
-        }
-
-        private async Task<GeneratorResult<T, U>> generate<T, U>(Generator<T, U> generator, GenerateTarget target, bool excludeNonVisible, CancellationToken token)
-        {
-            IEnumerable<ElementGroupSetting> groups = Project.Value.Groups;
-
-            if (target == GenerateTarget.Difficulty)
-                groups = groups.Where(g => g.ExportToDifficulty.Value);
-
-            if (target == GenerateTarget.Storyboard)
-                groups = groups.Where(g => !g.ExportToDifficulty.Value);
-
-            if (excludeNonVisible)
-                groups = groups.Where(g => g.Visible.Value);
-
-            var compiled = await Languages.CompileAsync(Project.Value.Files, null, token);
-
-            var generated = await generator.GenerateAsync(new GeneratorConfig
-            {
-                Scripts = compiled,
-                Storage = Project.Value.Files,
-                Beatmap = Beatmap.Value.GetPlayableBeatmap(Beatmap.Value.BeatmapInfo.Ruleset, new List<Mod>(), token),
-                Waveform = Beatmap.Value.Waveform,
-                Ordering = groups.Select(g => g.Name),
-            }, token);
-
-            if (generated.Assets.Any())
-                Project.Value.Assets.Generate(generated.Assets);
-
-            if (generated.Faulted.Any())
-            {
-                var notification = new SimpleErrorNotification
-                {
-                    Icon = FontAwesome.Solid.Bomb,
-                    Text = @"There are scripts that failed to run. See output for more details.",
-                };
-
-                notification.Closed += () => output.Show();
-                notifications.Post(notification);
-            }
-
-            Schedule(() =>
-            {
-                var added = generated.Groups.Except(Project.Value.Groups.Select(g => g.Name));
-                var removed = Project.Value.Groups.Select(g => g.Name).Except(generated.Groups);
-
-                Project.Value.Groups.AddRange(added.Select(g => new ElementGroupSetting { Name = g }));
-                Project.Value.Groups.RemoveAll(g => removed.Contains(g.Name));
-
-                scripts.Clear();
-                scripts.AddRange(compiled);
-            });
-
-            return generated;
-        }
-
-        private enum GenerateTarget
-        {
-            All,
-            Difficulty,
-            Storyboard,
-        }
+        private CancellationTokenSource reloadTokenSource;
 
         private void updateControls() => Schedule(() =>
         {
             reloadTokenSource?.Cancel();
-            generatePreviewTokenSource?.Cancel();
 
             if (Project.Value is DummyProject || Beatmap.Value is DummyWorkingBeatmap)
             {
@@ -399,12 +250,12 @@ namespace sbtw.Editor
                 reloadTokenSource = new CancellationTokenSource();
 
                 spinner.Show();
-                middleControlContainer.Show();
 
                 LoadComponentAsync(new EditorPreview(), loaded =>
                 {
                     contentContainer.Clear();
                     contentContainer.Add(preview = loaded);
+                    middleControlContainer.Show();
 
                     Schedule(() => spinner.Hide());
 
@@ -416,7 +267,7 @@ namespace sbtw.Editor
                             preview.Start();
                     }
 
-                    GeneratePreview();
+                    Generate(GenerateKind.Storyboard);
                 }, reloadTokenSource.Token);
             }
         });

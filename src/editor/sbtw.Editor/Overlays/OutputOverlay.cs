@@ -101,7 +101,7 @@ namespace sbtw.Editor.Overlays
                                         {
                                             Icon = FontAwesome.Regular.TrashAlt,
                                             IconScale = new Vector2(0.8f),
-                                            Action = () => clear(),
+                                            Action = () => Clear(),
                                         },
                                         new IconButton
                                         {
@@ -123,7 +123,7 @@ namespace sbtw.Editor.Overlays
 
         private Message lastMessage;
 
-        private void clear()
+        public new void Clear()
         {
             lastMessage = null;
             flow.Clear();

@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GlobExpressions;
 using osu.Framework.Platform;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
@@ -28,16 +29,17 @@ namespace sbtw.Editor.Languages
         public Task<IEnumerable<T>> CompileAsync(Storage storage, IEnumerable<string> ignore = null, CancellationToken token = default)
         {
             var toCompile = new List<T>();
+            ignore ??= Array.Empty<string>();
+            ignore = ignore.Concat(Exclude);
 
             foreach (string extension in Extensions)
             {
-                foreach (string file in storage.GetFiles(".", $"*{extension}"))
+                foreach (string file in Directory.GetFiles(storage.GetFullPath("."), $"*{extension}", SearchOption.AllDirectories))
                 {
-                    if (Exclude.Contains(file) || ignore.Contains(file))
+                    if (ignore.Any(path => Glob.IsMatch(file, path, GlobOptions.CaseInsensitive)))
                         continue;
 
-                    string fullPath = Path.Combine(storage.GetFullPath("."), file);
-                    toCompile.Add(CreateScript(Path.GetFileNameWithoutExtension(file), fullPath));
+                    toCompile.Add(CreateScript(Path.GetFileNameWithoutExtension(file), file));
                 }
             }
 

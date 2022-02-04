@@ -63,7 +63,7 @@ namespace sbtw.Editor.Projects
 
             stream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
             using var reader = new StreamReader(stream, leaveOpen: true);
-            JsonConvert.PopulateObject(reader.ReadToEnd(), this);
+            JsonConvert.PopulateObject(reader.ReadToEnd(), this, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
         }
 
         public bool Save()
@@ -72,7 +72,7 @@ namespace sbtw.Editor.Projects
             {
                 using var writer = new StreamWriter(stream, leaveOpen: true);
                 stream.SetLength(0);
-                writer.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
+                writer.Write(JsonConvert.SerializeObject(this, Formatting.Indented, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto }));
                 return true;
             }
             catch (Exception e)

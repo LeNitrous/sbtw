@@ -17,6 +17,7 @@ using osuTK;
 using sbtw.Editor.Configuration;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
+using sbtw.Editor.Studios;
 
 namespace sbtw.Editor.Graphics.UserInterface
 {
@@ -55,10 +56,27 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         private class ScriptsToolboxTab : FillFlowContainer
         {
-            private IBindableList<Script> scripts;
+            private IBindableList<ScriptGenerationResult> scripts;
+
+            protected override Container<Drawable> Content { get; }
+
+            public ScriptsToolboxTab()
+            {
+                RelativeSizeAxes = Axes.Both;
+                InternalChild = new OsuScrollContainer
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Child = Content = new FillFlowContainer
+                    {
+                        Direction = FillDirection.Vertical,
+                        RelativeSizeAxes = Axes.X,
+                        AutoSizeAxes = Axes.Y,
+                    }
+                };
+            }
 
             [BackgroundDependencyLoader]
-            private void load(IBindableList<Script> scripts)
+            private void load(IBindableList<ScriptGenerationResult> scripts)
             {
                 this.scripts = scripts.GetBoundCopy();
                 this.scripts.BindCollectionChanged((_, args) => Schedule(() => Children = this.scripts.Select(s => new ScriptListItem(s)).ToList()));
@@ -67,51 +85,45 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         private class ScriptListItem : CompositeDrawable
         {
-            private readonly Script script;
+            private readonly ScriptGenerationResult script;
 
-            public ScriptListItem(Script script)
+            public ScriptListItem(ScriptGenerationResult script)
             {
                 this.script = script;
             }
 
             [BackgroundDependencyLoader]
-            private void load()
+            private void load(Bindable<Studio> studio)
             {
                 RelativeSizeAxes = Axes.X;
                 Height = 40;
                 InternalChildren = new Drawable[]
                 {
-                    new ScriptItemLabel(script.Name)
+                    new OsuSpriteText
                     {
+                        Text = script.Name,
+                        Anchor = Anchor.CentreLeft,
+                        Origin = Anchor.CentreLeft,
+                        Margin = new MarginPadding { Left = 30 },
+                    },
+                    new SpriteIcon
+                    {
+                        Icon = FontAwesome.Solid.Bug,
+                        Size = new Vector2(14),
+                        Alpha = script.Faulted ? 1 : 0,
                         Anchor = Anchor.CentreLeft,
                         Origin = Anchor.CentreLeft,
                     },
-                };
-            }
-
-            private class ScriptItemLabel : CompositeDrawable
-            {
-                private readonly string name;
-
-                public ScriptItemLabel(string name)
-                {
-                    this.name = name;
-                }
-
-                [BackgroundDependencyLoader]
-                private void load()
-                {
-                    RelativeSizeAxes = Axes.Both;
-                    InternalChildren = new Drawable[]
+                    new IconButton
                     {
-                        new OsuSpriteText
-                        {
-                            Text = name,
-                            Anchor = Anchor.CentreLeft,
-                            Origin = Anchor.CentreLeft,
-                        },
-                    };
-                }
+                        Icon = FontAwesome.Regular.Edit,
+                        Size = new Vector2(40),
+                        Anchor = Anchor.TopRight,
+                        Origin = Anchor.TopRight,
+                        Action = () => studio.Value?.Open(script.Path),
+                        TooltipText = @"Reveal script in code.",
+                    }
+                };
             }
         }
 

@@ -13,10 +13,16 @@ namespace sbtw.Editor.Assets
         protected Script Script { get; private set; }
 
         [JsonProperty]
-        internal string Hash { get; private set; }
+        private string hash;
 
         [JsonProperty]
-        internal string Path { get; private set; }
+        private string path;
+
+        [JsonIgnore]
+        internal string Hash => hash;
+
+        [JsonIgnore]
+        internal string Path => path;
 
         internal string FullPath => Script.Storage.GetStorageForDirectory("Beatmap").GetFullPath(Path, true);
 
@@ -25,7 +31,7 @@ namespace sbtw.Editor.Assets
         internal void Register(Script script, string path)
         {
             Script = script;
-            Path = path;
+            this.path = path;
 
             using var md5 = MD5.Create();
 
@@ -38,7 +44,7 @@ namespace sbtw.Editor.Assets
                     hash += part.ToString("x2");
             }
 
-            Hash = hash;
+            this.hash = hash;
         }
 
         internal void Generate() => Generate(FullPath);
