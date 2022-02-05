@@ -132,7 +132,7 @@ namespace sbtw.Editor.Graphics.UserInterface
                         }
                     },
                     new EditorMenuItemSpacer(),
-                    new EditorMenuItem("Export as .osb")
+                    new EditorMenuItem("Export")
                     {
                         Action =
                         {

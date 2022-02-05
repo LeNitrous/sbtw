@@ -13,19 +13,20 @@ using osu.Game.Rulesets;
 using sbtw.Editor.Assets;
 using sbtw.Editor.Beatmaps;
 using sbtw.Editor.IO;
+using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Projects
 {
     public class Project : IProject, IDisposable
     {
         [JsonProperty("groups")]
-        public BindableList<ElementGroupSetting> Groups { get; } = new BindableList<ElementGroupSetting>();
+        public BindableList<GroupSetting> Groups { get; } = new BindableList<GroupSetting>();
 
         [JsonProperty]
         private IReadOnlyList<Asset> assets
         {
             get => Assets?.Cache ?? Array.Empty<Asset>();
-            set => Assets = new AssetGenerator(value);
+            set => Assets = new AssetCache(value);
         }
 
         [JsonIgnore]
@@ -33,6 +34,9 @@ namespace sbtw.Editor.Projects
 
         [JsonIgnore]
         public string Path => Files.GetFullPath(".");
+
+        [JsonIgnore]
+        public BindableList<ScriptGenerationResult> Scripts { get; } = new BindableList<ScriptGenerationResult>();
 
         [JsonIgnore]
         public StorageBackedBeatmapSet BeatmapSet { get; }
@@ -44,7 +48,7 @@ namespace sbtw.Editor.Projects
         public Storage Files { get; }
 
         [JsonIgnore]
-        public AssetGenerator Assets { get; private set; }
+        public AssetCache Assets { get; private set; }
 
         private readonly Stream stream;
 

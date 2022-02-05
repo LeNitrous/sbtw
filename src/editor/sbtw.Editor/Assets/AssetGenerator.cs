@@ -7,16 +7,16 @@ using System.Linq;
 
 namespace sbtw.Editor.Assets
 {
-    public class AssetGenerator
+    public class AssetCache
     {
         public IReadOnlyList<Asset> Cache => cache;
 
         private readonly List<Asset> cache = new List<Asset>();
 
-        public AssetGenerator(IEnumerable<Asset> cache)
+        public AssetCache(IEnumerable<Asset> initial)
         {
-            if (cache != null)
-                this.cache.AddRange(cache);
+            if (initial != null)
+                cache.AddRange(initial);
         }
 
         public void Generate(IEnumerable<Asset> assets)

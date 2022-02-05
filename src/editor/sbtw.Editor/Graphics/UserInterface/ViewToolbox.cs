@@ -6,9 +6,11 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Cursor;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
+using osu.Framework.Localisation;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
@@ -56,7 +58,8 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         private class ScriptsToolboxTab : FillFlowContainer
         {
-            private IBindableList<ScriptGenerationResult> scripts;
+            private readonly BindableList<ScriptGenerationResult> scripts = new BindableList<ScriptGenerationResult>();
+            private Bindable<IProject> project;
 
             protected override Container<Drawable> Content { get; }
 
@@ -76,10 +79,18 @@ namespace sbtw.Editor.Graphics.UserInterface
             }
 
             [BackgroundDependencyLoader]
-            private void load(IBindableList<ScriptGenerationResult> scripts)
+            private void load(Bindable<IProject> project)
             {
-                this.scripts = scripts.GetBoundCopy();
-                this.scripts.BindCollectionChanged((_, args) => Schedule(() => Children = this.scripts.Select(s => new ScriptListItem(s)).ToList()));
+                this.project = project.GetBoundCopy();
+                this.project.BindValueChanged(e =>
+                {
+                    scripts.UnbindBindings();
+
+                    if (e.NewValue is not DummyProject)
+                        scripts.BindTo(e.NewValue.Scripts);
+                }, true);
+
+                scripts.BindCollectionChanged((_, args) => Schedule(() => Children = scripts.Select(s => new ScriptListItem(s)).ToList()), true);
             }
         }
 
@@ -99,18 +110,17 @@ namespace sbtw.Editor.Graphics.UserInterface
                 Height = 40;
                 InternalChildren = new Drawable[]
                 {
-                    new OsuSpriteText
+                    new LabelSpriteText(script)
                     {
-                        Text = script.Name,
                         Anchor = Anchor.CentreLeft,
                         Origin = Anchor.CentreLeft,
                         Margin = new MarginPadding { Left = 30 },
                     },
-                    new SpriteIcon
+                    new BugIndicator
                     {
                         Icon = FontAwesome.Solid.Bug,
                         Size = new Vector2(14),
-                        Alpha = script.Faulted ? 1 : 0,
+                        Alpha = script.Exception != null ? 1 : 0,
                         Anchor = Anchor.CentreLeft,
                         Origin = Anchor.CentreLeft,
                     },
@@ -124,6 +134,22 @@ namespace sbtw.Editor.Graphics.UserInterface
                         TooltipText = @"Reveal script in code.",
                     }
                 };
+            }
+
+            private class BugIndicator : SpriteIcon, IHasTooltip
+            {
+                public LocalisableString TooltipText => @"There were errors when running this script.";
+            }
+
+            private class LabelSpriteText : OsuSpriteText, IHasTooltip
+            {
+                public LocalisableString TooltipText { get; }
+
+                public LabelSpriteText(ScriptGenerationResult script)
+                {
+                    Text = script.Name;
+                    TooltipText = script.Path;
+                }
             }
         }
 
@@ -152,31 +178,36 @@ namespace sbtw.Editor.Graphics.UserInterface
         private class GroupsToolboxTab : Container
         {
             private Bindable<IProject> project;
+            private GroupsList list;
 
             [BackgroundDependencyLoader]
             private void load(Bindable<IProject> project)
             {
                 RelativeSizeAxes = Axes.Both;
-                this.project = project.GetBoundCopy();
-                this.project.BindValueChanged(e =>
+                Child = list = new GroupsList
                 {
-                    Child = new GroupsList
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                        Items = { BindTarget = e.NewValue.Groups }
-                    };
-                }, true);
+                    RelativeSizeAxes = Axes.Both,
+                };
+
+                this.project = project.GetBoundCopy();
+                this.project.BindValueChanged(e => Schedule(() =>
+                {
+                    list.Items.UnbindBindings();
+
+                    if (e.NewValue is not DummyProject)
+                        list.Items.BindTo(e.NewValue.Groups);
+                }), true);
             }
 
-            private class GroupsList : OsuRearrangeableListContainer<ElementGroupSetting>
+            private class GroupsList : OsuRearrangeableListContainer<GroupSetting>
             {
-                protected override OsuRearrangeableListItem<ElementGroupSetting> CreateOsuDrawable(ElementGroupSetting item)
+                protected override OsuRearrangeableListItem<GroupSetting> CreateOsuDrawable(GroupSetting item)
                     => new GroupsListItem(item);
             }
 
-            private class GroupsListItem : OsuRearrangeableListItem<ElementGroupSetting>
+            private class GroupsListItem : OsuRearrangeableListItem<GroupSetting>
             {
-                public GroupsListItem(ElementGroupSetting item)
+                public GroupsListItem(GroupSetting item)
                     : base(item)
                 {
                 }
@@ -186,10 +217,7 @@ namespace sbtw.Editor.Graphics.UserInterface
 
             private class GroupsListItemContent : Container
             {
-                private readonly IconButton target;
-                private readonly Bindable<bool> exportToDifficulty;
-
-                public GroupsListItemContent(ElementGroupSetting model)
+                public GroupsListItemContent(GroupSetting model)
                 {
                     Height = 40;
                     RelativeSizeAxes = Axes.X;
@@ -211,21 +239,72 @@ namespace sbtw.Editor.Graphics.UserInterface
                             Spacing = new Vector2(5, 0),
                             Children = new Drawable[]
                             {
-                                target = new IconButton
-                                {
-                                    Size = new Vector2(40),
-                                    Action = () => exportToDifficulty.Value = !exportToDifficulty.Value,
-                                }
+                                new TargetIconButton(model.Target) { Size = new Vector2(40), },
+                                new HiddenToggleButton(model.Hidden) { Size = new Vector2(40), },
                             }
                         }
                     };
 
-                    exportToDifficulty = model.ExportToDifficulty.GetBoundCopy();
-                    exportToDifficulty.BindValueChanged(_ => handleTargetChange(), true);
+
                 }
 
-                private void handleTargetChange()
-                    => target.Icon = exportToDifficulty.Value ? FontAwesome.Solid.FileAlt : FontAwesome.Solid.Globe;
+                private class TargetIconButton : IconButton
+                {
+                    private readonly Bindable<ExportTarget> target;
+
+                    public TargetIconButton(Bindable<ExportTarget> target)
+                    {
+                        Action = cycle;
+                        this.target = target.GetBoundCopy();
+                        this.target.BindValueChanged(_ => handleTargetChange(), true);
+                    }
+
+                    private void cycle()
+                        => target.Value = (ExportTarget)(((int)target.Value + 1 % 3 + 3) % 3);
+
+                    private void handleTargetChange()
+                    {
+                        switch (target.Value)
+                        {
+                            case ExportTarget.Storyboard:
+                                Icon = FontAwesome.Solid.Globe;
+                                TooltipText = @"Export to .osb";
+                                break;
+
+                            case ExportTarget.Difficulty:
+                                Icon = FontAwesome.Solid.FileAlt;
+                                TooltipText = @"Export to .osu";
+                                break;
+
+                            case ExportTarget.None:
+                                Icon = FontAwesome.Solid.Circle;
+                                TooltipText = @"Do not export";
+                                break;
+                        }
+                    }
+                }
+
+                private class HiddenToggleButton : IconButton
+                {
+                    private readonly Bindable<bool> hidden;
+
+                    [Resolved]
+                    private Editor editor { get; set; }
+
+                    public HiddenToggleButton(Bindable<bool> hidden)
+                    {
+                        Action = () => hidden.Value = !hidden.Value;
+                        this.hidden = hidden.GetBoundCopy();
+                        this.hidden.BindValueChanged(_ => handleVisibilityChange(), true);
+                    }
+
+                    private void handleVisibilityChange()
+                    {
+                        Icon = hidden.Value ? FontAwesome.Solid.EyeSlash : FontAwesome.Solid.Eye;
+                        TooltipText = hidden.Value ? "Hidden" : "Visible";
+                        editor?.Generate(GenerateKind.Storyboard);
+                    }
+                }
             }
         }
     }

@@ -61,6 +61,8 @@ namespace sbtw.Editor.Scripts
         private readonly List<ScriptElementGroup> groups = new List<ScriptElementGroup>();
         private readonly List<Asset> assets = new List<Asset>();
         private readonly Logger logger = Logger.GetLogger("script");
+        private ScriptGenerationResult result;
+        private bool hasGenerated;
 
         public Storage Storage { get; private set; }
 
@@ -103,7 +105,7 @@ namespace sbtw.Editor.Scripts
         public void SetVideo(string path, int offset)
         {
             if (groups.Any(g => g.Name == "Video"))
-                throw new InvalidOperationException("Cannot create another video in the same script.");
+                throw new InvalidOperationException("A video has already been created.");
 
             GetGroup("Video").CreateVideo(path, offset);
         }
@@ -150,7 +152,10 @@ namespace sbtw.Editor.Scripts
                 token.ThrowIfCancellationRequested();
 
             if (IsDisposed)
-                throw new ObjectDisposedException($"{this} is already disposed and cannot generate.");
+                throw new ObjectDisposedException(ToString());
+
+            if (hasGenerated)
+                return result;
 
             Beatmap = beatmap;
             Storage = storage;
@@ -172,27 +177,23 @@ namespace sbtw.Editor.Scripts
             foreach (PropertyInfo property in importable_properties)
                 RegisterField(property.Name, property.GetValue(this));
 
-            bool faulted = true;
+            result = new ScriptGenerationResult { Name = Name, Path = Path };
 
             try
             {
                 await PerformAsync();
-                faulted = false;
+                result.Groups = groups;
+                result.Assets = assets;
             }
-            catch (AggregateException ae)
+            catch (Exception e)
             {
-                foreach (var ex in ae.Flatten().InnerExceptions)
-                    Error(FormatException(ex));
-            }
-            catch (Exception ex)
-            {
-                Error(FormatException(ex));
+                result.Exception = e;
             }
 
-            return new ScriptGenerationResult { Name = Name, Path = Path, Assets = assets, Groups = groups, Faulted = faulted };
+            hasGenerated = true;
+            return result;
         }
 
-        protected virtual string FormatException(Exception ex) => ex.Message;
         protected abstract Task PerformAsync();
         protected abstract void RegisterMethod(string name, Delegate method);
         protected abstract void RegisterField(string name, object value);

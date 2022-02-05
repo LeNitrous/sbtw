@@ -28,14 +28,6 @@ namespace sbtw.Editor.Languages.Javascript.Scripts
         protected override void RegisterField(string name, object value) => Engine.Script[name] = value;
         protected override void RegisterType(Type type) => Engine.AddHostType(type);
 
-        protected override string FormatException(Exception ex)
-        {
-            if (ex is ScriptEngineException sex)
-                return sex.ErrorDetails;
-
-            return base.FormatException(ex);
-        }
-
         protected override void Dispose(bool disposing)
         {
             Engine?.Dispose();

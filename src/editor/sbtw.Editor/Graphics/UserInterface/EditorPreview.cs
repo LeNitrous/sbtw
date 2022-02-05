@@ -3,6 +3,7 @@
 
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -117,17 +118,14 @@ namespace sbtw.Editor.Graphics.UserInterface
             beatmapBindable.Value = editorBeatmap;
         }
 
-        public void SetStoryboard(Storyboard storyboard, IResourceStore<byte[]> resources)
-        {
-            storyboardMain.Clear();
-            storyboardOver.Clear();
-
-            LoadComponentAsync(new EditorDrawableStoryboard(storyboard, resources), loaded =>
-            {
-                storyboardMain.Add(loaded);
-                storyboardOver.Add(loaded.Children.FirstOrDefault(l => l.Name == "Overlay").CreateProxy());
-            });
-        }
+        public async Task SetStoryboardAsync(Storyboard storyboard, IResourceStore<byte[]> resources)
+            => await LoadComponentAsync(new EditorDrawableStoryboard(storyboard, resources), loaded =>
+                {
+                    storyboardMain.Clear();
+                    storyboardOver.Clear();
+                    storyboardMain.Add(loaded);
+                    storyboardOver.Add(loaded.Children.FirstOrDefault(l => l.Name == "Overlay").CreateProxy());
+                });
 
         public void Seek(double time) => clock?.Seek(time);
 

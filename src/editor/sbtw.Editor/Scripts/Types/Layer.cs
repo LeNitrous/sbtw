@@ -6,8 +6,8 @@ namespace sbtw.Editor.Scripts.Types
     public enum Layer
     {
         Background,
-        Failing,
-        Passing,
+        Fail,
+        Pass,
         Foreground,
         Overlay,
     }

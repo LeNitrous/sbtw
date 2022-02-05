@@ -6,6 +6,7 @@ using osu.Framework.Platform;
 using sbtw.Editor.Assets;
 using sbtw.Editor.Beatmaps;
 using sbtw.Editor.IO;
+using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Projects
 {
@@ -13,11 +14,12 @@ namespace sbtw.Editor.Projects
     {
         public string Name => @"No project";
         public string Path => string.Empty;
-        public BindableList<ElementGroupSetting> Groups { get; } = new BindableList<ElementGroupSetting>();
+        public BindableList<ScriptGenerationResult> Scripts => null;
+        public BindableList<GroupSetting> Groups => null;
         public StorageBackedBeatmapSet BeatmapSet => null;
         public DemanglingResourceProvider Resources => null;
         public Storage Files => null;
-        public AssetGenerator Assets => null;
+        public AssetCache Assets => null;
 
         public bool Save() => true;
     }

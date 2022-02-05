@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,6 +31,23 @@ namespace sbtw.Editor.Languages
 
         public IEnumerable<Script> Compile(Storage storage, IEnumerable<string> ignore = null)
             => CompileAsync(storage, ignore).Result;
+
+        public ILanguage GetLanguageFor(string file)
+        {
+            foreach (var lang in languages)
+            {
+                if (lang.Extensions.Contains(Path.GetExtension(file)))
+                    return lang;
+            }
+
+            return null;
+        }
+
+        public void Reset()
+        {
+            foreach (var lang in languages)
+                (lang as Language)?.Reset();
+        }
 
         protected virtual void Dispose(bool disposing)
         {

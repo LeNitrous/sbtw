@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using osu.Framework.Audio.Track;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
+using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Generators
@@ -15,6 +16,6 @@ namespace sbtw.Editor.Generators
         public IBeatmap Beatmap { get; set; }
         public Waveform Waveform { get; set; }
         public IEnumerable<Script> Scripts { get; set; }
-        public IEnumerable<string> Ordering { get; set; }
+        public IEnumerable<GroupSetting> Groups { get; set; }
     }
 }

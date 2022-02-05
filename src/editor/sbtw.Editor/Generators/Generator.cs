@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
 using sbtw.Editor.Scripts.Elements;
 using sbtw.Editor.Scripts.Types;
@@ -20,30 +21,27 @@ namespace sbtw.Editor.Generators
 
             PreGenerate(context);
 
-            var elements = new Dictionary<IScriptedElement, U>();
-            var ordering = config.Ordering?.ToArray() ?? Array.Empty<string>();
+            var elements = new Dictionary<string, List<U>>();
+            var ordering = config.Groups?.ToArray() ?? Enumerable.Empty<GroupSetting>();
             var generated = await Task.WhenAll(config.Scripts?.Select(s => s.GenerateAsync(config.Storage, config.Beatmap, config.Waveform, token)));
-
-            foreach (var script in config.Scripts)
-            {
-                token.ThrowIfCancellationRequested();
-                script.Dispose();
-            }
-
-            var performed = generated.Where(g => !g.Faulted);
+            var performed = generated.Where(g => g.Exception == null);
 
             var groups = performed
                 .SelectMany(r => r.Groups)
                 .GroupBy(k => k.Name, v => v.Elements, (k, v) => new ScriptElementGroup(k, v.SelectMany(a => a)))
-                .OrderBy(g => Array.IndexOf(ordering, g.Name));
+                .OrderBy(g => Array.IndexOf(ordering.Select(g => g.Name).ToArray(), g.Name))
+                .Where(g => !ordering.FirstOrDefault(a => a.Name == g.Name)?.Hidden.Value ?? true);
 
             foreach (var group in groups)
             {
                 token.ThrowIfCancellationRequested();
                 foreach (var layer in Enum.GetValues<Layer>())
                 {
+                    if (!elements.TryGetValue(group.Name, out var list))
+                        elements.Add(group.Name, list = new List<U>());
+
                     foreach (var element in group.Elements.Where(e => e.Layer == layer).OrderBy(e => e, new ScriptedElementComparer()))
-                        elements.TryAdd(element, create(context, element));
+                        list.Add(create(context, element));
                 }
             }
 
@@ -53,9 +51,8 @@ namespace sbtw.Editor.Generators
             {
                 Result = context,
                 Assets = performed.SelectMany(g => g.Assets),
-                Groups = performed.Select(g => g.Name),
+                Groups = elements,
                 Scripts = generated,
-                Elements = elements,
             };
         }
 

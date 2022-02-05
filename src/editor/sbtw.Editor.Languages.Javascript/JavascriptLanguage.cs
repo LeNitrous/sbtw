@@ -61,6 +61,19 @@ namespace sbtw.Editor.Languages.Javascript
         public override IProjectGenerator CreateProjectGenerator() => new JavascriptProjectGenerator();
         public override ILanguageConfigManager CreateConfigManager() => config;
 
+        public override string GetExceptionMessage(Exception exception)
+        {
+            if (exception is ScriptEngineException sex)
+            {
+                if (sex.ScriptException != null && sex.ScriptException.constructor.name == "Error")
+                    return sex.ScriptException.stack;
+
+                return sex.ErrorDetails;
+            }
+
+            return base.GetExceptionMessage(exception);
+        }
+
         protected override JavascriptScript CreateScript(string name, string path)
         {
             var engine = runtime.CreateScriptEngine();

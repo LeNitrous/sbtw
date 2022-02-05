@@ -21,8 +21,8 @@ namespace sbtw.Editor.Languages
     public interface ILanguage : IDisposable
     {
         string Name { get; }
-        bool Enabled { get; }
         IEnumerable<string> Extensions { get; }
+        string GetExceptionMessage(Exception exception);
         IProjectGenerator CreateProjectGenerator();
         ILanguageConfigManager CreateConfigManager();
         Task<IEnumerable<Script>> CompileAsync(Storage storage, IEnumerable<string> ignore = null, CancellationToken token = default);

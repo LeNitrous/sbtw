@@ -37,7 +37,6 @@ namespace sbtw.Editor
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
             => dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
-        private readonly Logger logger = Logger.GetLogger("script");
         private VolumeOverlay volume;
         private EditorSettingsOverlay settings;
         private OutputOverlay output;
@@ -193,6 +192,7 @@ namespace sbtw.Editor
                 disposable.Dispose();
 
             Project.SetDefault();
+            Languages.Reset();
 
             editorClock.SetDefault();
             editorBeatmap.SetDefault();

@@ -15,50 +15,30 @@ using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Generators
 {
-    public class OsbGenerator : Generator<StringBuilder>
+    public class OsbGenerator : Generator<Dictionary<string, StringBuilder>, StringBuilder>
     {
-        protected readonly Dictionary<Layer, StringBuilder> Layers = new Dictionary<Layer, StringBuilder>();
+        protected override Dictionary<string, StringBuilder> CreateContext() => new Dictionary<string, StringBuilder>();
 
-        protected readonly StringBuilder Samples = new StringBuilder();
-
-        protected override StringBuilder CreateContext() => new StringBuilder();
-
-        protected override void PreGenerate(StringBuilder context)
+        protected override void PreGenerate(Dictionary<string, StringBuilder> context)
         {
-            context.AppendLine("[Events]");
-            context.AppendLine("// Background and Video Events");
-
-            Layers.Clear();
-
             foreach (var layer in Enum.GetValues<Layer>())
-            {
-                var builder = new StringBuilder();
-                builder.AppendLine($"// Storyboard Layer {(int)layer} ({Enum.GetName(layer)})");
-                Layers.Add(layer, builder);
-            }
+                context.Add(Enum.GetName(layer), new StringBuilder());
 
-            Samples.AppendLine("// Storyboard Sound Samples");
+            context.Add("Samples", new StringBuilder());
+            context.Add("Video", new StringBuilder());
         }
 
-        protected override void PostGenerate(StringBuilder context)
-        {
-            foreach ((var _, var builder) in Layers)
-                context.Append(builder);
+        protected override StringBuilder CreateAnimation(Dictionary<string, StringBuilder> context, ScriptedAnimation animation)
+            => context[animation.Layer.ToString()].AppendLine(encode_sprite(animation, $"Animation,{Enum.GetName(animation.Layer)},{Enum.GetName(animation.Origin)},\"{animation.Path}\",{animation.InitialPosition.X:0},{animation.InitialPosition.Y:0},{animation.FrameCount},{animation.FrameDelay},{Enum.GetName(animation.LoopType)}"));
 
-            context.Append(Samples);
-        }
+        protected override StringBuilder CreateSample(Dictionary<string, StringBuilder> context, ScriptedSample sample)
+            => context["Samples"].AppendLine($"Sample,{sample.StartTime},{(int)sample.Layer},\"{sample.Path}\",{sample.Volume}");
 
-        protected override StringBuilder CreateAnimation(StringBuilder context, ScriptedAnimation animation)
-            => Layers[animation.Layer].AppendLine(encode_sprite(animation, $"Animation,{Enum.GetName(animation.Layer)},{Enum.GetName(animation.Origin)},\"{animation.Path}\",{animation.InitialPosition.X},{animation.InitialPosition.Y},{animation.FrameCount},{animation.FrameDelay},{Enum.GetName(animation.LoopType)}"));
+        protected override StringBuilder CreateSprite(Dictionary<string, StringBuilder> context, ScriptedSprite sprite)
+            => context[sprite.Layer.ToString()].AppendLine(encode_sprite(sprite, $"Sprite,{Enum.GetName(sprite.Layer)},{Enum.GetName(sprite.Origin)},\"{sprite.Path}\",{sprite.InitialPosition.X:0},{sprite.InitialPosition.Y:0}"));
 
-        protected override StringBuilder CreateSample(StringBuilder context, ScriptedSample sample)
-            => Samples.AppendLine($"Sample,{sample.StartTime},{(int)sample.Layer},\"{sample.Path}\",{sample.Volume}");
-
-        protected override StringBuilder CreateSprite(StringBuilder context, ScriptedSprite sprite)
-            => Layers[sprite.Layer].AppendLine(encode_sprite(sprite, $"Sprite,{Enum.GetName(sprite.Layer)},{Enum.GetName(sprite.Origin)},\"{sprite.Path}\",{sprite.InitialPosition.X},{sprite.InitialPosition.Y}"));
-
-        protected override StringBuilder CreateVideo(StringBuilder context, ScriptedVideo video)
-            => context.AppendLine($"Video,{video.StartTime},\"{video.Path}\"");
+        protected override StringBuilder CreateVideo(Dictionary<string, StringBuilder> context, ScriptedVideo video)
+            => context["Video"].AppendLine($"Video,{video.StartTime},\"{video.Path}\"");
 
         private static string encode_sprite(ScriptedSprite sprite, string header)
         {
@@ -75,7 +55,7 @@ namespace sbtw.Editor.Generators
 
             foreach (var trigger in sprite.Triggers)
             {
-                builder.AppendLine($" T,{trigger.TriggerName},{trigger.TriggerStartTime},{trigger.TriggerEndTime}");
+                builder.AppendLine($" T,{trigger.TriggerName},{trigger.TriggerStartTime:0},{trigger.TriggerEndTime:0}");
                 encode_timeline_group(builder, trigger, 2);
             }
 
@@ -86,15 +66,15 @@ namespace sbtw.Editor.Generators
         {
             var commands = new SortedList<TimelineCommand>();
             commands.AddRange(group.Move.Commands.Select(cmd => new TimelineCommand("M", cmd, format_vector)));
-            commands.AddRange(group.X.Commands.Select(cmd => new TimelineCommand("MX", cmd)));
-            commands.AddRange(group.Y.Commands.Select(cmd => new TimelineCommand("MY", cmd)));
-            commands.AddRange(group.Alpha.Commands.Select(cmd => new TimelineCommand("F", cmd)));
+            commands.AddRange(group.X.Commands.Select(cmd => new TimelineCommand("MX", cmd, format_float_no_decimal)));
+            commands.AddRange(group.Y.Commands.Select(cmd => new TimelineCommand("MY", cmd, format_float_no_decimal)));
+            commands.AddRange(group.Alpha.Commands.Select(cmd => new TimelineCommand("F", cmd, format_float)));
             commands.AddRange(group.Colour.Commands.Select(cmd => new TimelineCommand("C", cmd, format_color)));
             commands.AddRange(group.FlipH.Commands.Select(cmd => new TimelineCommand("P", cmd, _ => "H")));
             commands.AddRange(group.FlipV.Commands.Select(cmd => new TimelineCommand("P", cmd, _ => "V")));
             commands.AddRange(group.BlendingParameters.Commands.Select(cmd => new TimelineCommand("P", cmd, _ => "A")));
-            commands.AddRange(group.Scale.Commands.Select(cmd => new TimelineCommand("S", cmd)));
-            commands.AddRange(group.Rotation.Commands.Select(cmd => new TimelineCommand("R", cmd)));
+            commands.AddRange(group.Scale.Commands.Select(cmd => new TimelineCommand("S", cmd, format_float)));
+            commands.AddRange(group.Rotation.Commands.Select(cmd => new TimelineCommand("R", cmd, format_float)));
             commands.AddRange(group.VectorScale.Commands.Select(cmd => new TimelineCommand("V", cmd, format_vector)));
 
             foreach (var command in commands)
@@ -102,8 +82,8 @@ namespace sbtw.Editor.Generators
                 var formatFunc = command.FormatFunc ?? format;
 
                 string stringCommand = command.Command.StartTime == command.Command.EndTime
-                    ? $"{new string(' ', depth)}{command.Identifier},{(int)command.Command.Easing},{command.Command.StartTime},,"
-                    : $"{new string(' ', depth)}{command.Identifier},{(int)command.Command.Easing},{command.Command.StartTime},{command.Command.EndTime},";
+                    ? $"{new string(' ', depth)}{command.Identifier},{(int)command.Command.Easing},{command.Command.StartTime:0},,"
+                    : $"{new string(' ', depth)}{command.Identifier},{(int)command.Command.Easing},{command.Command.StartTime:0},{command.Command.EndTime:0},";
 
                 if (command.Command is CommandTimeline<osuTK.Vector2>.TypedCommand vectorCommand)
                 {
@@ -160,7 +140,7 @@ namespace sbtw.Editor.Generators
             if (value is not osuTK.Vector2 vector)
                 return null;
 
-            return $"{vector.X},{vector.Y}";
+            return $"{vector.X:0},{vector.Y:0}";
         }
 
         private static string format_color(object value)
@@ -168,7 +148,23 @@ namespace sbtw.Editor.Generators
             if (value is not Color4 color)
                 return null;
 
-            return $"{color.R * 255},{color.G * 255},{color.B * 255}";
+            return $"{color.R:0},{color.G:0},{color.B:0}";
+        }
+
+        private static string format_float(object value)
+        {
+            if (value is not float floatValue)
+                return null;
+
+            return (floatValue % 1) > float.Epsilon ? floatValue.ToString("0.00") : floatValue.ToString("0");
+        }
+
+        private static string format_float_no_decimal(object value)
+        {
+            if (value is not float floatValue)
+                return null;
+
+            return floatValue.ToString("0");
         }
 
         private static string format(object value) => value.ToString();

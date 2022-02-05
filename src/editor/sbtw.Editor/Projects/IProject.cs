@@ -6,6 +6,7 @@ using osu.Framework.Platform;
 using sbtw.Editor.Assets;
 using sbtw.Editor.Beatmaps;
 using sbtw.Editor.IO;
+using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Projects
 {
@@ -15,9 +16,11 @@ namespace sbtw.Editor.Projects
 
         string Path { get; }
 
-        AssetGenerator Assets { get; }
+        AssetCache Assets { get; }
 
-        BindableList<ElementGroupSetting> Groups { get; }
+        BindableList<GroupSetting> Groups { get; }
+
+        BindableList<ScriptGenerationResult> Scripts { get; }
 
         StorageBackedBeatmapSet BeatmapSet { get; }
 
