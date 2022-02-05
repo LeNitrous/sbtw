@@ -19,8 +19,13 @@ namespace sbtw.Editor.Projects
 {
     public class Project : IProject, IDisposable
     {
-        [JsonProperty("groups")]
-        public BindableList<GroupSetting> Groups { get; } = new BindableList<GroupSetting>();
+        [JsonProperty("precision")]
+        public BindableInt Precision { get; } = new BindableInt
+        {
+            MinValue = 1,
+            MaxValue = 6,
+            Default = 2,
+        };
 
         [JsonProperty]
         private IReadOnlyList<Asset> assets
@@ -30,10 +35,10 @@ namespace sbtw.Editor.Projects
         }
 
         [JsonIgnore]
-        public string Name { get; }
-
-        [JsonIgnore]
         public string Path => Files.GetFullPath(".");
+
+        [JsonProperty("groups")]
+        public BindableList<GroupSetting> Groups { get; } = new BindableList<GroupSetting>();
 
         [JsonIgnore]
         public BindableList<ScriptGenerationResult> Scripts { get; } = new BindableList<ScriptGenerationResult>();
@@ -60,7 +65,6 @@ namespace sbtw.Editor.Projects
             if (!path.EndsWith(".sbtw.json"))
                 throw new ArgumentException("File is not a project.");
 
-            Name = System.IO.Path.GetFileNameWithoutExtension(path);
             Files = host.GetStorage(System.IO.Path.GetDirectoryName(path));
             Resources = new DemanglingResourceProvider(host, audio, Files.GetStorageForDirectory("Beatmap"));
             BeatmapSet = new StorageBackedBeatmapSet(Resources, rulesets);

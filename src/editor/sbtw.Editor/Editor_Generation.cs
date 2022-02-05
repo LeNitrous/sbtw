@@ -33,26 +33,29 @@ namespace sbtw.Editor
 
             Task.Run(async () =>
             {
+                if (Project.Value is not Project project)
+                    return;
+
                 bool hasFaulted = false;
 
                 if (kind == GenerateKind.Storyboard)
                 {
                     var generator = new EditorStoryboardGenerator(Languages, preview, Beatmap.Value.BeatmapInfo);
-                    hasFaulted = await generator.GenerateAsync(Project.Value, Beatmap.Value, generatorTokenSource.Token);
+                    hasFaulted = await generator.GenerateAsync(project, Beatmap.Value, generatorTokenSource.Token);
                 }
 
                 if (kind == GenerateKind.Osb)
                 {
-                    if (Project.Value.Groups.Any(g => g.Target.Value == ExportTarget.Storyboard))
+                    if (project.Groups.Any(g => g.Target.Value == ExportTarget.Storyboard))
                     {
                         var storyboard = new EditorOsbStoryboardGenerator(Languages);
-                        hasFaulted = await storyboard.GenerateAsync(Project.Value, Beatmap.Value, generatorTokenSource.Token);
+                        hasFaulted = await storyboard.GenerateAsync(project, Beatmap.Value, generatorTokenSource.Token);
                     }
 
-                    if (Project.Value.Groups.Any(g => g.Target.Value == ExportTarget.Difficulty))
+                    if (project.Groups.Any(g => g.Target.Value == ExportTarget.Difficulty))
                     {
                         var difficulty = new EditorOsbDifficultyGenerator(Languages);
-                        hasFaulted = hasFaulted || await difficulty.GenerateAsync(Project.Value, Beatmap.Value, generatorTokenSource.Token);
+                        hasFaulted = hasFaulted || await difficulty.GenerateAsync(project, Beatmap.Value, generatorTokenSource.Token);
                     }
                 }
 
@@ -98,7 +101,7 @@ namespace sbtw.Editor
                 Languages = langauges;
             }
 
-            public abstract Task<bool> GenerateAsync(IProject project, WorkingBeatmap beatmap, CancellationToken token = default);
+            public abstract Task<bool> GenerateAsync(Project project, WorkingBeatmap beatmap, CancellationToken token = default);
         }
 
         private abstract class EditorGenerator<T, U> : EditorGenerator
@@ -110,7 +113,7 @@ namespace sbtw.Editor
             {
             }
 
-            protected async Task<GeneratorResult<T, U>> GenerateAsync(IProject project, WorkingBeatmap working, ExportTarget? target = null, CancellationToken token = default)
+            protected async Task<GeneratorResult<T, U>> GenerateAsync(Project project, WorkingBeatmap working, ExportTarget? target = null, CancellationToken token = default)
             {
                 Logger.Add($@"Generating storyboard for ""{working}""...");
 
@@ -190,7 +193,7 @@ namespace sbtw.Editor
                 this.beatmapInfo = beatmapInfo;
             }
 
-            public override async Task<bool> GenerateAsync(IProject project, WorkingBeatmap beatmap, CancellationToken token = default)
+            public override async Task<bool> GenerateAsync(Project project, WorkingBeatmap beatmap, CancellationToken token = default)
             {
                 var generated = await GenerateAsync(project, beatmap, null, token);
                 await preview.SetStoryboardAsync(generated.Result, project.Resources.Resources);
@@ -210,7 +213,7 @@ namespace sbtw.Editor
             {
             }
 
-            public override sealed async Task<bool> GenerateAsync(IProject project, WorkingBeatmap beatmap, CancellationToken token = default)
+            public override sealed async Task<bool> GenerateAsync(Project project, WorkingBeatmap beatmap, CancellationToken token = default)
             {
                 string path = GetTargetFile(beatmap);
 

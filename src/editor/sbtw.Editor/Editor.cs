@@ -120,7 +120,7 @@ namespace sbtw.Editor
                                         Origin = Anchor.Centre,
                                         Children = new Drawable[]
                                         {
-                                            new ViewToolbox
+                                            new Toolbox
                                             {
                                                 Anchor = Anchor.TopRight,
                                                 Origin = Anchor.TopRight,
@@ -209,18 +209,23 @@ namespace sbtw.Editor
                 return;
 
             Project.Value = project;
-            OpenBeatmap(Project.Value.BeatmapSet.BeatmapSetInfo.Beatmaps.FirstOrDefault());
+
+            if (Project.Value is Project prj)
+                OpenBeatmap(prj.BeatmapSet.BeatmapSetInfo.Beatmaps.FirstOrDefault());
         }
 
         public void OpenBeatmap(IBeatmapInfo beatmapInfo)
         {
+            if (Project.Value is not Project project)
+                return;
+
             Beatmap.Disabled = false;
 
             lastTrackTime = Beatmap.Value.Track.CurrentTime;
             lastTrackState = Beatmap.Value.Track.IsRunning;
             lastTrackTitle = Beatmap.Value.BeatmapInfo.Metadata.Title;
 
-            Beatmap.Value = Project.Value.BeatmapSet.GetWorkingBeatmap(beatmapInfo);
+            Beatmap.Value = project.BeatmapSet.GetWorkingBeatmap(beatmapInfo);
             Ruleset.Value = beatmapInfo.Ruleset as RulesetInfo;
 
             Beatmap.Disabled = true;
@@ -228,9 +233,12 @@ namespace sbtw.Editor
 
         public void RefreshBeatmap()
         {
+            if (Project.Value is not Project project)
+                return;
+
             string current = Beatmap.Value.BeatmapInfo.DifficultyName;
-            Project.Value.BeatmapSet.Refresh();
-            OpenBeatmap(Project.Value.BeatmapSet.BeatmapSetInfo.Beatmaps.FirstOrDefault(b => b.DifficultyName == current));
+            project.BeatmapSet.Refresh();
+            OpenBeatmap(project.BeatmapSet.BeatmapSetInfo.Beatmaps.FirstOrDefault(b => b.DifficultyName == current));
         }
 
         private CancellationTokenSource reloadTokenSource;
