@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using osu.Framework.Graphics;
 using osu.Game.Storyboards;
-using osuTK;
 using sbtw.Editor.Scripts.Commands;
+using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Scripts.Elements
 {

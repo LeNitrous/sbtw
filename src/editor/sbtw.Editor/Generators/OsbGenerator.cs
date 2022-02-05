@@ -8,11 +8,10 @@ using System.Text;
 using osu.Framework.Graphics;
 using osu.Framework.Lists;
 using osu.Game.Storyboards;
-using osuTK;
 using osuTK.Graphics;
-using sbtw.Editor.Scripts;
 using sbtw.Editor.Scripts.Commands;
 using sbtw.Editor.Scripts.Elements;
+using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Generators
 {
@@ -106,7 +105,7 @@ namespace sbtw.Editor.Generators
                     ? $"{new string(' ', depth)}{command.Identifier},{(int)command.Command.Easing},{command.Command.StartTime},,"
                     : $"{new string(' ', depth)}{command.Identifier},{(int)command.Command.Easing},{command.Command.StartTime},{command.Command.EndTime},";
 
-                if (command.Command is CommandTimeline<Vector2>.TypedCommand vectorCommand)
+                if (command.Command is CommandTimeline<osuTK.Vector2>.TypedCommand vectorCommand)
                 {
                     stringCommand += vectorCommand.StartValue.Equals(vectorCommand.EndValue)
                         ? formatFunc(vectorCommand.StartValue)
@@ -158,7 +157,7 @@ namespace sbtw.Editor.Generators
 
         private static string format_vector(object value)
         {
-            if (value is not Vector2 vector)
+            if (value is not osuTK.Vector2 vector)
                 return null;
 
             return $"{vector.X},{vector.Y}";

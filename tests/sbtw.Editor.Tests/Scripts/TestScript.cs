@@ -2,6 +2,7 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using System.Threading.Tasks;
 using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Tests.Scripts
@@ -21,7 +22,11 @@ namespace sbtw.Editor.Tests.Scripts
         {
         }
 
-        protected override void Perform() => performAction?.Invoke(this);
+        protected override Task PerformAsync()
+        {
+            performAction?.Invoke(this);
+            return Task.CompletedTask;
+        }
 
         protected override void RegisterMethod(string name, Delegate method)
         {

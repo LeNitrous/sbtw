@@ -12,10 +12,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Humanizer;
 using osu.Framework.Audio.Track;
+using osu.Framework.Graphics;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
+using osu.Game.Storyboards;
 using sbtw.Editor.Assets;
+using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Scripts
 {
@@ -29,11 +32,11 @@ namespace sbtw.Editor.Scripts
             typeof(Rectangle),
             typeof(Layer),
             typeof(FontConfiguration),
-            typeof(osuTK.Vector2),
-            typeof(osu.Framework.Graphics.Anchor),
-            typeof(osu.Framework.Graphics.Easing),
-            typeof(osu.Framework.Graphics.Colour4),
-            typeof(osu.Game.Storyboards.AnimationLoopType),
+            typeof(Vector2),
+            typeof(Anchor),
+            typeof(Easing),
+            typeof(Colour4),
+            typeof(AnimationLoopType),
         };
 
         static Script()
@@ -163,11 +166,11 @@ namespace sbtw.Editor.Scripts
                 RegisterMethod(method.Name, method.CreateDelegate(type, this));
             }
 
-            foreach (PropertyInfo property in importable_properties)
-                RegisterField(property.Name, property.GetValue(this));
-
             foreach (Type type in importable_types)
                 RegisterType(type);
+
+            foreach (PropertyInfo property in importable_properties)
+                RegisterField(property.Name, property.GetValue(this));
 
             bool faulted = true;
 

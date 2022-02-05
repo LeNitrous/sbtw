@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using sbtw.Editor.Scripts;
 using sbtw.Editor.Scripts.Elements;
+using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Generators
 {

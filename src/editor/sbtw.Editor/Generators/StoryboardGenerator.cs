@@ -4,9 +4,9 @@
 using System;
 using osu.Game.Beatmaps;
 using osu.Game.Storyboards;
-using sbtw.Editor.Scripts;
 using sbtw.Editor.Scripts.Commands;
 using sbtw.Editor.Scripts.Elements;
+using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Generators
 {
