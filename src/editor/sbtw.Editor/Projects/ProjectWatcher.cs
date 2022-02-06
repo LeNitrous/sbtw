@@ -45,7 +45,7 @@ namespace sbtw.Editor.Projects
 
             watcher = new FileSystemWatcher
             {
-                Path = project.Value.Path,
+                Path = project.Value.Storage.GetFullPath("."),
                 IncludeSubdirectories = true
             };
 

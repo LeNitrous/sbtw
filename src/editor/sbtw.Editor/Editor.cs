@@ -1,7 +1,6 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System;
 using System.Linq;
 using System.Threading;
 using osu.Framework.Allocation;
@@ -47,6 +46,7 @@ namespace sbtw.Editor
         private Container contentContainer;
         private Container controlContainer;
         private Container middleControlContainer;
+        private BindableList<GroupSetting> groups;
         private Bindable<bool> showInterface;
         private Bindable<EditorClock> editorClock;
         private Bindable<EditorBeatmap> editorBeatmap;
@@ -188,9 +188,6 @@ namespace sbtw.Editor
             Beatmap.Disabled = false;
             Beatmap.SetDefault();
 
-            if (Project.Value is IDisposable disposable)
-                disposable.Dispose();
-
             Project.SetDefault();
             Languages.Reset();
 
@@ -210,13 +207,12 @@ namespace sbtw.Editor
 
             Project.Value = project;
 
-            if (Project.Value is Project prj)
-                OpenBeatmap(prj.BeatmapSet.BeatmapSetInfo.Beatmaps.FirstOrDefault());
+            OpenBeatmap(project.BeatmapSet?.BeatmapSetInfo.Beatmaps.FirstOrDefault());
         }
 
         public void OpenBeatmap(IBeatmapInfo beatmapInfo)
         {
-            if (Project.Value is not Project project)
+            if (beatmapInfo == null)
                 return;
 
             Beatmap.Disabled = false;
@@ -225,7 +221,7 @@ namespace sbtw.Editor
             lastTrackState = Beatmap.Value.Track.IsRunning;
             lastTrackTitle = Beatmap.Value.BeatmapInfo.Metadata.Title;
 
-            Beatmap.Value = project.BeatmapSet.GetWorkingBeatmap(beatmapInfo);
+            Beatmap.Value = Project.Value.BeatmapSet.GetWorkingBeatmap(beatmapInfo);
             Ruleset.Value = beatmapInfo.Ruleset as RulesetInfo;
 
             Beatmap.Disabled = true;
@@ -233,12 +229,9 @@ namespace sbtw.Editor
 
         public void RefreshBeatmap()
         {
-            if (Project.Value is not Project project)
-                return;
-
             string current = Beatmap.Value.BeatmapInfo.DifficultyName;
-            project.BeatmapSet.Refresh();
-            OpenBeatmap(project.BeatmapSet.BeatmapSetInfo.Beatmaps.FirstOrDefault(b => b.DifficultyName == current));
+            Project.Value.BeatmapSet.Refresh();
+            OpenBeatmap(Project.Value.BeatmapSet?.BeatmapSetInfo.Beatmaps.FirstOrDefault(b => b.DifficultyName == current));
         }
 
         private CancellationTokenSource reloadTokenSource;
@@ -261,6 +254,9 @@ namespace sbtw.Editor
 
                 LoadComponentAsync(new EditorPreview(), loaded =>
                 {
+                    groups = Project.Value.Groups.GetBoundCopy();
+                    groups.CollectionChanged += (_, __) => Generate(GenerateKind.Storyboard);
+
                     contentContainer.Clear();
                     contentContainer.Add(preview = loaded);
                     middleControlContainer.Show();

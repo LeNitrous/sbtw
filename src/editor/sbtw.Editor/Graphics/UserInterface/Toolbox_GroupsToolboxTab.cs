@@ -18,6 +18,7 @@ namespace sbtw.Editor.Graphics.UserInterface
     {
         private class GroupsToolboxTab : Container
         {
+            private BindableList<GroupSetting> groups;
             private Bindable<IProject> project;
             private GroupsList list;
 
@@ -33,10 +34,11 @@ namespace sbtw.Editor.Graphics.UserInterface
                 this.project = project.GetBoundCopy();
                 this.project.BindValueChanged(e => Schedule(() =>
                 {
+                    groups = e.NewValue.Groups?.GetBoundCopy();
                     list.Items.UnbindBindings();
 
-                    if (e.NewValue is Project project)
-                        list.Items.BindTo(project.Groups);
+                    if (groups != null)
+                        list.Items.BindTo(groups);
                 }), true);
             }
 
@@ -118,7 +120,7 @@ namespace sbtw.Editor.Graphics.UserInterface
                                 break;
 
                             case ExportTarget.None:
-                                Icon = FontAwesome.Solid.Circle;
+                                Icon = FontAwesome.Solid.MinusCircle;
                                 TooltipText = @"Do not export";
                                 break;
                         }

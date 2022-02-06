@@ -52,7 +52,7 @@ namespace sbtw.Editor.Projects
                 if (generators != null)
                 {
                     foreach (var generator in generators)
-                        generator?.Generate(project.Files);
+                        generator?.Generate(project.Storage);
                 }
 
                 project.Save();

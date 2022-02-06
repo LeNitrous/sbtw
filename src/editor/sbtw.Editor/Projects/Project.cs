@@ -2,12 +2,13 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
-using Newtonsoft.Json;
+using System.Linq;
 using osu.Framework.Audio;
 using osu.Framework.Bindables;
-using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Game.Rulesets;
 using sbtw.Editor.Assets;
@@ -17,45 +18,22 @@ using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Projects
 {
-    public class Project : IProject, IDisposable
+    public class Project : IProject
     {
-        [JsonProperty("precision")]
-        public BindableInt Precision { get; } = new BindableInt
-        {
-            MinValue = 1,
-            MaxValue = 6,
-            Default = 2,
-        };
+        public string Name { get; }
+        public BindableList<Asset> Assets { get; }
+        public BindableList<GroupSetting> Groups { get; }
+        public BindableList<ScriptGenerationResult> Scripts { get; } = new BindableList<ScriptGenerationResult>();
+        public StorageBackedBeatmapSet BeatmapSet { get; }
+        public Storage Storage { get; }
 
-        [JsonProperty]
-        private IReadOnlyList<Asset> assets
+        public int Precision
         {
-            get => Assets?.Cache ?? Array.Empty<Asset>();
-            set => Assets = new AssetCache(value);
+            get => config.Get<int>("precision");
+            set => config.Set("precision", value);
         }
 
-        [JsonIgnore]
-        public string Path => Files.GetFullPath(".");
-
-        [JsonProperty("groups")]
-        public BindableList<GroupSetting> Groups { get; } = new BindableList<GroupSetting>();
-
-        [JsonIgnore]
-        public BindableList<ScriptGenerationResult> Scripts { get; } = new BindableList<ScriptGenerationResult>();
-
-        [JsonIgnore]
-        public StorageBackedBeatmapSet BeatmapSet { get; }
-
-        [JsonIgnore]
-        public DemanglingResourceProvider Resources { get; }
-
-        [JsonIgnore]
-        public Storage Files { get; }
-
-        [JsonIgnore]
-        public AssetCache Assets { get; private set; }
-
-        private readonly Stream stream;
+        private readonly ProjectConfigManager config;
 
         public Project(GameHost host, AudioManager audio, RulesetStore rulesets, string path)
         {
@@ -65,35 +43,113 @@ namespace sbtw.Editor.Projects
             if (!path.EndsWith(".sbtw.json"))
                 throw new ArgumentException("File is not a project.");
 
-            Files = host.GetStorage(System.IO.Path.GetDirectoryName(path));
-            Resources = new DemanglingResourceProvider(host, audio, Files.GetStorageForDirectory("Beatmap"));
-            BeatmapSet = new StorageBackedBeatmapSet(Resources, rulesets);
+            Name = Path.GetFileNameWithoutExtension(path);
+            Storage = host.GetStorage(Path.GetDirectoryName(path));
+            BeatmapSet = new StorageBackedBeatmapSet(new DemanglingResourceProvider(host, audio, Storage.GetStorageForDirectory("Beatmap")), rulesets);
 
-            stream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
-            using var reader = new StreamReader(stream, leaveOpen: true);
-            JsonConvert.PopulateObject(reader.ReadToEnd(), this, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
+            config = new ProjectConfigManager(this);
+
+            Groups = new BindableList<GroupSetting>(config.Get<IEnumerable<GroupSetting>>("groups"));
+            Groups.BindCollectionChanged(handleGroupCollectionChange, true);
+
+            Assets = new BindableList<Asset>(config.Get<IEnumerable<Asset>>("assets"));
+            Assets.BindCollectionChanged((_, __) => config.Set("assets", Assets), true);
         }
 
-        public bool Save()
+        public void GenerateAssets(IEnumerable<Asset> assets)
         {
-            try
+            foreach (var asset in assets)
             {
-                using var writer = new StreamWriter(stream, leaveOpen: true);
-                stream.SetLength(0);
-                writer.Write(JsonConvert.SerializeObject(this, Formatting.Indented, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto }));
-                return true;
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e, "Failed to save project");
-                return false;
+                var configAssetByHash = Assets.FirstOrDefault(a => a.Hash == asset.Hash);
+                var configAssetByPath = Assets.FirstOrDefault(a => a.Path == asset.Path);
+
+                // Asset from config only needs to obtain script
+                if (configAssetByHash == configAssetByPath && configAssetByPath.Script == null)
+                {
+                    configAssetByPath.Register(asset.Script);
+                    continue;
+                }
+
+                // Find asset with cached hash
+                if (configAssetByHash != null)
+                {
+                    // Directory changed
+                    if (File.Exists(configAssetByHash.FullPath) && asset.FullPath != configAssetByHash.FullPath)
+                    {
+                        File.Delete(configAssetByHash.FullPath);
+                        asset.Generate();
+                        Assets.Add(asset);
+                    }
+
+                    continue;
+                }
+
+                // Find asset with path
+                if (configAssetByPath != null)
+                {
+                    // Asset identifier changed
+                    if (File.Exists(configAssetByPath.FullPath) && asset.Hash != configAssetByPath.Hash)
+                    {
+                        File.Delete(configAssetByPath.FullPath);
+                        asset.Generate();
+                        Assets.Add(asset);
+                    }
+
+                    continue;
+                }
+
+                // Generate if not exists
+                if (!File.Exists(asset.FullPath))
+                {
+                    asset.Generate();
+                    Assets.Add(asset);
+                }
+
+                // Add to cache if file exists
+                if (File.Exists(asset.FullPath) && configAssetByPath == null && configAssetByHash == null)
+                    Assets.Add(asset);
             }
         }
 
-        public void Dispose()
+        private void handleGroupCollectionChange(object sender, NotifyCollectionChangedEventArgs args)
         {
-            stream.Dispose();
-            GC.SuppressFinalize(this);
+            switch (args.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    registerGroups(args.NewItems);
+                    break;
+
+                case NotifyCollectionChangedAction.Remove:
+                    unregisterGroups(args.OldItems);
+                    break;
+
+                case NotifyCollectionChangedAction.Replace:
+                    unregisterGroups(args.OldItems);
+                    registerGroups(args.NewItems);
+                    break;
+            }
+
+            config.Set("groups", Groups);
         }
+
+        private void registerGroups(IList items)
+        {
+            foreach (GroupSetting group in items)
+            {
+                group.Target.ValueChanged += _ => Save();
+                group.Hidden.ValueChanged += _ => Save();
+            }
+        }
+
+        private static void unregisterGroups(IList items)
+        {
+            foreach (GroupSetting group in items)
+            {
+                group.Target.UnbindAll();
+                group.Hidden.UnbindAll();
+            }
+        }
+
+        public bool Save() => config.Save();
     }
 }

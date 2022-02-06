@@ -7,7 +7,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
-using osu.Framework.Bindables;
+using sbtw.Editor.Configuration;
 using sbtw.Editor.Languages.Javascript.Projects;
 using sbtw.Editor.Languages.Javascript.Scripts;
 using sbtw.Editor.Projects;
@@ -27,19 +27,10 @@ namespace sbtw.Editor.Languages.Javascript
 
         private V8Runtime runtime;
         private Typescript typescript;
-        private readonly JavascriptConfigManager config;
-        private readonly Bindable<int> debugPort;
-        private readonly Bindable<bool> debugEnabled;
 
-        public JavascriptLanguage()
+        public JavascriptLanguage(JsonBackedConfigManager config)
+            : base(config)
         {
-            config = new JavascriptConfigManager();
-            debugPort = config.GetBindable<int>(JavascriptSetting.DebugPort);
-            debugEnabled = config.GetBindable<bool>(JavascriptSetting.DebugEnabled);
-
-            debugPort.ValueChanged += _ => createRuntime();
-            debugEnabled.ValueChanged += _ => createRuntime();
-
             createRuntime();
         }
 
@@ -52,14 +43,13 @@ namespace sbtw.Editor.Languages.Javascript
             //if (debugEnabled.Value)
             flags |= V8RuntimeFlags.EnableDebugging | V8RuntimeFlags.EnableRemoteDebugging;
 
-            runtime = new V8Runtime("sbtw", flags, debugPort.Value);
+            runtime = new V8Runtime("sbtw", flags, 7270);
             runtime.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableAllLoading;
 
             typescript = new Typescript(runtime.CreateScriptEngine());
         }
 
         public override IProjectGenerator CreateProjectGenerator() => new JavascriptProjectGenerator();
-        public override ILanguageConfigManager CreateConfigManager() => config;
 
         public override string GetExceptionMessage(Exception exception)
         {
@@ -98,7 +88,6 @@ namespace sbtw.Editor.Languages.Javascript
             base.Dispose(isDisposing);
             typescript?.Dispose();
             runtime?.Dispose();
-            config?.Dispose();
         }
 
         private class TypescriptDocumentLoader : DocumentLoader

@@ -22,9 +22,9 @@ namespace sbtw.Editor.Languages
     {
         string Name { get; }
         IEnumerable<string> Extensions { get; }
+        LanguageConfigManager Config { get; }
         string GetExceptionMessage(Exception exception);
         IProjectGenerator CreateProjectGenerator();
-        ILanguageConfigManager CreateConfigManager();
         Task<IEnumerable<Script>> CompileAsync(Storage storage, IEnumerable<string> ignore = null, CancellationToken token = default);
         IEnumerable<Script> Compile(Storage storage, IEnumerable<string> ignore = null);
     }

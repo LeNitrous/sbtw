@@ -1,6 +1,7 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System;
 using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
@@ -10,28 +11,33 @@ namespace sbtw.Editor.Assets
 {
     public abstract class Asset
     {
-        protected Script Script { get; private set; }
+        [JsonIgnore]
+        public Script Script { get; private set; }
 
         [JsonProperty]
-        private string hash;
+        internal string Hash { get; private set; }
 
         [JsonProperty]
-        private string path;
+        internal string Path { get; private set; }
 
-        [JsonIgnore]
-        internal string Hash => hash;
-
-        [JsonIgnore]
-        internal string Path => path;
+        internal bool Registered => !string.IsNullOrEmpty(Hash) && !string.IsNullOrEmpty(Path);
 
         internal string FullPath => Script.Storage.GetStorageForDirectory("Beatmap").GetFullPath(Path, true);
 
         protected virtual string CreateIdentifier() => GetType().Name;
 
+        internal void Register(Script script)
+        {
+            if (!Registered)
+                throw new InvalidOperationException();
+
+            Script = script;
+        }
+
         internal void Register(Script script, string path)
         {
+            Path = path;
             Script = script;
-            this.path = path;
 
             using var md5 = MD5.Create();
 
@@ -44,7 +50,7 @@ namespace sbtw.Editor.Assets
                     hash += part.ToString("x2");
             }
 
-            this.hash = hash;
+            Hash = hash;
         }
 
         internal void Generate() => Generate(FullPath);

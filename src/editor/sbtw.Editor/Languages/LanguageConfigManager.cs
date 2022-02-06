@@ -1,27 +1,22 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System;
-using osu.Framework.Configuration;
+using sbtw.Editor.Configuration;
 
 namespace sbtw.Editor.Languages
 {
-    public abstract class LanguageConfigManager<TLookup> : ConfigManager<TLookup>, ILanguageConfigManager
-        where TLookup : struct, Enum
+    public class LanguageConfigManager : ILanguageConfigManager
     {
-        public LanguageConfigManager()
+        private readonly ILanguage language;
+        private readonly JsonBackedConfigManager config;
+
+        public LanguageConfigManager(ILanguage language, JsonBackedConfigManager config)
         {
-            Load();
-            InitialiseDefaults();
+            this.config = config;
+            this.language = language;
         }
 
-        protected override void PerformLoad()
-        {
-        }
-
-        protected override bool PerformSave()
-        {
-            return true;
-        }
+        public TValue Get<TValue>(string key) => config.Get<TValue>($"{language.Name}.{key}");
+        public void Set<TValue>(string key, TValue value) => config.Set($"{language.Name}.{key}", value);
     }
 }

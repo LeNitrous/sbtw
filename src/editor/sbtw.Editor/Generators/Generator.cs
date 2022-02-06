@@ -29,8 +29,7 @@ namespace sbtw.Editor.Generators
             var groups = performed
                 .SelectMany(r => r.Groups)
                 .GroupBy(k => k.Name, v => v.Elements, (k, v) => new ScriptElementGroup(k, v.SelectMany(a => a)))
-                .OrderBy(g => Array.IndexOf(ordering.Select(g => g.Name).ToArray(), g.Name))
-                .Where(g => !ordering.FirstOrDefault(a => a.Name == g.Name)?.Hidden.Value ?? true);
+                .OrderBy(g => Array.IndexOf(ordering.Reverse().Select(g => g.Name).ToArray(), g.Name));
 
             foreach (var group in groups)
             {
@@ -41,7 +40,10 @@ namespace sbtw.Editor.Generators
                         elements.Add(group.Name, list = new List<U>());
 
                     foreach (var element in group.Elements.Where(e => e.Layer == layer).OrderBy(e => e, new ScriptedElementComparer()))
-                        list.Add(create(context, element));
+                    {
+                        if (!(ordering.FirstOrDefault(o => o.Name == group.Name)?.Hidden.Value ?? false))
+                            list.Add(create(context, element));
+                    }
                 }
             }
 

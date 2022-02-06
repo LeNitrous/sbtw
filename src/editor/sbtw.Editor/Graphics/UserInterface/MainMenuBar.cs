@@ -225,12 +225,12 @@ namespace sbtw.Editor.Graphics.UserInterface
             });
         }
 
-        private void revealProject() => host.OpenFileExternally(project.Value.Path);
-        private void revealProjectWorkspace() => studio.Value?.Open(project.Value.Path);
+        private void revealProject() => host.OpenFileExternally(project.Value.Storage.GetFullPath("."));
+        private void revealProjectWorkspace() => studio.Value?.Open(project.Value.Storage.GetFullPath("."));
 
         private void revealBeatmapFile()
         {
-            string path = Directory.GetFiles(Path.Combine(project.Value.Path, "Beatmap"))
+            string path = Directory.GetFiles(project.Value.Storage.GetFullPath("./Beatmap"))
                 .FirstOrDefault(f => f.Contains($"[{beatmap.Value.BeatmapInfo.DifficultyName}]"));
 
             if (string.IsNullOrEmpty(path))

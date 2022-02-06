@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using GlobExpressions;
 using osu.Framework.Platform;
+using sbtw.Editor.Configuration;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
 
@@ -20,14 +21,19 @@ namespace sbtw.Editor.Languages
         public abstract string Name { get; }
         public virtual IEnumerable<string> Extensions { get; } = Array.Empty<string>();
         public virtual IEnumerable<string> Exclude { get; } = Array.Empty<string>();
+        public LanguageConfigManager Config { get; }
         protected bool IsDisposed { get; private set; }
         protected readonly List<CachedScript> Cache = new List<CachedScript>();
+
+        protected Language(JsonBackedConfigManager config)
+        {
+            Config = new LanguageConfigManager(this, config);
+        }
 
         public void Reset() => Cache.Clear();
 
         public virtual string GetExceptionMessage(Exception exception) => exception.Message;
         public virtual IProjectGenerator CreateProjectGenerator() => null;
-        public virtual ILanguageConfigManager CreateConfigManager() => null;
         public abstract Task<IEnumerable<Script>> CompileAsync(Storage storage, IEnumerable<string> ignore = null, CancellationToken token = default);
         public abstract IEnumerable<Script> Compile(Storage storage, IEnumerable<string> ignore = null);
 
@@ -56,6 +62,11 @@ namespace sbtw.Editor.Languages
     public abstract class Language<T> : Language, ILanguage<T>
         where T : Script
     {
+        protected Language(JsonBackedConfigManager config)
+            : base(config)
+        {
+        }
+
         IEnumerable<T> ILanguage<T>.Compile(Storage storage, IEnumerable<string> ignore) => (this as ILanguage<T>).CompileAsync(storage, ignore).Result;
 
         async Task<IEnumerable<T>> ILanguage<T>.CompileAsync(Storage storage, IEnumerable<string> ignore, CancellationToken token)

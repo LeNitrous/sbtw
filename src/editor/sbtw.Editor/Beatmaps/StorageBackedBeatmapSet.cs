@@ -16,15 +16,15 @@ namespace sbtw.Editor.Beatmaps
     public class StorageBackedBeatmapSet
     {
         public BeatmapSetInfo BeatmapSetInfo { get; private set; }
+        public readonly DemanglingResourceProvider Resources;
 
         private readonly List<Beatmap> beatmaps = new List<Beatmap>();
         private readonly RulesetStore rulesets;
-        private readonly DemanglingResourceProvider resources;
 
         public StorageBackedBeatmapSet(DemanglingResourceProvider resources, RulesetStore rulesets)
         {
+            Resources = resources;
             this.rulesets = rulesets;
-            this.resources = resources;
             Refresh();
         }
 
@@ -33,18 +33,18 @@ namespace sbtw.Editor.Beatmaps
             beatmaps.Clear();
             BeatmapSetInfo = new BeatmapSetInfo();
 
-            foreach (string filePath in Directory.EnumerateFiles(resources.Storage.GetFullPath("."), "*", SearchOption.AllDirectories))
+            foreach (string filePath in Directory.EnumerateFiles(Resources.Storage.GetFullPath("."), "*", SearchOption.AllDirectories))
             {
-                string fileName = filePath.Replace(resources.Storage.GetFullPath(".") + "\\", string.Empty).Replace("\\", "/");
-                var file = new RealmFile { Hash = Path.Combine(new string(' ', 2), "$" + filePath.Replace(resources.Storage.GetFullPath(".") + "\\", string.Empty)) };
+                string fileName = filePath.Replace(Resources.Storage.GetFullPath(".") + "\\", string.Empty).Replace("\\", "/");
+                var file = new RealmFile { Hash = Path.Combine(new string(' ', 2), "$" + filePath.Replace(Resources.Storage.GetFullPath(".") + "\\", string.Empty)) };
                 BeatmapSetInfo.Files.Add(new RealmNamedFileUsage(file, fileName));
             }
 
-            foreach (string filePath in resources.Storage.GetFiles(string.Empty))
+            foreach (string filePath in Resources.Storage.GetFiles(string.Empty))
             {
                 if (Path.GetExtension(filePath) == ".osu")
                 {
-                    using var stream = resources.Storage.GetStream(filePath);
+                    using var stream = Resources.Storage.GetStream(filePath);
                     using var reader = new LineBufferedReader(stream);
 
                     var beatmap = Decoder.GetDecoder<Beatmap>(reader).Decode(reader);
@@ -65,7 +65,7 @@ namespace sbtw.Editor.Beatmaps
             if (ownedBeatmap == null)
                 return null;
 
-            return new StorageBackedWorkingBeatmap(resources, ownedBeatmap);
+            return new StorageBackedWorkingBeatmap(Resources, ownedBeatmap);
         }
     }
 }

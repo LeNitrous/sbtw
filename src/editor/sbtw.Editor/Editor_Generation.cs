@@ -29,34 +29,33 @@ namespace sbtw.Editor
 
         public void Generate(GenerateKind kind)
         {
+            output.Clear();
+
             generatorTokenSource?.Cancel();
             generatorTokenSource = new CancellationTokenSource();
 
             Task.Run(async () =>
             {
-                if (Project.Value is not Project project)
-                    return;
-
                 bool hasFaulted = false;
 
                 if (kind == GenerateKind.Storyboard)
                 {
                     var generator = new EditorStoryboardGenerator(Scheduler, Languages, preview, Beatmap.Value.BeatmapInfo);
-                    hasFaulted = await generator.GenerateAsync(project, Beatmap.Value, generatorTokenSource.Token);
+                    hasFaulted = await generator.GenerateAsync(Project.Value, Beatmap.Value, generatorTokenSource.Token);
                 }
 
                 if (kind == GenerateKind.Osb)
                 {
-                    if (project.Groups.Any(g => g.Target.Value == ExportTarget.Storyboard))
+                    if (Project.Value.Groups?.Any(g => g.Target.Value == ExportTarget.Storyboard) ?? false)
                     {
                         var storyboard = new EditorOsbStoryboardGenerator(Scheduler, Languages);
-                        hasFaulted = await storyboard.GenerateAsync(project, Beatmap.Value, generatorTokenSource.Token);
+                        hasFaulted = await storyboard.GenerateAsync(Project.Value, Beatmap.Value, generatorTokenSource.Token);
                     }
 
-                    if (project.Groups.Any(g => g.Target.Value == ExportTarget.Difficulty))
+                    if (Project.Value.Groups?.Any(g => g.Target.Value == ExportTarget.Difficulty) ?? false)
                     {
                         var difficulty = new EditorOsbDifficultyGenerator(Scheduler, Languages);
-                        hasFaulted = hasFaulted || await difficulty.GenerateAsync(project, Beatmap.Value, generatorTokenSource.Token);
+                        hasFaulted = hasFaulted || await difficulty.GenerateAsync(Project.Value, Beatmap.Value, generatorTokenSource.Token);
                     }
                 }
 
@@ -104,7 +103,7 @@ namespace sbtw.Editor
                 Languages = langauges;
             }
 
-            public abstract Task<bool> GenerateAsync(Project project, WorkingBeatmap beatmap, CancellationToken token = default);
+            public abstract Task<bool> GenerateAsync(IProject project, WorkingBeatmap beatmap, CancellationToken token = default);
         }
 
         private abstract class EditorGenerator<T, U> : EditorGenerator
@@ -116,19 +115,19 @@ namespace sbtw.Editor
             {
             }
 
-            protected async Task<GeneratorResult<T, U>> GenerateAsync(Project project, WorkingBeatmap working, ExportTarget? target = null, CancellationToken token = default)
+            protected async Task<GeneratorResult<T, U>> GenerateAsync(IProject project, WorkingBeatmap working, ExportTarget? target = null, CancellationToken token = default)
             {
                 Logger.Add($@"Generating storyboard for ""{working}""...");
 
                 var beatmap = working.GetPlayableBeatmap(working.BeatmapInfo.Ruleset, Array.Empty<Mod>(), token);
-                var scripts = await Languages.CompileAsync(project.Files, null, token);
+                var scripts = await Languages.CompileAsync(project.Storage, null, token);
                 var groups = target == null ? project.Groups : project.Groups.Where(g => g.Target.Value == target);
 
                 var generated = await CreateGenerator().GenerateAsync(new GeneratorConfig
                 {
                     Groups = groups,
                     Scripts = scripts,
-                    Storage = project.Files,
+                    Storage = project.Storage,
                     Beatmap = beatmap,
                     Waveform = working.Waveform
                 }, token);
@@ -156,19 +155,22 @@ namespace sbtw.Editor
                     }
                 }
 
-                if (generated.Assets.Any())
-                    project.Assets.Generate(generated.Assets);
-
                 Scheduler.Add(() =>
                 {
+                    if (generated.Assets.Any())
+                        project.GenerateAssets(generated.Assets);
+
                     var oldGroupNames = project.Groups.Select(g => g.Name);
                     var newGroupNames = generated.Groups.Keys;
 
                     var removedGroupNames = oldGroupNames.Except(newGroupNames);
                     var addedGroupNames = newGroupNames.Except(oldGroupNames);
 
-                    project.Groups.AddRange(addedGroupNames.Select(name => new GroupSetting { Name = name }));
-                    project.Groups.RemoveAll(group => removedGroupNames.Contains(group.Name));
+                    if (addedGroupNames.Any())
+                        project.Groups.AddRange(addedGroupNames.Select(name => new GroupSetting { Name = name }));
+
+                    if (removedGroupNames.Any())
+                        project.Groups.RemoveAll(group => removedGroupNames.Contains(group.Name));
 
                     project.Scripts.Clear();
                     project.Scripts.AddRange(generated.Scripts);
@@ -199,10 +201,10 @@ namespace sbtw.Editor
                 this.beatmapInfo = beatmapInfo;
             }
 
-            public override async Task<bool> GenerateAsync(Project project, WorkingBeatmap beatmap, CancellationToken token = default)
+            public override async Task<bool> GenerateAsync(IProject project, WorkingBeatmap beatmap, CancellationToken token = default)
             {
                 var generated = await GenerateAsync(project, beatmap, null, token);
-                await preview.SetStoryboardAsync(generated.Result, project.Resources.Resources);
+                await preview.SetStoryboardAsync(generated.Result, project.BeatmapSet.Resources.Resources);
                 return !generated.Scripts.Any(s => s.Exception != null);
             }
 
@@ -219,12 +221,12 @@ namespace sbtw.Editor
             {
             }
 
-            public override sealed async Task<bool> GenerateAsync(Project project, WorkingBeatmap beatmap, CancellationToken token = default)
+            public override sealed async Task<bool> GenerateAsync(IProject project, WorkingBeatmap beatmap, CancellationToken token = default)
             {
                 string path = GetTargetFile(beatmap);
 
                 var generated = await GenerateAsync(project, beatmap, Target, token);
-                using var stream = project.Resources.Storage.GetStream(path, FileAccess.ReadWrite, FileMode.OpenOrCreate);
+                using var stream = project.BeatmapSet.Resources.Storage.GetStream(path, FileAccess.ReadWrite, FileMode.OpenOrCreate);
 
                 await Perform(generated.Result, stream, token);
 
