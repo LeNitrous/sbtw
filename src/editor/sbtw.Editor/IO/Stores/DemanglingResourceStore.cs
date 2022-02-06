@@ -24,7 +24,7 @@ namespace sbtw.Editor.IO.Stores
         public Task<byte[]> GetAsync(string name, CancellationToken token) => store.GetAsync(demangle(name), token);
         public Stream GetStream(string name) => store.GetStream(demangle(name));
         public IEnumerable<string> GetAvailableResources() => store.GetAvailableResources();
-        private static string demangle(string name) => name.Split('$').Last().Replace("\\", "/");
+        private static string demangle(string name) => name?.Split('$').Last().Replace("\\", "/");
 
         public void Dispose()
         {

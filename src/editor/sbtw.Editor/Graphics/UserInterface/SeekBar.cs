@@ -99,21 +99,20 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         private abstract class VisualisationFlow : Container
         {
-            [Resolved]
-            private Bindable<EditorBeatmap> beatmap { get; set; }
-
-            [Resolved]
-            private IBindable<WorkingBeatmap> working { get; set; }
+            private Bindable<EditorBeatmap> beatmap;
+            private IBindable<WorkingBeatmap> working;
 
             [BackgroundDependencyLoader]
-            private void load()
+            private void load(Bindable<EditorBeatmap> beatmap, IBindable<WorkingBeatmap> working)
             {
                 Height = visualisation_size;
                 RelativeSizeAxes = Axes.X;
 
-                beatmap.ValueChanged += _ => rebuildVisualisation();
-                working.ValueChanged += _ => rebuildVisualisation();
+                this.beatmap = beatmap.GetBoundCopy();
+                this.working = working.GetBoundCopy();
 
+                this.beatmap.ValueChanged += _ => rebuildVisualisation();
+                this.working.ValueChanged += _ => rebuildVisualisation();
                 rebuildVisualisation();
             }
 
@@ -122,6 +121,10 @@ namespace sbtw.Editor.Graphics.UserInterface
             private void rebuildVisualisation() => Schedule(() =>
             {
                 Clear();
+
+                if (working.Value == null || beatmap.Value == null)
+                    return;
+
                 RelativeChildSize = new Vector2((float)Math.Max(1, working.Value.Track.Length), 1);
                 CreateVisualisation(beatmap.Value, working.Value);
             });

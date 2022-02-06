@@ -65,7 +65,7 @@ namespace sbtw.Editor
             dependencies.CacheAs(settings = new EditorSettingsOverlay());
             dependencies.CacheAs(notifications = new NotificationOverlay());
             dependencies.CacheAs(editorClock = new NonNullableBindable<EditorClock>(new EditorClock()));
-            dependencies.CacheAs(editorBeatmap = new NonNullableBindable<EditorBeatmap>(new EditorBeatmap(new Beatmap())));
+            dependencies.CacheAs(editorBeatmap = new Bindable<EditorBeatmap>());
 
             Logger.NewEntry += entry =>
             {

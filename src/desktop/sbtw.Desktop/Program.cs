@@ -9,7 +9,7 @@ namespace sbtw.Desktop
     {
         public static void Main()
         {
-            using var host = Host.GetSuitableHost(@"sbtw", true);
+            using var host = Host.GetSuitableDesktopHost(@"sbtw");
             host.Run(new DesktopEditor());
         }
     }

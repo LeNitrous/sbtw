@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Logging;
+using osu.Framework.Threading;
 using osu.Game.Beatmaps;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Rulesets.Mods;
@@ -40,7 +41,7 @@ namespace sbtw.Editor
 
                 if (kind == GenerateKind.Storyboard)
                 {
-                    var generator = new EditorStoryboardGenerator(Languages, preview, Beatmap.Value.BeatmapInfo);
+                    var generator = new EditorStoryboardGenerator(Scheduler, Languages, preview, Beatmap.Value.BeatmapInfo);
                     hasFaulted = await generator.GenerateAsync(project, Beatmap.Value, generatorTokenSource.Token);
                 }
 
@@ -48,13 +49,13 @@ namespace sbtw.Editor
                 {
                     if (project.Groups.Any(g => g.Target.Value == ExportTarget.Storyboard))
                     {
-                        var storyboard = new EditorOsbStoryboardGenerator(Languages);
+                        var storyboard = new EditorOsbStoryboardGenerator(Scheduler, Languages);
                         hasFaulted = await storyboard.GenerateAsync(project, Beatmap.Value, generatorTokenSource.Token);
                     }
 
                     if (project.Groups.Any(g => g.Target.Value == ExportTarget.Difficulty))
                     {
-                        var difficulty = new EditorOsbDifficultyGenerator(Languages);
+                        var difficulty = new EditorOsbDifficultyGenerator(Scheduler, Languages);
                         hasFaulted = hasFaulted || await difficulty.GenerateAsync(project, Beatmap.Value, generatorTokenSource.Token);
                     }
                 }
@@ -95,9 +96,11 @@ namespace sbtw.Editor
         private abstract class EditorGenerator
         {
             protected readonly LanguageStore Languages;
+            protected readonly Scheduler Scheduler;
 
-            protected EditorGenerator(LanguageStore langauges)
+            protected EditorGenerator(Scheduler scheduler, LanguageStore langauges)
             {
+                Scheduler = scheduler;
                 Languages = langauges;
             }
 
@@ -108,8 +111,8 @@ namespace sbtw.Editor
         {
             protected readonly Logger Logger = Logger.GetLogger("script");
 
-            protected EditorGenerator(LanguageStore langauges)
-                : base(langauges)
+            protected EditorGenerator(Scheduler scheduler, LanguageStore langauges)
+                : base(scheduler, langauges)
             {
             }
 
@@ -156,17 +159,20 @@ namespace sbtw.Editor
                 if (generated.Assets.Any())
                     project.Assets.Generate(generated.Assets);
 
-                var oldGroupNames = project.Groups.Select(g => g.Name);
-                var newGroupNames = generated.Groups.Keys;
+                Scheduler.Add(() =>
+                {
+                    var oldGroupNames = project.Groups.Select(g => g.Name);
+                    var newGroupNames = generated.Groups.Keys;
 
-                var removedGroupNames = oldGroupNames.Except(newGroupNames);
-                var addedGroupNames = newGroupNames.Except(oldGroupNames);
+                    var removedGroupNames = oldGroupNames.Except(newGroupNames);
+                    var addedGroupNames = newGroupNames.Except(oldGroupNames);
 
-                project.Groups.AddRange(addedGroupNames.Select(name => new GroupSetting { Name = name }));
-                project.Groups.RemoveAll(group => removedGroupNames.Contains(group.Name));
+                    project.Groups.AddRange(addedGroupNames.Select(name => new GroupSetting { Name = name }));
+                    project.Groups.RemoveAll(group => removedGroupNames.Contains(group.Name));
 
-                project.Scripts.Clear();
-                project.Scripts.AddRange(generated.Scripts);
+                    project.Scripts.Clear();
+                    project.Scripts.AddRange(generated.Scripts);
+                });
 
                 var message = new StringBuilder();
                 message.Append("Generation completed");
@@ -186,8 +192,8 @@ namespace sbtw.Editor
             private readonly BeatmapInfo beatmapInfo;
             private readonly EditorPreview preview;
 
-            public EditorStoryboardGenerator(LanguageStore languages, EditorPreview preview, BeatmapInfo beatmapInfo)
-                : base(languages)
+            public EditorStoryboardGenerator(Scheduler scheduler, LanguageStore languages, EditorPreview preview, BeatmapInfo beatmapInfo)
+                : base(scheduler, languages)
             {
                 this.preview = preview;
                 this.beatmapInfo = beatmapInfo;
@@ -208,8 +214,8 @@ namespace sbtw.Editor
         {
             public abstract ExportTarget Target { get; }
 
-            protected EditorOsbGenerator(LanguageStore langauges)
-                : base(langauges)
+            protected EditorOsbGenerator(Scheduler scheduler, LanguageStore langauges)
+                : base(scheduler, langauges)
             {
             }
 
@@ -249,7 +255,7 @@ namespace sbtw.Editor
             }
 
             protected virtual string GetTargetFile(WorkingBeatmap beatmap)
-                => $"{beatmap.Metadata.Artist} - {beatmap.Metadata.Title} ({beatmap.Metadata.AuthorString})";
+                => $"{beatmap.Metadata.Artist} - {beatmap.Metadata.Title} ({beatmap.Metadata.Author.Username})";
 
             protected override Generator<Dictionary<string, StringBuilder>, StringBuilder> CreateGenerator()
                 => new OsbGenerator();
@@ -259,8 +265,8 @@ namespace sbtw.Editor
         {
             public override ExportTarget Target => ExportTarget.Storyboard;
 
-            public EditorOsbStoryboardGenerator(LanguageStore langauges)
-                : base(langauges)
+            public EditorOsbStoryboardGenerator(Scheduler scheduler, LanguageStore langauges)
+                : base(scheduler, langauges)
             {
             }
 
@@ -279,8 +285,8 @@ namespace sbtw.Editor
         {
             public override ExportTarget Target => ExportTarget.Difficulty;
 
-            public EditorOsbDifficultyGenerator(LanguageStore langauges)
-                : base(langauges)
+            public EditorOsbDifficultyGenerator(Scheduler scheduler, LanguageStore langauges)
+                : base(scheduler, langauges)
             {
             }
 

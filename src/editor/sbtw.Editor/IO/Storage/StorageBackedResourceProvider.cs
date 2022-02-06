@@ -16,7 +16,7 @@ namespace sbtw.Editor.IO.Storage
         public AudioManager AudioManager { get; }
         public IResourceStore<byte[]> Files => Resources;
         public IResourceStore<byte[]> Resources { get; }
-        public RealmContextFactory RealmContextFactory { get; }
+        public RealmAccess RealmAccess { get; }
 
         public readonly FrameworkStorage Storage;
 

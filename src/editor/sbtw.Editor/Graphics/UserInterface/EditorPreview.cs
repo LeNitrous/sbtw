@@ -10,6 +10,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
 using osu.Framework.IO.Stores;
+using osu.Framework.Threading;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics.Backgrounds;
 using osu.Game.Rulesets;
@@ -119,13 +120,24 @@ namespace sbtw.Editor.Graphics.UserInterface
         }
 
         public async Task SetStoryboardAsync(Storyboard storyboard, IResourceStore<byte[]> resources)
-            => await LoadComponentAsync(new EditorDrawableStoryboard(storyboard, resources), loaded =>
-                {
-                    storyboardMain.Clear();
-                    storyboardOver.Clear();
-                    storyboardMain.Add(loaded);
-                    storyboardOver.Add(loaded.Children.FirstOrDefault(l => l.Name == "Overlay").CreateProxy());
-                });
+        {
+            Task task = null;
+
+            var del = new ScheduledDelegate(() => task = LoadComponentAsync(new EditorDrawableStoryboard(storyboard, resources), loaded =>
+            {
+                storyboardMain.Clear();
+                storyboardOver.Clear();
+                storyboardMain.Add(loaded);
+                storyboardOver.Add(loaded.Children.FirstOrDefault(l => l.Name == "Overlay").CreateProxy());
+            }));
+
+            Scheduler.Add(del);
+
+            while (!IsDisposed && !del.Completed)
+                await Task.Delay(10);
+
+            await task;
+        }
 
         public void Seek(double time) => clock?.Seek(time);
 
