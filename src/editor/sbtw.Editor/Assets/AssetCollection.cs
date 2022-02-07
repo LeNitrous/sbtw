@@ -6,6 +6,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using osu.Framework.Platform;
 
 namespace sbtw.Editor.Assets
@@ -125,47 +127,63 @@ namespace sbtw.Editor.Assets
 
                 if (assetByPath == null && assetByProp != null)
                 {
-                    if (File.Exists(storage.GetFullPath(assetByProp.Path)))
-                    {
-                        File.Move(storage.GetFullPath(assetByProp.Path), storage.GetFullPath(asset.Path));
-                        assetByProp.Path = asset.Path;
-                        assetByProp.ReferenceCount++;
-                    }
-                    else
-                    {
-                        assetByProp.ReferenceCount++;
-                        assetByProp.Path = asset.Path;
-                        assetByProp.Generate(storage);
-                    }
-
+                    asset.ReferenceCount = assetByProp.ReferenceCount;
+                    assetByProp.ReferenceCount = 0;
+                    cache.Add(asset);
                     continue;
                 }
 
                 if (assetByPath != null && assetByProp == null)
                 {
-                    cache.Remove(assetByPath);
+                    asset.ReferenceCount = assetByPath.ReferenceCount;
+                    assetByPath.ReferenceCount = 0;
                     cache.Add(asset);
-                    asset.Generate(storage);
-                    asset.ReferenceCount++;
                     continue;
                 }
 
                 if (assetByPath == null && assetByProp == null)
                 {
                     asset.ReferenceCount++;
-                    asset.Generate(storage);
                     cache.Add(asset);
                 }
             }
 
-            foreach (var asset in cache)
-            {
-                if (asset.ReferenceCount != 0 && !File.Exists(storage.GetFullPath(asset.Path)))
-                    continue;
+            queueBackgroundUpdate();
+        }
 
-                File.Delete(storage.GetFullPath(asset.Path));
-                cache.Remove(asset);
-            }
+        private int lastUpdate;
+        private readonly object updateLock = new object();
+
+        private void queueBackgroundUpdate()
+        {
+            int current = Interlocked.Increment(ref lastUpdate);
+
+            Task.Delay(100).ContinueWith(_ =>
+            {
+                if (current != lastUpdate)
+                    return;
+
+                lock (updateLock)
+                {
+                    Interlocked.Increment(ref lastUpdate);
+
+                    foreach (var asset in cache.ToArray())
+                    {
+                        if (asset.ReferenceCount > 0)
+                        {
+                            if (!File.Exists(storage.GetFullPath(asset.Path)))
+                                asset.Generate(storage);
+                        }
+                        else
+                        {
+                            if (File.Exists(storage.GetFullPath(asset.Path)))
+                                File.Delete(storage.GetFullPath(asset.Path));
+
+                            cache.Remove(asset);
+                        }
+                    }
+                }
+            });
         }
 
         public bool Contains(Asset asset)

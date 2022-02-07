@@ -19,16 +19,6 @@ namespace sbtw.Editor.Scripts
         string Name { get; }
 
         /// <summary>
-        /// Paths to files that should be excluded during search at a script language level. Glob patterns are accepted.
-        /// </summary>
-        IReadOnlyList<string> Exclude { get; }
-
-        /// <summary>
-        /// File extensions this scripting language can support.
-        /// </summary>
-        IReadOnlyList<string> Extensions { get; }
-
-        /// <summary>
         /// Gets the exception message for this scripting language.
         /// </summary>
         /// <param name="exception">The exception raised.</param>

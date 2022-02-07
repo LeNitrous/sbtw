@@ -17,6 +17,8 @@ namespace sbtw.Editor.Scripts
     public abstract class FileBasedScriptLanguage<T> : ScriptLanguage<T>
         where T : FileBasedScript
     {
+        public abstract IReadOnlyList<string> Extensions { get; }
+        public virtual IReadOnlyList<string> Exclude { get; } = Array.Empty<string>();
         protected readonly List<CachedScript> Cache = new List<CachedScript>();
 
         protected FileBasedScriptLanguage(IProject project)

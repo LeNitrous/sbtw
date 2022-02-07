@@ -13,8 +13,6 @@ namespace sbtw.Editor.Scripts
     public abstract class ScriptLanguage : IScriptLanguage
     {
         public abstract string Name { get; }
-        public abstract IReadOnlyList<string> Extensions { get; }
-        public virtual IReadOnlyList<string> Exclude { get; } = Array.Empty<string>();
         public bool IsDisposed { get; private set; }
         protected readonly IProject Project;
 

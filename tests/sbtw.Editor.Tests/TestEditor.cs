@@ -4,7 +4,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using sbtw.Editor.Studios;
-using sbtw.Editor.Tests.Studios;
 
 namespace sbtw.Editor.Tests
 {
@@ -30,6 +29,6 @@ namespace sbtw.Editor.Tests
             throw new System.NotImplementedException();
         }
 
-        protected override StudioManager CreateStudioManager() => new TestStudioManager(LocalEditorConfig);
+        protected override StudioManager CreateStudioManager() => null;
     }
 }
