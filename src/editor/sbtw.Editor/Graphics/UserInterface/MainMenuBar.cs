@@ -98,7 +98,6 @@ namespace sbtw.Editor.Graphics.UserInterface
                     {
                         Action =
                         {
-                            Value = () => project.Value.Save(),
                             Disabled = project.Value is DummyProject,
                         }
                     },
@@ -110,7 +109,6 @@ namespace sbtw.Editor.Graphics.UserInterface
                     {
                         Action =
                         {
-                            Value = () => editor?.CloseProject(),
                             Disabled = project.Value is DummyProject,
                         }
                     },
@@ -136,7 +134,6 @@ namespace sbtw.Editor.Graphics.UserInterface
                     {
                         Action =
                         {
-                            Value = () => editor?.Generate(GenerateKind.Osb),
                             Disabled = project.Value is DummyProject
                         }
                     },
@@ -151,14 +148,13 @@ namespace sbtw.Editor.Graphics.UserInterface
                     new EditorMenuItem("Switch Difficulty")
                     {
                         Items = beatmap.Value?.BeatmapInfo.BeatmapSet.Beatmaps?
-                            .Select(b => new DifficultyMenuItem(b, b.DifficultyName == beatmap.Value.BeatmapInfo.DifficultyName, b => editor?.OpenBeatmap(b)))
+                            .Select(b => new DifficultyMenuItem(b, b.DifficultyName == beatmap.Value.BeatmapInfo.DifficultyName, b => { }))
                             .ToArray() ?? new MenuItem[] { new EditorMenuItemSpacer() }
                     },
                     new EditorMenuItem("Reload Beatmap")
                     {
                         Action =
                         {
-                            Value = () => editor?.RefreshBeatmap(),
                             Disabled = beatmap.Value is DummyWorkingBeatmap
                         }
                     },
@@ -185,7 +181,6 @@ namespace sbtw.Editor.Graphics.UserInterface
                     {
                         Action =
                         {
-                            Value = () => editor?.Generate(GenerateKind.Storyboard),
                             Disabled = project.Value is DummyProject
                         }
                     },
@@ -220,17 +215,15 @@ namespace sbtw.Editor.Graphics.UserInterface
 
                 if (string.IsNullOrEmpty(path))
                     return;
-
-                editor.OpenProject(path);
             });
         }
 
-        private void revealProject() => host.OpenFileExternally(project.Value.Storage.GetFullPath("."));
-        private void revealProjectWorkspace() => studio.Value?.Open(project.Value.Storage.GetFullPath("."));
+        private void revealProject() => host.OpenFileExternally(project.Value.Path);
+        private void revealProjectWorkspace() => studio.Value?.Open(project.Value.Path);
 
         private void revealBeatmapFile()
         {
-            string path = Directory.GetFiles(project.Value.Storage.GetFullPath("./Beatmap"))
+            string path = Directory.GetFiles(project.Value.Path)
                 .FirstOrDefault(f => f.Contains($"[{beatmap.Value.BeatmapInfo.DifficultyName}]"));
 
             if (string.IsNullOrEmpty(path))

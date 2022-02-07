@@ -11,7 +11,7 @@ namespace sbtw.Editor.Tests
         [STAThread]
         public static int Main()
         {
-            using var host = Host.GetSuitableHost(@"sbtw", true);
+            using var host = Host.GetSuitableDesktopHost(@"sbtw");
             host.Run(new EditorTestBrowser());
             return 0;
         }

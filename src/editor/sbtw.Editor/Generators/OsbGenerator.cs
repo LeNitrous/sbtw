@@ -29,13 +29,13 @@ namespace sbtw.Editor.Generators
         }
 
         protected override StringBuilder CreateAnimation(Dictionary<string, StringBuilder> context, ScriptedAnimation animation)
-            => context[animation.Layer.ToString()].AppendLine(encode_sprite(animation, $"Animation,{Enum.GetName(animation.Layer)},{Enum.GetName(animation.Origin)},\"{animation.Path}\",{animation.InitialPosition.X:0},{animation.InitialPosition.Y:0},{animation.FrameCount},{animation.FrameDelay},{Enum.GetName(animation.LoopType)}"));
+            => context[animation.Layer.ToString()].AppendLine(encode_sprite(animation, $"Animation,{Enum.GetName(animation.Layer)},{Enum.GetName(animation.Origin)},\"{animation.Path}\",{animation.Position.X:0},{animation.Position.Y:0},{animation.FrameCount},{animation.FrameDelay},{Enum.GetName(animation.LoopType)}"));
 
         protected override StringBuilder CreateSample(Dictionary<string, StringBuilder> context, ScriptedSample sample)
             => context["Samples"].AppendLine($"Sample,{sample.StartTime},{(int)sample.Layer},\"{sample.Path}\",{sample.Volume}");
 
         protected override StringBuilder CreateSprite(Dictionary<string, StringBuilder> context, ScriptedSprite sprite)
-            => context[sprite.Layer.ToString()].AppendLine(encode_sprite(sprite, $"Sprite,{Enum.GetName(sprite.Layer)},{Enum.GetName(sprite.Origin)},\"{sprite.Path}\",{sprite.InitialPosition.X:0},{sprite.InitialPosition.Y:0}"));
+            => context[sprite.Layer.ToString()].AppendLine(encode_sprite(sprite, $"Sprite,{Enum.GetName(sprite.Layer)},{Enum.GetName(sprite.Origin)},\"{sprite.Path}\",{sprite.Position.X:0},{sprite.Position.Y:0}"));
 
         protected override StringBuilder CreateVideo(Dictionary<string, StringBuilder> context, ScriptedVideo video)
             => context["Video"].AppendLine($"Video,{video.StartTime},\"{video.Path}\"");
@@ -62,7 +62,7 @@ namespace sbtw.Editor.Generators
             return builder.ToString();
         }
 
-        private static void encode_timeline_group(StringBuilder builder, IScriptedCommandTimelineGroup group, int depth = 1)
+        private static void encode_timeline_group(StringBuilder builder, IScriptCommandTimelineGroup group, int depth = 1)
         {
             var commands = new SortedList<TimelineCommand>();
             commands.AddRange(group.Move.Commands.Select(cmd => new TimelineCommand("M", cmd, format_vector)));

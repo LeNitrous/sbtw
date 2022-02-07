@@ -1,10 +1,7 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -16,9 +13,7 @@ using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Overlays;
 using osuTK;
-using sbtw.Editor.Languages;
 using sbtw.Editor.Overlays.Setup;
-using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Overlays
 {
@@ -38,12 +33,6 @@ namespace sbtw.Editor.Overlays
 
         [Resolved(canBeNull: true)]
         private Editor editor { get; set; }
-
-        [Resolved]
-        private ProjectManager projects { get; set; }
-
-        [Resolved]
-        private LanguageStore languages { get; set; }
 
         public SetupOverlay()
         {
@@ -124,22 +113,6 @@ namespace sbtw.Editor.Overlays
             {
                 Logger.Log("Beatmap path is not a beatmap archive.", level: LogLevel.Error);
                 return;
-            }
-
-            try
-            {
-                ZipFile.ExtractToDirectory(beatmapPath.Value, Path.Combine(projectPath.Value, "Beatmap"));
-                File.Delete(beatmapPath.Value);
-
-                var project = projects.Create(Path.Combine(projectPath.Value, Path.ChangeExtension(projectName.Value, ".sbtw.json")), languages.Languages.Select(l => l.CreateProjectGenerator()));
-                project.Save();
-
-                editor.OpenProject(project);
-                Hide();
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e, "An error has occured while creating a project.");
             }
         }
 

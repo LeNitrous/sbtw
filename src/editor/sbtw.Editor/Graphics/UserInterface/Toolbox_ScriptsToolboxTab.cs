@@ -1,7 +1,7 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System.Linq;
+using System.IO;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -23,7 +23,6 @@ namespace sbtw.Editor.Graphics.UserInterface
     {
         private class ScriptsToolboxTab : FillFlowContainer
         {
-            private readonly BindableList<ScriptGenerationResult> scripts = new BindableList<ScriptGenerationResult>();
             private Bindable<IProject> project;
 
             protected override Container<Drawable> Content { get; }
@@ -47,22 +46,13 @@ namespace sbtw.Editor.Graphics.UserInterface
             private void load(Bindable<IProject> project)
             {
                 this.project = project.GetBoundCopy();
-                this.project.BindValueChanged(e =>
-                {
-                    scripts.UnbindBindings();
-
-                    if (e.NewValue is Project project)
-                        scripts.BindTo(project.Scripts);
-                }, true);
-
-                scripts.BindCollectionChanged((_, args) => Schedule(() => Children = scripts.Select(s => new ScriptListItem(s)).ToList()), true);
             }
 
             private class ScriptListItem : CompositeDrawable
             {
-                private readonly ScriptGenerationResult script;
+                private readonly IScript script;
 
-                public ScriptListItem(ScriptGenerationResult script)
+                public ScriptListItem(IScript script)
                 {
                     this.script = script;
                 }
@@ -94,7 +84,6 @@ namespace sbtw.Editor.Graphics.UserInterface
                             Size = new Vector2(40),
                             Anchor = Anchor.TopRight,
                             Origin = Anchor.TopRight,
-                            Action = () => studio.Value?.Open(script.Path),
                             TooltipText = @"Reveal script in code.",
                         }
                     };
@@ -109,10 +98,13 @@ namespace sbtw.Editor.Graphics.UserInterface
                 {
                     public LocalisableString TooltipText { get; }
 
-                    public LabelSpriteText(ScriptGenerationResult script)
+                    public LabelSpriteText(IScript script)
                     {
-                        Text = script.Name;
-                        TooltipText = script.Path;
+                        if (script is not FileBasedScript file)
+                            return;
+
+                        Text = Path.GetFileNameWithoutExtension(file.Path);
+                        TooltipText = file.Path;
                     }
                 }
             }

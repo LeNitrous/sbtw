@@ -1,14 +1,12 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System.Collections.Generic;
+using osu.Framework.Platform;
 
 namespace sbtw.Editor.Projects
 {
-    public interface IProject
+    public interface ICanProvideFiles
     {
-        string Name { get; }
-        string Path { get; }
-        IEnumerable<string> Exclude { get; }
+        Storage Files { get; }
     }
 }

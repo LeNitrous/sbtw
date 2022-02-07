@@ -2,59 +2,71 @@
 // See LICENSE in the repository root for more details.
 
 using System;
-using System.Security.Cryptography;
-using System.Text;
+using System.IO;
 using Newtonsoft.Json;
-using sbtw.Editor.Scripts;
+using osu.Framework.Platform;
 
 namespace sbtw.Editor.Assets
 {
-    public abstract class Asset
+    /// <summary>
+    /// Represents a generatable asset.
+    /// </summary>
+    public abstract class Asset : IEquatable<Asset>
     {
-        [JsonIgnore]
-        public Script Script { get; private set; }
-
+        /// <summary>
+        /// The relative path to the given asset.
+        /// </summary>
         [JsonProperty]
-        internal string Hash { get; private set; }
+        internal string Path { get; set; }
 
-        [JsonProperty]
-        internal string Path { get; private set; }
+        /// <summary>
+        /// The number of times this asset was referenced.
+        /// </summary>
+        internal int ReferenceCount { get; set; }
 
-        internal bool Registered => !string.IsNullOrEmpty(Hash) && !string.IsNullOrEmpty(Path);
+        /// <summary>
+        /// The storage where this asset is being generated on.
+        /// </summary>
+        protected Storage Storage { get; private set; }
 
-        internal string FullPath => Script.Storage.GetStorageForDirectory("Beatmap").GetFullPath(Path, true);
-
-        protected virtual string CreateIdentifier() => GetType().Name;
-
-        internal void Register(Script script)
+        /// <summary>
+        /// Generates this asset.
+        /// </summary>
+        /// <param name="storage">The target storage to generate to.</param>
+        internal void Generate(Storage storage)
         {
-            if (!Registered)
-                throw new InvalidOperationException();
+            if (string.IsNullOrEmpty(Path))
+                throw new InvalidOperationException(@"Asset is not yet ready for generation.");
 
-            Script = script;
+            Storage ??= storage ?? throw new ArgumentNullException(nameof(storage));
+
+            using var stream = storage.GetStream(Path, FileAccess.Write, FileMode.OpenOrCreate);
+            stream.Position = 0;
+            stream.Write(Generate());
         }
 
-        internal void Register(Script script, string path)
-        {
-            Path = path;
-            Script = script;
+        /// <summary>
+        /// Generates this asset with a given path.
+        /// </summary>
+        /// <returns>The generated asset as a read-only span of bytes.</returns>
+        protected abstract ReadOnlySpan<byte> Generate();
 
-            using var md5 = MD5.Create();
+        /// <summary>
+        /// Check whether the asset is equal to the other asset.
+        /// </summary>
+        /// <remarks>
+        /// This must be overridden if the asset provides other properties.
+        /// As by default it only checks for type equality only.
+        /// </remarks>
+        /// <param name="other">The other asset to test against.</param>
+        /// <returns>True if the assets match. Otherwise false.</returns>
+        public virtual bool Equals(Asset other)
+            => other.GetType() == GetType();
 
-            string hash = string.Empty;
-            string identifier = CreateIdentifier();
+        public override bool Equals(object obj)
+            => Equals(obj as Asset);
 
-            if (!string.IsNullOrEmpty(identifier))
-            {
-                foreach (byte part in md5.ComputeHash(Encoding.UTF8.GetBytes($"{identifier}@{Path}")))
-                    hash += part.ToString("x2");
-            }
-
-            Hash = hash;
-        }
-
-        internal void Generate() => Generate(FullPath);
-
-        protected abstract void Generate(string path);
+        public override int GetHashCode()
+            => HashCode.Combine(Path);
     }
 }

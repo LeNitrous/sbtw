@@ -1,8 +1,6 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System.Linq;
-using System.Threading;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -13,19 +11,16 @@ using osu.Framework.Input;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Framework.Logging;
-using osu.Game.Beatmaps;
 using osu.Game.Graphics.Cursor;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Input.Bindings;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.Volume;
-using osu.Game.Rulesets;
 using osu.Game.Screens.Edit;
 using sbtw.Editor.Configuration;
 using sbtw.Editor.Graphics.UserInterface;
 using sbtw.Editor.Overlays;
-using sbtw.Editor.Projects;
 
 namespace sbtw.Editor
 {
@@ -42,17 +37,12 @@ namespace sbtw.Editor
         private SetupOverlay setup;
         private NotificationOverlay notifications;
         private LoadingSpinner spinner;
-        private EditorPreview preview;
         private Container contentContainer;
         private Container controlContainer;
         private Container middleControlContainer;
-        private BindableList<GroupSetting> groups;
         private Bindable<bool> showInterface;
         private Bindable<EditorClock> editorClock;
         private Bindable<EditorBeatmap> editorBeatmap;
-        private double lastTrackTime;
-        private string lastTrackTitle;
-        private bool lastTrackState;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -84,7 +74,6 @@ namespace sbtw.Editor
 
             Children = new Drawable[]
             {
-                new ProjectWatcher(),
                 new VolumeControlReceptor
                 {
                     RelativeSizeAxes = Axes.Both,
@@ -174,107 +163,7 @@ namespace sbtw.Editor
 
             showInterface = Session.GetBindable<bool>(EditorSessionStatic.ShowInterface);
             showInterface.BindValueChanged(e => controlContainer.FadeTo(e.NewValue ? 1 : 0, 250, Easing.OutQuint), true);
-
-            Beatmap.ValueChanged += _ => updateControls();
-            Project.ValueChanged += _ => updateControls();
-
-            updateControls();
         }
-
-        public void CloseProject()
-        {
-            preview?.Expire();
-            preview = null;
-            Beatmap.Disabled = false;
-            Beatmap.SetDefault();
-
-            Project.SetDefault();
-            Languages.Reset();
-
-            editorClock.SetDefault();
-            editorBeatmap.SetDefault();
-            Beatmap.Disabled = true;
-        }
-
-        public void OpenProject(string path) => OpenProject(Projects.Load(path));
-
-        public void OpenProject(IProject project)
-        {
-            CloseProject();
-
-            if (project == null)
-                return;
-
-            Project.Value = project;
-
-            OpenBeatmap(project.BeatmapSet?.BeatmapSetInfo.Beatmaps.FirstOrDefault());
-        }
-
-        public void OpenBeatmap(IBeatmapInfo beatmapInfo)
-        {
-            if (beatmapInfo == null)
-                return;
-
-            Beatmap.Disabled = false;
-
-            lastTrackTime = Beatmap.Value.Track.CurrentTime;
-            lastTrackState = Beatmap.Value.Track.IsRunning;
-            lastTrackTitle = Beatmap.Value.BeatmapInfo.Metadata.Title;
-
-            Beatmap.Value = Project.Value.BeatmapSet.GetWorkingBeatmap(beatmapInfo);
-            Ruleset.Value = beatmapInfo.Ruleset as RulesetInfo;
-
-            Beatmap.Disabled = true;
-        }
-
-        public void RefreshBeatmap()
-        {
-            string current = Beatmap.Value.BeatmapInfo.DifficultyName;
-            Project.Value.BeatmapSet.Refresh();
-            OpenBeatmap(Project.Value.BeatmapSet?.BeatmapSetInfo.Beatmaps.FirstOrDefault(b => b.DifficultyName == current));
-        }
-
-        private CancellationTokenSource reloadTokenSource;
-
-        private void updateControls() => Schedule(() =>
-        {
-            reloadTokenSource?.Cancel();
-
-            if (Project.Value is DummyProject || Beatmap.Value is DummyWorkingBeatmap)
-            {
-                preview?.Stop();
-                middleControlContainer.Hide();
-                contentContainer.Clear();
-            }
-            else
-            {
-                reloadTokenSource = new CancellationTokenSource();
-
-                spinner.Show();
-
-                LoadComponentAsync(new EditorPreview(), loaded =>
-                {
-                    groups = Project.Value.Groups.GetBoundCopy();
-                    groups.CollectionChanged += (_, __) => Generate(GenerateKind.Storyboard);
-
-                    contentContainer.Clear();
-                    contentContainer.Add(preview = loaded);
-                    middleControlContainer.Show();
-
-                    Schedule(() => spinner.Hide());
-
-                    if (Beatmap.Value.BeatmapInfo.Metadata.Title == lastTrackTitle)
-                    {
-                        preview.Seek(lastTrackTime);
-
-                        if (lastTrackState)
-                            preview.Start();
-                    }
-
-                    Generate(GenerateKind.Storyboard);
-                }, reloadTokenSource.Token);
-            }
-        });
 
         public bool OnPressed(KeyBindingPressEvent<GlobalAction> e)
         {
@@ -314,11 +203,9 @@ namespace sbtw.Editor
                     return true;
 
                 case PlatformAction.Save:
-                    Project.Value?.Save();
                     return true;
 
                 case PlatformAction.DocumentClose:
-                    CloseProject();
                     return true;
 
                 default:

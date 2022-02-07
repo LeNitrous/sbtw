@@ -1,1 +1,0 @@
-SetValue("TestVariable", "Hello World");

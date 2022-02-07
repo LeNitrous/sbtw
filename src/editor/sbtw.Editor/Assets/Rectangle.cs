@@ -6,12 +6,9 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace sbtw.Editor.Assets
 {
-    public class Rectangle : Asset
+    public class Rectangle : ImageAsset
     {
-        protected override void Generate(string path)
-        {
-            var image = new Image<Rgba32>(1, 1, new Rgba32(255, 255, 255));
-            image.SaveAsPng(System.IO.Path.ChangeExtension(path, ".png"));
-        }
+        protected override Image<Rgba32> GetImage()
+            => new Image<Rgba32>(1, 1, new Rgba32(255, 255, 255));
     }
 }

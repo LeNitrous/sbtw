@@ -5,24 +5,22 @@ using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Scripts.Elements
 {
-    public class ScriptedVideo : IScriptedElement
+    public class ScriptedVideo : IScriptElement
     {
         public string Path { get; }
-
-        public Script Owner { get; }
-
-        public string Group { get; }
-
+        public IScript Owner { get; }
+        public Group Group { get; }
         public Layer Layer { get; }
-
         public double StartTime { get; }
+        public Vector2 Position { get; }
 
-        public ScriptedVideo(Script owner, string group, string path, int offset)
+        public ScriptedVideo(IScript owner, Group group, string path, double startTime, Vector2 position)
         {
             Owner = owner;
             Group = group;
             Path = path;
-            StartTime = offset;
+            StartTime = startTime;
+            Position = position;
         }
     }
 }

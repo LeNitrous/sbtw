@@ -8,7 +8,6 @@ using osu.Framework.Bindables;
 using osu.Framework.Platform;
 using osu.Game;
 using sbtw.Editor.Configuration;
-using sbtw.Editor.Languages;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Studios;
 
@@ -23,9 +22,6 @@ namespace sbtw.Editor
 
         protected EditorConfigManager LocalEditorConfig { get; private set; }
         protected EditorSessionStatics Session { get; private set; }
-
-        protected LanguageStore Languages { get; private set; }
-        protected ProjectManager Projects { get; private set; }
         protected StudioManager Studios { get; private set; }
 
         public Bindable<Studio> Studio { get; private set; }
@@ -38,8 +34,6 @@ namespace sbtw.Editor
             dependencies.CacheAs(LocalEditorConfig);
             dependencies.CacheAs(Session = new EditorSessionStatics());
             dependencies.CacheAs(Studios = CreateStudioManager());
-            dependencies.CacheAs(Projects = new ProjectManager(Host, Audio, RulesetStore));
-            dependencies.CacheAs(Languages = new LanguageStore());
             dependencies.CacheAs(Studio = Studios.Current);
             dependencies.CacheAs(Project = new NonNullableBindable<IProject>(new DummyProject()));
         }
@@ -74,7 +68,6 @@ namespace sbtw.Editor
         protected override void Dispose(bool isDisposing)
         {
             base.Dispose(isDisposing);
-            Languages?.Dispose();
             LocalEditorConfig?.Dispose();
         }
     }

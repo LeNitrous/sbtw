@@ -5,27 +5,22 @@ using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Scripts.Elements
 {
-    public class ScriptedSample : IScriptedElement
+    public class ScriptedSample : IScriptElement
     {
         public string Path { get; }
-
-        public Script Owner { get; }
-
-        public string Group { get; }
-
+        public IScript Owner { get; }
+        public Group Group { get; }
         public Layer Layer { get; }
-
         public double StartTime { get; }
-
         public int Volume { get; }
 
-        public ScriptedSample(Script owner, string group, Layer layer, string path, double startTime, int volume)
+        public ScriptedSample(IScript owner, Group group, string path, double startTime, Layer layer, int volume)
         {
             Owner = owner;
             Group = group;
-            Layer = layer;
             Path = path;
             StartTime = startTime;
+            Layer = layer;
             Volume = volume;
         }
     }

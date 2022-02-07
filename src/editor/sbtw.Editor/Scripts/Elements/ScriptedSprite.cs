@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using osu.Framework.Graphics;
 using osu.Game.Storyboards;
 using sbtw.Editor.Scripts.Commands;
@@ -10,51 +11,41 @@ using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Scripts.Elements
 {
-    public class ScriptedSprite : IScriptedElementWithDuration
+    public class ScriptedSprite : IScriptElement, IScriptElementHasDuration
     {
-
         public string Path { get; }
-
-        public Script Owner { get; }
-
-        public string Group { get; }
-
+        public IScript Owner { get; }
+        public Group Group { get; }
         public Layer Layer { get; }
-
+        public double StartTime => new[] { Loops.Min(g => g.StartTime), Triggers.Min(g => g.StartTime), Timeline.StartTime }.Min();
+        public double EndTime => new[] { Loops.Max(g => g.EndTime), Triggers.Max(g => g.EndTime), Timeline.EndTime }.Max();
+        public double Duration => EndTime - StartTime;
         public Anchor Origin { get; }
+        public Vector2 Position { get; }
 
-        public Vector2 InitialPosition { get; }
-
-        public double StartTime { get; }
-
-        public double EndTime { get; }
-
-        internal readonly List<ScriptedCommandLoop> Loops = new List<ScriptedCommandLoop>();
-
-        internal readonly List<ScriptedCommandTrigger> Triggers = new List<ScriptedCommandTrigger>();
-
-        internal readonly ScriptedCommandTimelineGroup Timeline = new ScriptedCommandTimelineGroup();
+        internal readonly List<ScriptCommandLoop> Loops = new List<ScriptCommandLoop>();
+        internal readonly List<ScriptCommandTrigger> Triggers = new List<ScriptCommandTrigger>();
+        internal readonly ScriptCommandTimelineGroup Timeline = new ScriptCommandTimelineGroup();
 
         private CommandTimelineGroup context;
-
         private CommandTimelineGroup currentContext
         {
             get => context ?? Timeline;
             set => context = value;
         }
 
-        public ScriptedSprite(Script owner, string group, Layer layer, string path, Anchor origin, Vector2 initialPosition)
+        public ScriptedSprite(IScript owner, Group group, string path, Layer layer, Vector2 position, Anchor origin)
         {
             Owner = owner;
             Group = group;
-            Layer = layer;
             Path = path;
+            Layer = layer;
             Origin = origin;
-            InitialPosition = initialPosition;
+            Position = position;
         }
 
         public void Move(Easing easing, double startTime, double endTime, Vector2 startPosition, Vector2 endPosition)
-            => (currentContext as IScriptedCommandTimelineGroup)?.Move.Add(easing, startTime, endTime, startPosition, endPosition);
+            => (currentContext as IScriptCommandTimelineGroup)?.Move.Add(easing, startTime, endTime, startPosition, endPosition);
 
         public void Move(Easing easing, double startTime, double endTime, Vector2 startPosition, double endX, double endY)
             => Move(easing, startTime, endTime, startPosition, new Vector2((float)endX, (float)endY));
@@ -256,7 +247,7 @@ namespace sbtw.Editor.Scripts.Elements
             if (context != null)
                 throw new InvalidOperationException("Cannot start a new group when an existing group is active.");
 
-            var loop = new ScriptedCommandLoop(startTime, repeatCount - 1);
+            var loop = new ScriptCommandLoop(startTime, repeatCount - 1);
             Loops.Add(loop);
             currentContext = loop;
         }
@@ -266,7 +257,7 @@ namespace sbtw.Editor.Scripts.Elements
             if (context != null)
                 throw new InvalidOperationException("Cannot start a new group when an existing group is active.");
 
-            var trigger = new ScriptedCommandTrigger(triggerName, startTime, endTime, group);
+            var trigger = new ScriptCommandTrigger(triggerName, startTime, endTime, group);
             Triggers.Add(trigger);
             currentContext = trigger;
         }

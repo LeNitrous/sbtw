@@ -22,7 +22,6 @@ using osuTK;
 using osuTK.Input;
 using sbtw.Editor.Configuration;
 using sbtw.Editor.Graphics.Containers;
-using sbtw.Editor.Languages;
 using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Graphics.UserInterface
@@ -47,9 +46,6 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         [Resolved]
         private Bindable<WorkingBeatmap> beatmap { get; set; }
-
-        [Resolved]
-        private LanguageStore languages { get; set; }
 
         private DependencyContainer dependencies;
 

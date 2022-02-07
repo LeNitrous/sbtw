@@ -15,56 +15,43 @@ namespace sbtw.Editor.Generators
 {
     public abstract class Generator<T, U>
     {
-        public async Task<GeneratorResult<T, U>> GenerateAsync(GeneratorConfig config, CancellationToken token = default)
+        public T Generate(IEnumerable<IScript> scripts, ICanProvideGroups groupsProvider)
+            => GenerateAsync(scripts, groupsProvider).Result;
+
+        public async Task<T> GenerateAsync(IEnumerable<IScript> scripts, ICanProvideGroups groupsProvider, CancellationToken token = default)
         {
+            if (scripts == null)
+                throw new ArgumentNullException(nameof(scripts));
+
+            if (groupsProvider == null)
+                throw new ArgumentNullException(nameof(groupsProvider));
+
             var context = CreateContext();
 
             PreGenerate(context);
 
-            var elements = new Dictionary<string, List<U>>();
-            var ordering = config.Groups?.ToArray() ?? Enumerable.Empty<GroupSetting>();
-            var generated = await Task.WhenAll(config.Scripts?.Select(s => s.GenerateAsync(config.Storage, config.Beatmap, config.Waveform, token)));
-            var performed = generated.Where(g => g.Exception == null);
-
-            var groups = performed
-                .SelectMany(r => r.Groups)
-                .GroupBy(k => k.Name, v => v.Elements, (k, v) => new ScriptElementGroup(k, v.SelectMany(a => a)))
-                .OrderBy(g => Array.IndexOf(ordering.Reverse().Select(g => g.Name).ToArray(), g.Name));
-
-            foreach (var group in groups)
+            foreach (var script in scripts)
             {
                 token.ThrowIfCancellationRequested();
+                await script.ExecuteAsync(token);
+            }
+
+            foreach (var group in groupsProvider.Groups)
+            {
                 foreach (var layer in Enum.GetValues<Layer>())
                 {
-                    if (!elements.TryGetValue(group.Name, out var list))
-                        elements.Add(group.Name, list = new List<U>());
-
-                    foreach (var element in group.Elements.Where(e => e.Layer == layer).OrderBy(e => e, new ScriptedElementComparer()))
+                    foreach (var element in group.Elements.Where(e => e.Layer == layer))
                     {
-                        if (!(ordering.FirstOrDefault(o => o.Name == group.Name)?.Hidden.Value ?? false))
-                            list.Add(create(context, element));
+                        token.ThrowIfCancellationRequested();
+                        create(context, element);
                     }
                 }
             }
 
             PostGenerate(context);
 
-            return new GeneratorResult<T, U>
-            {
-                Result = context,
-                Assets = performed.SelectMany(g => g.Assets),
-                Groups = elements,
-                Scripts = generated,
-            };
+            return context;
         }
-
-        public GeneratorResult<T, U> Generate(GeneratorConfig config) => GenerateAsync(config).Result;
-
-        protected abstract T CreateContext();
-        protected abstract U CreateAnimation(T context, ScriptedAnimation animation);
-        protected abstract U CreateSample(T context, ScriptedSample sample);
-        protected abstract U CreateSprite(T context, ScriptedSprite sprite);
-        protected abstract U CreateVideo(T context, ScriptedVideo video);
 
         protected virtual void PreGenerate(T context)
         {
@@ -74,7 +61,13 @@ namespace sbtw.Editor.Generators
         {
         }
 
-        private U create(T context, IScriptedElement element)
+        protected abstract T CreateContext();
+        protected abstract U CreateAnimation(T context, ScriptedAnimation animation);
+        protected abstract U CreateSample(T context, ScriptedSample sample);
+        protected abstract U CreateSprite(T context, ScriptedSprite sprite);
+        protected abstract U CreateVideo(T context, ScriptedVideo video);
+
+        private U create(T context, IScriptElement element)
         {
             switch (element)
             {
@@ -94,22 +87,5 @@ namespace sbtw.Editor.Generators
                     return default;
             }
         }
-
-        private class ScriptedElementComparer : IComparer<IScriptedElement>
-        {
-            public int Compare(IScriptedElement x, IScriptedElement y)
-            {
-                int result = x.StartTime.CompareTo(y.StartTime);
-
-                if (result != 0)
-                    return result;
-
-                return (x as IScriptedElementWithDuration)?.EndTime.CompareTo((y as IScriptedElementWithDuration)?.EndTime) ?? 0;
-            }
-        }
-    }
-
-    public abstract class Generator<T> : Generator<T, T>
-    {
     }
 }

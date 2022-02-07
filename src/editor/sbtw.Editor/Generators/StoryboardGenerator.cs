@@ -16,25 +16,25 @@ namespace sbtw.Editor.Generators
 
         public StoryboardGenerator(BeatmapInfo beatmapInfo)
         {
-            this.beatmapInfo = beatmapInfo;
+            this.beatmapInfo = beatmapInfo ?? throw new ArgumentNullException(nameof(beatmapInfo));
         }
 
         protected override Storyboard CreateContext() => new Storyboard { BeatmapInfo = beatmapInfo };
 
+        private static IStoryboardElement add(Storyboard storyboard, Layer layer, IStoryboardElement element)
+            => add(storyboard, Enum.GetName(layer), element);
+
         protected override IStoryboardElement CreateAnimation(Storyboard context, ScriptedAnimation animation)
-            => add(context, animation.Layer, copy(animation, new StoryboardAnimation(animation.Path, animation.Origin, animation.InitialPosition, animation.FrameCount, animation.FrameDelay, animation.LoopType)));
+            => add(context, animation.Layer, copy(animation, new StoryboardAnimation(animation.Path, animation.Origin, animation.Position, animation.FrameCount, animation.FrameDelay, animation.LoopType)));
 
         protected override IStoryboardElement CreateSample(Storyboard context, ScriptedSample sample)
             => add(context, sample.Layer, new StoryboardSampleInfo(sample.Path, sample.StartTime, sample.Volume));
 
         protected override IStoryboardElement CreateSprite(Storyboard context, ScriptedSprite sprite)
-            => add(context, sprite.Layer, copy(sprite, new StoryboardSprite(sprite.Path, sprite.Origin, sprite.InitialPosition)));
+            => add(context, sprite.Layer, copy(sprite, new StoryboardSprite(sprite.Path, sprite.Origin, sprite.Position)));
 
         protected override IStoryboardElement CreateVideo(Storyboard context, ScriptedVideo video)
             => add(context, "Video", new StoryboardVideo(video.Path, (int)video.StartTime));
-
-        private static IStoryboardElement add(Storyboard storyboard, Layer layer, IStoryboardElement element)
-            => add(storyboard, Enum.GetName(layer), element);
 
         private static IStoryboardElement add(Storyboard storyboard, string layer, IStoryboardElement element)
         {
@@ -57,7 +57,7 @@ namespace sbtw.Editor.Generators
             return destination;
         }
 
-        private static void copy_timeline_groups(IScriptedCommandTimelineGroup source, CommandTimelineGroup destination)
+        private static void copy_timeline_groups(IScriptCommandTimelineGroup source, CommandTimelineGroup destination)
         {
             foreach (var sourceMove in source.Move.Commands)
             {

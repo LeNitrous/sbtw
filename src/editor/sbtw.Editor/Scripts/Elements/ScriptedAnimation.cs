@@ -10,13 +10,11 @@ namespace sbtw.Editor.Scripts.Elements
     public class ScriptedAnimation : ScriptedSprite
     {
         public int FrameCount { get; }
-
         public double FrameDelay { get; }
-
         public AnimationLoopType LoopType { get; }
 
-        public ScriptedAnimation(Script owner, string group, Layer layer, string path, Anchor origin, Vector2 initialPosition, int frameCount, double frameDelay, AnimationLoopType loopType)
-            : base(owner, group, layer, path, origin, initialPosition)
+        public ScriptedAnimation(IScript owner, Group group, string path, Layer layer, Vector2 position, Anchor origin, int frameCount, double frameDelay, AnimationLoopType loopType)
+            : base(owner, group, path, layer, position, origin)
         {
             FrameCount = frameCount;
             FrameDelay = frameDelay;

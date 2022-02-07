@@ -3,23 +3,15 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using osu.Framework.Allocation;
 using osu.Framework.Platform;
 using sbtw.Desktop.IO;
 using sbtw.Desktop.Studios;
-using sbtw.Editor.Languages.Javascript;
 using sbtw.Editor.Studios;
 
 namespace sbtw.Desktop
 {
     public class DesktopEditor : Editor.Editor
     {
-        [BackgroundDependencyLoader]
-        private void load()
-        {
-            Languages.Register(new JavascriptLanguage());
-        }
-
         public override void SetHost(GameHost host)
         {
             base.SetHost(host);

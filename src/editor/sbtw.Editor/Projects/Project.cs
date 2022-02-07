@@ -2,154 +2,85 @@
 // See LICENSE in the repository root for more details.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.IO;
-using System.Linq;
-using osu.Framework.Audio;
-using osu.Framework.Bindables;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using osu.Framework.Logging;
 using osu.Framework.Platform;
-using osu.Game.Rulesets;
+using osu.Game.Beatmaps;
+using osu.Game.Storyboards;
 using sbtw.Editor.Assets;
 using sbtw.Editor.Beatmaps;
-using sbtw.Editor.IO;
+using sbtw.Editor.Generators;
 using sbtw.Editor.Scripts;
+using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Projects
 {
-    public class Project : IProject
+    public abstract class Project : IProject, ICanProvideAssets, ICanProvideGroups, ICanProvideScripts, ICanProvideFiles, ICanProvideLogger, ICanProvideBeatmapSet
     {
         public string Name { get; }
-        public BindableList<Asset> Assets { get; }
-        public BindableList<GroupSetting> Groups { get; }
-        public BindableList<ScriptGenerationResult> Scripts { get; } = new BindableList<ScriptGenerationResult>();
-        public StorageBackedBeatmapSet BeatmapSet { get; }
-        public Storage Storage { get; }
+        public string Path => Files.GetFullPath(".");
+        public IEnumerable<string> Exclude { get; }
+        public Storage Files { get; }
+        public ScriptManager Scripts { get; }
+        public GroupCollection Groups { get; }
+        public AssetCollection Assets { get; }
+        public BeatmapSetProvider BeatmapSet { get; }
 
-        public int Precision
-        {
-            get => config.Get<int>("precision");
-            set => config.Set("precision", value);
-        }
-
-        private readonly ProjectConfigManager config;
-
-        public Project(GameHost host, AudioManager audio, RulesetStore rulesets, string path)
+        protected Project(string path, IEnumerable<Type> types)
         {
             if (string.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
-            if (!path.EndsWith(".sbtw.json"))
-                throw new ArgumentException("File is not a project.");
-
-            Name = Path.GetFileNameWithoutExtension(path);
-            Storage = host.GetStorage(Path.GetDirectoryName(path));
-            BeatmapSet = new StorageBackedBeatmapSet(new DemanglingResourceProvider(host, audio, Storage.GetStorageForDirectory("Beatmap")), rulesets);
-
-            config = new ProjectConfigManager(this);
-
-            Groups = new BindableList<GroupSetting>(config.Get<IEnumerable<GroupSetting>>("groups"));
-            Groups.BindCollectionChanged(handleGroupCollectionChange, true);
-
-            Assets = new BindableList<Asset>(config.Get<IEnumerable<Asset>>("assets"));
-            Assets.BindCollectionChanged((_, __) => config.Set("assets", Assets), true);
+            Name = System.IO.Path.GetFileNameWithoutExtension(path);
+            Files = CreateStorage(path);
+            Groups = new GroupCollection();
+            Assets = new AssetCollection(Files);
+            Scripts = new ScriptManager(this, types);
+            BeatmapSet = CreateBeatmapSetProvider();
         }
 
-        public void GenerateAssets(IEnumerable<Asset> assets)
+        public Storyboard GetStoryboard() => GetStoryboardAsync().Result;
+
+        public async Task<Storyboard> GetStoryboardAsync(CancellationToken token = default)
         {
-            foreach (var asset in assets)
-            {
-                var configAssetByHash = Assets.FirstOrDefault(a => a.Hash == asset.Hash);
-                var configAssetByPath = Assets.FirstOrDefault(a => a.Path == asset.Path);
-
-                // Asset from config only needs to obtain script
-                if (configAssetByHash == configAssetByPath && configAssetByPath.Script == null)
-                {
-                    configAssetByPath.Register(asset.Script);
-                    continue;
-                }
-
-                // Find asset with cached hash
-                if (configAssetByHash != null)
-                {
-                    // Directory changed
-                    if (File.Exists(configAssetByHash.FullPath) && asset.FullPath != configAssetByHash.FullPath)
-                    {
-                        File.Delete(configAssetByHash.FullPath);
-                        asset.Generate();
-                        Assets.Add(asset);
-                    }
-
-                    continue;
-                }
-
-                // Find asset with path
-                if (configAssetByPath != null)
-                {
-                    // Asset identifier changed
-                    if (File.Exists(configAssetByPath.FullPath) && asset.Hash != configAssetByPath.Hash)
-                    {
-                        File.Delete(configAssetByPath.FullPath);
-                        asset.Generate();
-                        Assets.Add(asset);
-                    }
-
-                    continue;
-                }
-
-                // Generate if not exists
-                if (!File.Exists(asset.FullPath))
-                {
-                    asset.Generate();
-                    Assets.Add(asset);
-                }
-
-                // Add to cache if file exists
-                if (File.Exists(asset.FullPath) && configAssetByPath == null && configAssetByHash == null)
-                    Assets.Add(asset);
-            }
+            var working = BeatmapSet.GetWorkingBeatmap();
+            var resources = new ScriptResources { Beatmap = working.Beatmap, Waveform = working.Waveform };
+            var generator = new StoryboardGenerator(working.BeatmapInfo as BeatmapInfo);
+            var scripts = await Scripts.GetScriptsAsync(resources, token);
+            return await generator.GenerateAsync(scripts, this, token);
         }
 
-        private void handleGroupCollectionChange(object sender, NotifyCollectionChangedEventArgs args)
+        public StringBuilder GetOsb() => GetOsbAsync().Result;
+
+        public async Task<StringBuilder> GetOsbAsync(CancellationToken token = default)
         {
-            switch (args.Action)
+            var working = BeatmapSet.GetWorkingBeatmap();
+            var resources = new ScriptResources { Beatmap = working.Beatmap, Waveform = working.Waveform };
+            var generator = new OsbGenerator();
+            var scripts = await Scripts.GetScriptsAsync(resources, token);
+            var generated = await generator.GenerateAsync(scripts, this, token);
+            var builder = new StringBuilder();
+            builder.AppendLine("[Events]");
+            builder.AppendLine("// Background and Video events");
+            builder.Append(generated["Video"]);
+
+            foreach (var layer in Enum.GetValues<Layer>())
             {
-                case NotifyCollectionChangedAction.Add:
-                    registerGroups(args.NewItems);
-                    break;
-
-                case NotifyCollectionChangedAction.Remove:
-                    unregisterGroups(args.OldItems);
-                    break;
-
-                case NotifyCollectionChangedAction.Replace:
-                    unregisterGroups(args.OldItems);
-                    registerGroups(args.NewItems);
-                    break;
+                builder.AppendLine($"// Storyboard Layer {layer} ({Enum.GetName(layer)})");
+                builder.Append(generated[Enum.GetName(layer)]);
             }
 
-            config.Set("groups", Groups);
+            builder.AppendLine("// Storyboard Sound Samples");
+            builder.Append(generated["Samples"]);
+
+            return builder;
         }
 
-        private void registerGroups(IList items)
-        {
-            foreach (GroupSetting group in items)
-            {
-                group.Target.ValueChanged += _ => Save();
-                group.Hidden.ValueChanged += _ => Save();
-            }
-        }
-
-        private static void unregisterGroups(IList items)
-        {
-            foreach (GroupSetting group in items)
-            {
-                group.Target.UnbindAll();
-                group.Hidden.UnbindAll();
-            }
-        }
-
-        public bool Save() => config.Save();
+        public abstract void Log(object message, LogLevel level);
+        protected abstract Storage CreateStorage(string path);
+        protected abstract BeatmapSetProvider CreateBeatmapSetProvider();
     }
 }

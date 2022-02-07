@@ -11,6 +11,7 @@ using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osuTK;
 using sbtw.Editor.Projects;
+using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Graphics.UserInterface
 {
@@ -18,7 +19,6 @@ namespace sbtw.Editor.Graphics.UserInterface
     {
         private class GroupsToolboxTab : Container
         {
-            private BindableList<GroupSetting> groups;
             private Bindable<IProject> project;
             private GroupsList list;
 
@@ -32,25 +32,17 @@ namespace sbtw.Editor.Graphics.UserInterface
                 };
 
                 this.project = project.GetBoundCopy();
-                this.project.BindValueChanged(e => Schedule(() =>
-                {
-                    groups = e.NewValue.Groups?.GetBoundCopy();
-                    list.Items.UnbindBindings();
-
-                    if (groups != null)
-                        list.Items.BindTo(groups);
-                }), true);
             }
 
-            private class GroupsList : OsuRearrangeableListContainer<GroupSetting>
+            private class GroupsList : OsuRearrangeableListContainer<Group>
             {
-                protected override OsuRearrangeableListItem<GroupSetting> CreateOsuDrawable(GroupSetting item)
+                protected override OsuRearrangeableListItem<Group> CreateOsuDrawable(Group item)
                     => new GroupsListItem(item);
             }
 
-            private class GroupsListItem : OsuRearrangeableListItem<GroupSetting>
+            private class GroupsListItem : OsuRearrangeableListItem<Group>
             {
-                public GroupsListItem(GroupSetting item)
+                public GroupsListItem(Group item)
                     : base(item)
                 {
                 }
@@ -60,7 +52,7 @@ namespace sbtw.Editor.Graphics.UserInterface
 
             private class GroupsListItemContent : Container
             {
-                public GroupsListItemContent(GroupSetting model)
+                public GroupsListItemContent(Group model)
                 {
                     Height = 40;
                     RelativeSizeAxes = Axes.X;
@@ -82,8 +74,8 @@ namespace sbtw.Editor.Graphics.UserInterface
                             Spacing = new Vector2(5, 0),
                             Children = new Drawable[]
                             {
-                                new TargetIconButton(model.Target) { Size = new Vector2(40), },
-                                new HiddenToggleButton(model.Hidden) { Size = new Vector2(40), },
+                                new TargetSwitcher(model.Target) { Size = new Vector2(40), },
+                                new VisibilityToggle(model.Visible) { Size = new Vector2(40), },
                             }
                         }
                     };
@@ -91,11 +83,11 @@ namespace sbtw.Editor.Graphics.UserInterface
 
                 }
 
-                private class TargetIconButton : IconButton
+                private class TargetSwitcher : IconButton
                 {
                     private readonly Bindable<ExportTarget> target;
 
-                    public TargetIconButton(Bindable<ExportTarget> target)
+                    public TargetSwitcher(Bindable<ExportTarget> target)
                     {
                         Action = cycle;
                         this.target = target.GetBoundCopy();
@@ -127,14 +119,14 @@ namespace sbtw.Editor.Graphics.UserInterface
                     }
                 }
 
-                private class HiddenToggleButton : IconButton
+                private class VisibilityToggle : IconButton
                 {
                     private readonly Bindable<bool> hidden;
 
                     [Resolved]
                     private Editor editor { get; set; }
 
-                    public HiddenToggleButton(Bindable<bool> hidden)
+                    public VisibilityToggle(Bindable<bool> hidden)
                     {
                         Action = () => hidden.Value = !hidden.Value;
                         this.hidden = hidden.GetBoundCopy();
@@ -145,7 +137,6 @@ namespace sbtw.Editor.Graphics.UserInterface
                     {
                         Icon = hidden.Value ? FontAwesome.Solid.EyeSlash : FontAwesome.Solid.Eye;
                         TooltipText = hidden.Value ? "Hidden" : "Visible";
-                        editor?.Generate(GenerateKind.Storyboard);
                     }
                 }
             }
