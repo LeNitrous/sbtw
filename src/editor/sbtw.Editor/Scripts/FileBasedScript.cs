@@ -15,27 +15,6 @@ namespace sbtw.Editor.Scripts
     /// </summary>
     public abstract class FileBasedScript : Script
     {
-        public static readonly IReadOnlyList<MemberInfo> MEMBERS = typeof(ScriptResources).GetMembers(BindingFlags.Public | BindingFlags.Instance);
-        public static readonly IReadOnlyDictionary<Type, MethodInfo> METHOD_TYPES;
-        public static readonly IReadOnlyList<Type> TYPES;
-
-        static FileBasedScript()
-        {
-            var typeMap = new Dictionary<Type, MethodInfo>();
-
-            foreach (var method in typeof(Script).GetMethods())
-            {
-                var parameters = method.GetParameters().Select(p => p.ParameterType);
-                var type = method.ReturnType == typeof(void)
-                    ? Expression.GetActionType(parameters.ToArray())
-                    : Expression.GetFuncType(parameters.Append(method.ReturnType).ToArray());
-
-                typeMap.Add(type, method);
-            }
-
-            METHOD_TYPES = typeMap;
-        }
-
         /// <summary>
         /// The full path for this script.
         /// </summary>
@@ -49,12 +28,11 @@ namespace sbtw.Editor.Scripts
         /// <summary>
         /// Compiles this script.
         /// </summary>
-        public abstract void Compile();
+        public void Compile() => CompileAsync().Wait();
 
         /// <summary>
         /// Compiles this script asynchronously.
         /// </summary>
-        /// <returns>The task used for this method.</returns>
         public abstract Task CompileAsync();
 
         /// <summary>
@@ -75,5 +53,28 @@ namespace sbtw.Editor.Scripts
         /// </summary>
         /// <param name="type">The type to expose.</param>
         public abstract void RegisterType(Type type);
+
+        static FileBasedScript()
+        {
+            var typeMap = new List<(Type, MethodInfo)>();
+            var methods = typeof(Script)
+                .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Where(m => m.GetCustomAttribute<ScriptVisibleAttribute>() != null);
+
+            foreach (var method in methods)
+            {
+                var parameters = method.GetParameters().Select(p => p.ParameterType);
+                var type = method.ReturnType == typeof(void)
+                    ? Expression.GetActionType(parameters.ToArray())
+                    : Expression.GetFuncType(parameters.Append(method.ReturnType).ToArray());
+
+                typeMap.Add((type, method));
+            }
+
+            METHODS = typeMap;
+        }
+
+        public static readonly IReadOnlyList<(Type, MethodInfo)> METHODS;
+        public static readonly IReadOnlyList<Type> TYPES = Type.EmptyTypes;
     }
 }

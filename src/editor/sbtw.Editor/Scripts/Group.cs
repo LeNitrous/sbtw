@@ -1,7 +1,9 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Lists;
@@ -15,31 +17,30 @@ namespace sbtw.Editor.Scripts
     /// <summary>
     /// Represents a collection of elements.
     /// </summary>
+    [JsonObject(MemberSerialization.OptIn)]
     public class Group
     {
         /// <summary>
         /// The name of the group.
         /// </summary>
+        [JsonProperty]
         public readonly string Name;
-
-        /// <summary>
-        /// The <see cref="IScript"/> that owns this group.
-        /// </summary>
-        internal readonly IScript Owner;
 
         /// <summary>
         /// The <see cref="GroupCollection"/> this group is provided by.
         /// </summary>
-        internal readonly GroupCollection Provider;
+        internal GroupCollection Provider;
 
         /// <summary>
         /// Whether this group should be visible in the editor.
         /// </summary>
+        [JsonProperty]
         internal readonly BindableBool Visible = new BindableBool(true);
 
         /// <summary>
         /// Determines where this group should be exported to.
         /// </summary>
+        [JsonProperty]
         internal readonly Bindable<ExportTarget> Target = new Bindable<ExportTarget>(ExportTarget.Storyboard);
 
         /// <summary>
@@ -49,33 +50,32 @@ namespace sbtw.Editor.Scripts
 
         private readonly SortedList<IScriptElement> elements = new SortedList<IScriptElement>(new ScriptedElementComparer());
 
-        public Group(IScript owner, GroupCollection provider, string name)
+        internal Group(string name)
         {
-            Name = name;
-            Owner = owner;
-            Provider = provider;
-            Provider.Add(this);
+            Name = !string.IsNullOrEmpty(name) ? name : throw new ArgumentException(@"Argument must have a valid value", nameof(name));
         }
 
         public ScriptedSprite CreateSprite(string path, Anchor origin = Anchor.TopLeft, Vector2 position = default, Layer layer = Layer.Background)
         {
-            var sprite = new ScriptedSprite(Owner, this, path, layer, position, origin);
+            var sprite = new ScriptedSprite(this, path, layer, position, origin);
             elements.Add(sprite);
             return sprite;
         }
 
         public ScriptedAnimation CreateAnimation(string path, Anchor origin = Anchor.TopLeft, Vector2 position = default, int frameCount = 0, double frameDelay = 0, AnimationLoopType loopType = AnimationLoopType.LoopForever, Layer layer = Layer.Background)
         {
-            var animation = new ScriptedAnimation(Owner, this, path, layer, position, origin, frameCount, frameDelay, loopType);
+            var animation = new ScriptedAnimation(this, path, layer, position, origin, frameCount, frameDelay, loopType);
             elements.Add(animation);
             return animation;
         }
 
         public void CreateSample(string path, double time, int volume = 100, Layer layer = Layer.Background)
-            => elements.Add(new ScriptedSample(Owner, this, path, time, layer, volume));
+            => elements.Add(new ScriptedSample(this, path, time, layer, volume));
 
         public void CreateVideo(string path, int offset, Vector2 positionOffset = default)
-            => elements.Add(new ScriptedVideo(Owner, this, path, offset, positionOffset));
+            => elements.Add(new ScriptedVideo(this, path, offset, positionOffset));
+
+        internal void Clear() => elements.Clear();
 
         private class ScriptedElementComparer : IComparer<IScriptElement>
         {

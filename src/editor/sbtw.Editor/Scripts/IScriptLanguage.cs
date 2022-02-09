@@ -14,11 +14,6 @@ namespace sbtw.Editor.Scripts
     public interface IScriptLanguage : IDisposable
     {
         /// <summary>
-        /// The name of the scripting language.
-        /// </summary>
-        string Name { get; }
-
-        /// <summary>
         /// Gets the exception message for this scripting language.
         /// </summary>
         /// <param name="exception">The exception raised.</param>
@@ -30,7 +25,7 @@ namespace sbtw.Editor.Scripts
         /// </summary>
         /// <param name="resources">The resources for use in scripts.</param>
         /// <returns></returns>
-        IEnumerable<IScript> GetScripts(ScriptResources resources);
+        IEnumerable<IScript> GetScripts(Dictionary<string, object> resources = null);
 
         /// <summary>
         /// Gets scripts that can be processed by this language asynchronously.
@@ -38,7 +33,7 @@ namespace sbtw.Editor.Scripts
         /// <param name="resources">The resources for use in scripts.</param>
         /// <param name="token">The cancellation token that will be used.</param>
         /// <returns>A collection of scripts.</returns>
-        Task<IEnumerable<IScript>> GetScriptsAsync(ScriptResources resources, CancellationToken token = default);
+        Task<IEnumerable<IScript>> GetScriptsAsync(Dictionary<string, object> resources = null, CancellationToken token = default);
     }
 
     /// <summary>
@@ -53,7 +48,7 @@ namespace sbtw.Editor.Scripts
         /// </summary>
         /// <param name="resources">The resources for use in scripts.</param>
         /// <returns>A collection of scripts.</returns>
-        IEnumerable<T> GetScripts(ScriptResources resources);
+        IEnumerable<T> GetScripts(Dictionary<string, object> resources = null);
 
         /// <summary>
         /// Gets scripts that can be processed by this language asynchronously.
@@ -61,6 +56,6 @@ namespace sbtw.Editor.Scripts
         /// <param name="resources">The resources for use in scripts.</param>
         /// <param name="token">The cancellation token that will be used.</param>
         /// <returns>A collection of scripts.</returns>
-        Task<IEnumerable<T>> GetScriptsAsync(ScriptResources resources, CancellationToken token = default);
+        Task<IEnumerable<T>> GetScriptsAsync(Dictionary<string, object> resources = null, CancellationToken token = default);
     }
 }

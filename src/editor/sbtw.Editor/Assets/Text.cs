@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using sbtw.Editor.Projects;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
@@ -24,9 +25,11 @@ namespace sbtw.Editor.Assets
 
         protected override Image<Rgba32> GetImage()
         {
-            string fontFullPath = Storage.GetFullPath(Config.Path);
+            var storage = (Project as ICanProvideFiles).Files;
 
-            if (!Storage.Exists(fontFullPath))
+            string fontFullPath = storage.GetFullPath(Config.Path);
+
+            if (!storage.Exists(fontFullPath))
                 throw new FileNotFoundException($@"Failed to find font in ""{fontFullPath}"".");
 
             var collection = new FontCollection();
@@ -57,8 +60,8 @@ namespace sbtw.Editor.Assets
 
         public FontConfiguration(string path, string name, int size)
         {
-            Path = path;
-            Name = name;
+            Path = !string.IsNullOrEmpty(path) ? path : throw new ArgumentException(@"Argument must contain a valid value.", nameof(path));
+            Name = !string.IsNullOrEmpty(name) ? name : throw new ArgumentException(@"Argument must contain a valid value.", nameof(name));
             Size = size;
         }
 

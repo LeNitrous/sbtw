@@ -8,37 +8,50 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper.Internal;
 using GlobExpressions;
+using osu.Framework.Platform;
+using sbtw.Editor.Extensions;
 using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Scripts
 {
+    /// <summary>
+    /// A scripting language that relies on external scripts.
+    /// </summary>
     public abstract class FileBasedScriptLanguage<T> : ScriptLanguage<T>
         where T : FileBasedScript
     {
+        /// <summary>
+        /// An array of extensions (including the period at the start)
+        /// that will be used in searching for files in a given storage.
+        /// </summary>
         public abstract IReadOnlyList<string> Extensions { get; }
+
+        /// <summary>
+        /// An array of of file names and glob patterns that will be excluded from file search.
+        /// </summary>
         public virtual IReadOnlyList<string> Exclude { get; } = Array.Empty<string>();
+
         protected readonly List<CachedScript> Cache = new List<CachedScript>();
+        private readonly Storage storage;
 
         protected FileBasedScriptLanguage(IProject project)
             : base(project)
         {
+            storage = (Project as ICanProvideFiles)?.Files ?? throw new NotSupportedException(@"Project does not provide files.");
         }
 
-        protected override async Task<IEnumerable<IScript>> GetScriptsAsync(CancellationToken token)
+        protected override async Task<IEnumerable<IScript>> GetScriptsInternalAsync(Dictionary<string, object> resources = null, CancellationToken token = default)
         {
             var scripts = new List<T>();
-            var exclude = (Project.Exclude ?? Array.Empty<string>()).Concat(Exclude);
-            var storage = (Project as ICanProvideFiles).Files;
 
             foreach (string extension in Extensions)
             {
-                foreach (string path in Directory.GetFiles(storage.GetFullPath("."), $"*{extension}", SearchOption.AllDirectories))
+                foreach (string path in storage.GetFiles(".", $"*{extension}", SearchOption.AllDirectories))
                 {
                     token.ThrowIfCancellationRequested();
 
-                    if (exclude.Any(pattern => Glob.IsMatch(path, pattern, GlobOptions.CaseInsensitive)))
+                    if (Exclude.Any(pattern => Glob.IsMatch(path, pattern, GlobOptions.CaseInsensitive)))
                         continue;
 
                     using var stream = storage.GetStream(path, FileAccess.Read, FileMode.Open);
@@ -47,7 +60,7 @@ namespace sbtw.Editor.Scripts
 
                     var cached = Cache.FirstOrDefault(c => c.Path == path);
 
-                    if (cached.Path != null)
+                    if (cached != null)
                     {
                         if (!cached.Hash.SequenceEqual(hash))
                         {
@@ -57,22 +70,22 @@ namespace sbtw.Editor.Scripts
                     }
                     else
                     {
-                        Cache.Add(cached = new CachedScript { Path = path, Hash = hash, Script = CreateScript(path) });
-                    }
+                        Cache.Add(cached = new CachedScript { Path = path, Hash = hash, Script = CreateScript(storage.GetFullPath(path)) });
 
-                    if (!cached.Initialized)
-                    {
-                        foreach ((var type, var method) in FileBasedScript.METHOD_TYPES)
+                        foreach ((var type, var method) in FileBasedScript.METHODS)
                             cached.Script.RegisterDelegate(method.CreateDelegate(type, cached.Script));
 
                         foreach (var type in FileBasedScript.TYPES)
                             cached.Script.RegisterType(type);
 
-                        cached.Initialized = true;
+                        await cached.Script.CompileAsync();
                     }
 
-                    foreach (var member in FileBasedScript.MEMBERS)
-                        cached.Script.RegisterMember(member.Name, member.GetMemberValue(cached.Script.Resources));
+                    if (resources != null)
+                    {
+                        foreach ((string name, object obj) in resources)
+                            cached.Script.RegisterMember(name, obj);
+                    }
 
                     scripts.Add(cached.Script);
                 }
@@ -80,7 +93,7 @@ namespace sbtw.Editor.Scripts
 
             foreach (var cached in Cache)
             {
-                if (File.Exists(cached.Path))
+                if (storage.Exists(cached.Path))
                     continue;
 
                 cached.Script.Dispose();
@@ -106,7 +119,6 @@ namespace sbtw.Editor.Scripts
         {
             public string Path;
             public byte[] Hash;
-            public bool Initialized;
             public T Script;
         }
     }

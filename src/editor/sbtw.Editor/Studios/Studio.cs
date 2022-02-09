@@ -9,19 +9,13 @@ namespace sbtw.Editor.Studios
     public class Studio : IEquatable<Studio>
     {
         public string Name { get; set; }
-
         public string FriendlyName { get; set; }
 
         public bool Equals(Studio other)
             => other.Name == Name && other.FriendlyName == FriendlyName;
 
         public override bool Equals(object obj)
-        {
-            if (obj == null || obj is not Studio other)
-                return false;
-
-            return Equals(other);
-        }
+            => obj is Studio studio && Equals(studio);
 
         public override int GetHashCode()
             => HashCode.Combine(Name, FriendlyName);

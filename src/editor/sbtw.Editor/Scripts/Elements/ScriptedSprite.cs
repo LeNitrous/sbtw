@@ -14,14 +14,43 @@ namespace sbtw.Editor.Scripts.Elements
     public class ScriptedSprite : IScriptElement, IScriptElementHasDuration
     {
         public string Path { get; }
-        public IScript Owner { get; }
         public Group Group { get; }
         public Layer Layer { get; }
-        public double StartTime => new[] { Loops.Min(g => g.StartTime), Triggers.Min(g => g.StartTime), Timeline.StartTime }.Min();
-        public double EndTime => new[] { Loops.Max(g => g.EndTime), Triggers.Max(g => g.EndTime), Timeline.EndTime }.Max();
         public double Duration => EndTime - StartTime;
         public Anchor Origin { get; }
         public Vector2 Position { get; }
+
+        public double StartTime
+        {
+            get
+            {
+                var startTimes = new List<double> { Timeline.StartTime };
+
+                if (Loops.Any())
+                    startTimes.Add(Loops.Min(g => g.StartTime));
+
+                if (Triggers.Any())
+                    startTimes.Add(Triggers.Min(g => g.StartTime));
+
+                return startTimes.Min();
+            }
+        }
+
+        public double EndTime
+        {
+            get
+            {
+                var endTimes = new List<double> { Timeline.EndTime };
+
+                if (Loops.Any())
+                    endTimes.Add(Loops.Max(g => g.EndTime));
+
+                if (Triggers.Any())
+                    endTimes.Add(Triggers.Max(g => g.EndTime));
+
+                return endTimes.Max();
+            }
+        }
 
         internal readonly List<ScriptCommandLoop> Loops = new List<ScriptCommandLoop>();
         internal readonly List<ScriptCommandTrigger> Triggers = new List<ScriptCommandTrigger>();
@@ -34,9 +63,8 @@ namespace sbtw.Editor.Scripts.Elements
             set => context = value;
         }
 
-        public ScriptedSprite(IScript owner, Group group, string path, Layer layer, Vector2 position, Anchor origin)
+        public ScriptedSprite(Group group, string path, Layer layer, Vector2 position, Anchor origin)
         {
-            Owner = owner;
             Group = group;
             Path = path;
             Layer = layer;

@@ -7,6 +7,6 @@ namespace sbtw.Editor.Projects
 {
     public interface ICanProvideLogger
     {
-        void Log(object message, LogLevel level);
+        void Log(object message, LogLevel level = LogLevel.Verbose);
     }
 }

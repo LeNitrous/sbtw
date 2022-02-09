@@ -4,37 +4,40 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Linq;
 using osu.Framework.Bindables;
-using sbtw.Editor.Extensions;
 using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Scripts
 {
     public class GroupCollection : IList<Group>, ICollection<Group>, IEnumerable<Group>, IEnumerable
     {
-        public IBindableList<Group> Bindable => groups;
-        public int Count => groups.Count;
+        public event Action GroupPropertyChanged;
+        public readonly BindableList<Group> Bindable = new BindableList<Group>();
+        public int Count => Bindable.Count;
         public bool IsReadOnly => false;
 
         public Group this[int index]
         {
-            get => groups[index];
+            get => Bindable[index];
             set => Insert(index, value);
         }
 
-        private readonly BindableList<Group> groups = new BindableList<Group>();
-
         public GroupCollection(IEnumerable<Group> initial = null)
         {
+            Bindable.CollectionChanged += handleCollectionChange;
+
             if (initial != null)
                 AddRange(initial);
         }
 
         public void Add(Group item)
         {
-            item.Target.ValueChanged += handleTargetChange;
-            item.Visible.ValueChanged += handleVisibilityChange;
-            groups.Add(item);
+            if (Contains(item) || Bindable.Any(g => g.Name == item.Name))
+                return;
+
+            Bindable.Add(item);
         }
 
         public void AddRange(IEnumerable<Group> items)
@@ -45,57 +48,102 @@ namespace sbtw.Editor.Scripts
 
         public bool Remove(Group item)
         {
-            if (!Contains(item))
+            if (!Contains(item) || !Bindable.Any(g => g.Name == item.Name))
                 return false;
 
-            item.Target.ValueChanged -= handleTargetChange;
-            item.Visible.ValueChanged -= handleVisibilityChange;
-            groups.Remove(item);
+            Bindable.Remove(item);
 
             return true;
         }
 
         public void RemoveAt(int index)
-        {
-            if (index > groups.Count && index < 0)
-                throw new ArgumentOutOfRangeException(nameof(index));
-
-            var group = groups[index];
-            Remove(group);
-        }
+            => Bindable.RemoveAt(index);
 
         public void Clear()
-        {
-            foreach (var group in groups)
-                Remove(group);
-        }
+            => Bindable.Clear();
 
         public void Insert(int index, Group item)
         {
-            item.Target.ValueChanged += handleTargetChange;
-            item.Visible.ValueChanged += handleVisibilityChange;
-            groups.Insert(index, item);
+            if (Contains(item) || item.Provider != null)
+                return;
+
+            Bindable.Insert(index, item);
         }
 
         public bool Contains(Group item)
-            => groups.Contains(item);
+            => Bindable.Contains(item);
 
         public void CopyTo(Group[] array, int arrayIndex)
-            => groups.CopyTo(array, arrayIndex);
+            => Bindable.CopyTo(array, arrayIndex);
 
         public IEnumerator<Group> GetEnumerator()
-            => groups.GetEnumerator();
+            => Bindable.GetEnumerator();
 
         public int IndexOf(Group item)
-            => groups.IndexOf(item);
+            => Bindable.IndexOf(item);
 
         IEnumerator IEnumerable.GetEnumerator()
-            => groups.GetEnumerator();
+            => Bindable.GetEnumerator();
 
         private void handleVisibilityChange(ValueChangedEvent<bool> e)
-            => groups.TriggerChange();
+            => GroupPropertyChanged?.Invoke();
 
         private void handleTargetChange(ValueChangedEvent<ExportTarget> e)
-            => groups.TriggerChange();
+            => GroupPropertyChanged?.Invoke();
+
+        private void registerGroup(Group item)
+        {
+            item.Provider = this;
+            item.Target.ValueChanged += handleTargetChange;
+            item.Visible.ValueChanged += handleVisibilityChange;
+        }
+
+        private void unregisterGroup(Group item)
+        {
+            item.Provider = null;
+            item.Target.ValueChanged -= handleTargetChange;
+            item.Visible.ValueChanged -= handleVisibilityChange;
+        }
+
+        private void handleCollectionChange(object sender, NotifyCollectionChangedEventArgs evt)
+        {
+            switch (evt.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    {
+                        foreach (var item in evt.NewItems.Cast<Group>())
+                            registerGroup(item);
+
+                        break;
+                    }
+
+                case NotifyCollectionChangedAction.Remove:
+                    {
+                        foreach (var item in evt.OldItems.Cast<Group>())
+                            unregisterGroup(item);
+
+                        break;
+                    }
+
+                case NotifyCollectionChangedAction.Reset:
+                    {
+                        foreach (var item in evt.OldItems.Cast<Group>())
+                            unregisterGroup(item);
+
+                        break;
+                    }
+
+                case NotifyCollectionChangedAction.Replace:
+                    {
+                        foreach (var item in evt.NewItems.Cast<Group>())
+                            registerGroup(item);
+
+                        foreach (var item in evt.OldItems.Cast<Group>())
+                            unregisterGroup(item);
+
+                        break;
+                    }
+            }
+        }
     }
 }

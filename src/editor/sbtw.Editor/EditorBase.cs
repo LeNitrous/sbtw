@@ -33,8 +33,8 @@ namespace sbtw.Editor
             dependencies.CacheAs(this);
             dependencies.CacheAs(LocalEditorConfig);
             dependencies.CacheAs(Session = new EditorSessionStatics());
-            dependencies.CacheAs(Studios = CreateStudioManager());
-            dependencies.CacheAs(Studio = Studios.Current);
+            // dependencies.CacheAs(Studios = CreateStudioManager());
+            // dependencies.CacheAs(Studio = Studios.Current);
             dependencies.CacheAs(Project = new NonNullableBindable<IProject>(new DummyProject()));
         }
 

@@ -16,7 +16,6 @@ namespace sbtw.Editor.Scripts
         ICanProvideGroups GroupProvider { set; }
         ICanProvideFiles FileProvider { set; }
         ICanProvideLogger Logger { set; }
-        ScriptResources Resources { set; }
 
         void Execute();
         Task ExecuteAsync(CancellationToken token = default);

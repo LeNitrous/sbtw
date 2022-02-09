@@ -1,14 +1,15 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System.Collections.Generic;
+using osu.Framework.Bindables;
 
 namespace sbtw.Editor.Projects
 {
-    public interface IProject
+    public interface IProject : ICanProvideGroups
     {
-        string Name { get; }
-        string Path { get; }
-        IEnumerable<string> Exclude { get; }
+        /// <summary>
+        /// The number of decimals to be exported during storyboard exporting.
+        /// </summary>
+        BindableInt Precision { get; }
     }
 }

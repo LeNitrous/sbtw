@@ -8,7 +8,6 @@ namespace sbtw.Editor.Scripts.Elements
     public interface IScriptElement
     {
         string Path { get; }
-        IScript Owner { get; }
         Group Group { get; }
         Layer Layer { get; }
         double StartTime { get; }

@@ -11,12 +11,12 @@ using osu.Game.Skinning;
 
 namespace sbtw.Editor.Beatmaps
 {
-    public class StorageBackedWorkingBeatmap : WorkingBeatmap
+    public class BeatmapProviderWorkingBeatmap : WorkingBeatmap
     {
         private readonly IBeatmapResourceProvider resources;
         private readonly IBeatmap beatmap;
 
-        public StorageBackedWorkingBeatmap(IBeatmapResourceProvider resources, IBeatmap beatmap)
+        public BeatmapProviderWorkingBeatmap(IBeatmapResourceProvider resources, IBeatmap beatmap)
             : base(beatmap.BeatmapInfo, resources.AudioManager)
         {
             this.beatmap = beatmap;

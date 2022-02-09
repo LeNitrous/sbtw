@@ -6,9 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using osu.Framework.Platform;
+using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Assets
 {
@@ -18,10 +16,10 @@ namespace sbtw.Editor.Assets
     public class AssetCollection : IList<Asset>, ICollection<Asset>, IEnumerable<Asset>, IEnumerable
     {
         private readonly List<Asset> cache = new List<Asset>();
-        private readonly Storage storage;
+        private readonly IProject project;
 
+        public event Action CacheChanged;
         public int Count => cache.Count;
-
         public bool IsReadOnly => false;
 
         public Asset this[int index]
@@ -30,12 +28,39 @@ namespace sbtw.Editor.Assets
             set => update(new List<Asset>(cache) { [index] = value });
         }
 
-        public AssetCollection(Storage storage, IEnumerable<Asset> initial = null)
+        public AssetCollection(IProject project, IEnumerable<Asset> initial = null)
         {
-            this.storage = storage;
+            if (project is not ICanProvideFiles)
+                throw new ArgumentException(@"Project does not provide files.", nameof(project));
+
+            this.project = project;
 
             if (initial != null)
-                update(initial);
+                cache.AddRange(initial);
+        }
+
+        /// <summary>
+        /// Generates assets to storage.
+        /// </summary>
+        public void Generate()
+        {
+            var storage = (project as ICanProvideFiles).BeatmapFiles;
+
+            foreach (var asset in cache.ToArray())
+            {
+                if (asset.ReferenceCount > 0)
+                {
+                    if (!File.Exists(storage.GetFullPath(asset.Path)))
+                        asset.Generate(project);
+                }
+                else
+                {
+                    if (File.Exists(storage.GetFullPath(asset.Path)))
+                        File.Delete(storage.GetFullPath(asset.Path));
+
+                    cache.Remove(asset);
+                }
+            }
         }
 
         /// <summary>
@@ -116,6 +141,9 @@ namespace sbtw.Editor.Assets
 
             foreach (var asset in assets)
             {
+                if (string.IsNullOrEmpty(asset.Path))
+                    throw new ArgumentNullException(@"Asset cannot have an empty path.", nameof(asset.Path));
+
                 var assetByPath = cache.FirstOrDefault(a => a.Path == asset.Path);
                 var assetByProp = cache.FirstOrDefault(a => a.Equals(asset));
 
@@ -148,42 +176,7 @@ namespace sbtw.Editor.Assets
                 }
             }
 
-            queueBackgroundUpdate();
-        }
-
-        private int lastUpdate;
-        private readonly object updateLock = new object();
-
-        private void queueBackgroundUpdate()
-        {
-            int current = Interlocked.Increment(ref lastUpdate);
-
-            Task.Delay(100).ContinueWith(_ =>
-            {
-                if (current != lastUpdate)
-                    return;
-
-                lock (updateLock)
-                {
-                    Interlocked.Increment(ref lastUpdate);
-
-                    foreach (var asset in cache.ToArray())
-                    {
-                        if (asset.ReferenceCount > 0)
-                        {
-                            if (!File.Exists(storage.GetFullPath(asset.Path)))
-                                asset.Generate(storage);
-                        }
-                        else
-                        {
-                            if (File.Exists(storage.GetFullPath(asset.Path)))
-                                File.Delete(storage.GetFullPath(asset.Path));
-
-                            cache.Remove(asset);
-                        }
-                    }
-                }
-            });
+            CacheChanged?.Invoke();
         }
 
         public bool Contains(Asset asset)

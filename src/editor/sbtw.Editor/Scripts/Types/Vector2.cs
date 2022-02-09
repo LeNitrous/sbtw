@@ -12,6 +12,11 @@ namespace sbtw.Editor.Scripts.Types
         public double X => underlying.X;
         public double Y => underlying.Y;
 
+        public static readonly Vector2 UnitX = new Vector2(1, 0);
+        public static readonly Vector2 UnitY = new Vector2(0, 1);
+        public static readonly Vector2 Zero = new Vector2(0);
+        public static readonly Vector2 One = new Vector2(1);
+
         public Vector2(double x, double y)
         {
             underlying = new osuTK.Vector2((float)x, (float)y);

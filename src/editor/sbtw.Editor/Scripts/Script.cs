@@ -54,11 +54,6 @@ namespace sbtw.Editor.Scripts
         public ICanProvideLogger Logger { get; set; }
 
         /// <summary>
-        /// Gets or sets this script's resources.
-        /// </summary>
-        public ScriptResources Resources { get; set; }
-
-        /// <summary>
         /// Executes this script.
         /// </summary>
         public void Execute()
@@ -77,6 +72,7 @@ namespace sbtw.Editor.Scripts
             try
             {
                 await PerformAsync();
+                Exception = null;
             }
             catch (Exception e)
             {
@@ -90,35 +86,41 @@ namespace sbtw.Editor.Scripts
         /// <returns>The task used to run this method.</returns>
         protected abstract Task PerformAsync();
 
+        [ScriptVisible]
         public string GetAsset(string path, Asset asset)
         {
             if (AssetProvider == null)
-                throw new NotSupportedException(@"This script does not support assets.");
+                throw new NotSupportedException(@"This script does not support getting assets.");
 
             asset.Path = path;
+            asset.Owner = this;
             AssetProvider.Assets.Add(asset);
             return path;
         }
 
+        [ScriptVisible]
         public Group GetGroup(string name)
         {
             if (GroupProvider == null)
-                throw new NotSupportedException(@"This script does not support groups.");
+                throw new NotSupportedException(@"This script does not support getting groups.");
 
-            var group = GroupProvider?.Groups.FirstOrDefault(g => g.Name == name);
+            var group = GroupProvider.Groups.FirstOrDefault(g => g.Name == name);
 
             if (group != null)
                 return group;
 
-            return group = new Group(this, GroupProvider.Groups, name);
+            GroupProvider.Groups.Add(group = new Group(name));
+
+            return group;
         }
 
+        [ScriptVisible]
         public byte[] Fetch(string path)
         {
             if (FileProvider == null)
                 throw new NotSupportedException(@"This script does not support storage access.");
 
-            if (FileProvider.Files.Exists(path))
+            if (!FileProvider.Files.Exists(path))
                 throw new FileNotFoundException($@"File ""{path}"" does not exist.");
 
             using var stream = FileProvider.Files.GetStream(path, FileAccess.Read, FileMode.OpenOrCreate);
@@ -128,12 +130,15 @@ namespace sbtw.Editor.Scripts
             return memory.ToArray();
         }
 
+        [ScriptVisible]
         public string Fetch(string path, bool _)
             => Encoding.Default.GetString(Fetch(path));
 
+        [ScriptVisible]
         public void Log(object message)
             => Log(message, LogLevel.Debug);
 
+        [ScriptVisible]
         public void Error(object message)
             => Log(message, LogLevel.Error);
 

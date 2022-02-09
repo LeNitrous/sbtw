@@ -5,12 +5,15 @@ using System;
 using System.IO;
 using Newtonsoft.Json;
 using osu.Framework.Platform;
+using sbtw.Editor.Projects;
+using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Assets
 {
     /// <summary>
     /// Represents a generatable asset.
     /// </summary>
+    [JsonObject(MemberSerialization.OptIn)]
     public abstract class Asset : IEquatable<Asset>
     {
         /// <summary>
@@ -25,6 +28,16 @@ namespace sbtw.Editor.Assets
         internal int ReferenceCount { get; set; }
 
         /// <summary>
+        /// The script that generated this asset.
+        /// </summary>
+        internal IScript Owner { get; set; }
+
+        /// <summary>
+        /// The project this asset is owned by.
+        /// </summary>
+        internal IProject Project { get; private set; }
+
+        /// <summary>
         /// The storage where this asset is being generated on.
         /// </summary>
         protected Storage Storage { get; private set; }
@@ -33,14 +46,17 @@ namespace sbtw.Editor.Assets
         /// Generates this asset.
         /// </summary>
         /// <param name="storage">The target storage to generate to.</param>
-        internal void Generate(Storage storage)
+        internal void Generate(IProject project)
         {
             if (string.IsNullOrEmpty(Path))
                 throw new InvalidOperationException(@"Asset is not yet ready for generation.");
 
-            Storage ??= storage ?? throw new ArgumentNullException(nameof(storage));
+            if (project is not ICanProvideFiles fileProvider)
+                throw new InvalidOperationException(@"Project cannot provide files");
 
-            using var stream = storage.GetStream(Path, FileAccess.Write, FileMode.OpenOrCreate);
+            Project = project;
+
+            using var stream = fileProvider.BeatmapFiles.GetStream(Path, FileAccess.Write, FileMode.OpenOrCreate);
             stream.Position = 0;
             stream.Write(Generate());
         }

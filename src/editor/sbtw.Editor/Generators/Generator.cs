@@ -13,22 +13,29 @@ using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Generators
 {
-    public abstract class Generator<T, U>
+    public abstract class Generator<TResult, TElement>
     {
-        public T Generate(IEnumerable<IScript> scripts, ICanProvideGroups groupsProvider)
-            => GenerateAsync(scripts, groupsProvider).Result;
+        public TResult Generate(IProject project, Dictionary<string, object> resources = null, ExportTarget? target = null, bool includeHidden = true)
+            => GenerateAsync(project, resources, target, includeHidden).Result;
 
-        public async Task<T> GenerateAsync(IEnumerable<IScript> scripts, ICanProvideGroups groupsProvider, CancellationToken token = default)
+        public async Task<TResult> GenerateAsync(IProject project, Dictionary<string, object> resources = null, ExportTarget? target = null, bool includeHidden = true, CancellationToken token = default)
         {
-            if (scripts == null)
-                throw new ArgumentNullException(nameof(scripts));
+            if (project is not ICanProvideScripts scriptsProvider)
+                throw new ArgumentException("Project does not support managing scripts.", nameof(project));
 
-            if (groupsProvider == null)
-                throw new ArgumentNullException(nameof(groupsProvider));
+            if (project is not ICanProvideGroups groupsProvider)
+                throw new ArgumentException("Project does not support providing groups.", nameof(project));
 
             var context = CreateContext();
 
             PreGenerate(context);
+
+            IEnumerable<Group> groups = groupsProvider.Groups;
+
+            foreach (var group in groups)
+                group.Clear();
+
+            var scripts = await scriptsProvider.Scripts.GetScriptsAsync(resources, token);
 
             foreach (var script in scripts)
             {
@@ -36,7 +43,13 @@ namespace sbtw.Editor.Generators
                 await script.ExecuteAsync(token);
             }
 
-            foreach (var group in groupsProvider.Groups)
+            if (target.HasValue && target.Value != ExportTarget.None)
+                groups = groups.Where(g => g.Target.Value == target.Value);
+
+            if (!includeHidden)
+                groups = groups.Where(g => g.Visible.Value);
+
+            foreach (var group in groups)
             {
                 foreach (var layer in Enum.GetValues<Layer>())
                 {
@@ -53,21 +66,21 @@ namespace sbtw.Editor.Generators
             return context;
         }
 
-        protected virtual void PreGenerate(T context)
+        protected virtual void PreGenerate(TResult context)
         {
         }
 
-        protected virtual void PostGenerate(T context)
+        protected virtual void PostGenerate(TResult context)
         {
         }
 
-        protected abstract T CreateContext();
-        protected abstract U CreateAnimation(T context, ScriptedAnimation animation);
-        protected abstract U CreateSample(T context, ScriptedSample sample);
-        protected abstract U CreateSprite(T context, ScriptedSprite sprite);
-        protected abstract U CreateVideo(T context, ScriptedVideo video);
+        protected abstract TResult CreateContext();
+        protected abstract TElement CreateAnimation(TResult context, ScriptedAnimation animation);
+        protected abstract TElement CreateSample(TResult context, ScriptedSample sample);
+        protected abstract TElement CreateSprite(TResult context, ScriptedSprite sprite);
+        protected abstract TElement CreateVideo(TResult context, ScriptedVideo video);
 
-        private U create(T context, IScriptElement element)
+        private TElement create(TResult context, IScriptElement element)
         {
             switch (element)
             {

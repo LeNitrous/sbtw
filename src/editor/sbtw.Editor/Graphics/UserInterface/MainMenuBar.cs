@@ -1,7 +1,6 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System.IO;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -218,18 +217,16 @@ namespace sbtw.Editor.Graphics.UserInterface
             });
         }
 
-        private void revealProject() => host.OpenFileExternally(project.Value.Path);
-        private void revealProjectWorkspace() => studio.Value?.Open(project.Value.Path);
+        private void revealProject()
+        {
+        }
+
+        private void revealProjectWorkspace()
+        {
+        }
 
         private void revealBeatmapFile()
         {
-            string path = Directory.GetFiles(project.Value.Path)
-                .FirstOrDefault(f => f.Contains($"[{beatmap.Value.BeatmapInfo.DifficultyName}]"));
-
-            if (string.IsNullOrEmpty(path))
-                return;
-
-            host.OpenFileExternally(path);
         }
 
         private class DrawableEditorBarMenuItem : DrawableOsuMenuItem

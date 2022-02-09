@@ -1,6 +1,7 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System.Collections.Generic;
 using sbtw.Editor.Assets;
 
 namespace sbtw.Editor.Projects
@@ -10,6 +11,6 @@ namespace sbtw.Editor.Projects
     /// </summary>
     public interface ICanProvideAssets
     {
-        AssetCollection Assets { get; }
+        ICollection<Asset> Assets { get; }
     }
 }

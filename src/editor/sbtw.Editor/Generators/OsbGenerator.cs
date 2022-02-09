@@ -140,7 +140,7 @@ namespace sbtw.Editor.Generators
             if (value is not osuTK.Vector2 vector)
                 return null;
 
-            return $"{vector.X:0},{vector.Y:0}";
+            return $"{vector.X:0.##},{vector.Y:0.##}";
         }
 
         private static string format_color(object value)
@@ -148,7 +148,7 @@ namespace sbtw.Editor.Generators
             if (value is not Color4 color)
                 return null;
 
-            return $"{color.R:0},{color.G:0},{color.B:0}";
+            return $"{color.R * 255:0},{color.G * 255:0},{color.B * 255:0}";
         }
 
         private static string format_float(object value)
@@ -156,7 +156,7 @@ namespace sbtw.Editor.Generators
             if (value is not float floatValue)
                 return null;
 
-            return (floatValue % 1) > float.Epsilon ? floatValue.ToString("0.00") : floatValue.ToString("0");
+            return (floatValue % 1) > float.Epsilon ? floatValue.ToString("0.####") : floatValue.ToString("0");
         }
 
         private static string format_float_no_decimal(object value)

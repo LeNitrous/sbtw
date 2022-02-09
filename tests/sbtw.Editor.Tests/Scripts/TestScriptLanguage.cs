@@ -6,21 +6,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
-using sbtw.Editor.Tests.Scripts;
 
-namespace sbtw.Editor.Tests
+namespace sbtw.Editor.Tests.Scripts
 {
     public class TestScriptLanguage : ScriptLanguage<TestScript>
     {
-        public override string Name => @"Test";
-        public IReadOnlyList<TestScript> Scripts { get; set; }
+        public IEnumerable<IScript> Scripts { get; set; }
 
         public TestScriptLanguage(IProject project)
             : base(project)
         {
         }
 
-        protected override Task<IEnumerable<IScript>> GetScriptsAsync(CancellationToken token = default)
-            => Task.FromResult<IEnumerable<IScript>>(Scripts);
+        protected override Task<IEnumerable<IScript>> GetScriptsInternalAsync(Dictionary<string, object> resources = null, CancellationToken token = default)
+            => Task.FromResult(Scripts);
     }
 }

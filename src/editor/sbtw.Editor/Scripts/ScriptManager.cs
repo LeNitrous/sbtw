@@ -12,6 +12,7 @@ namespace sbtw.Editor.Scripts
 {
     public class ScriptManager : IDisposable
     {
+        public IReadOnlyList<IScriptLanguage> Languages => languages;
         private readonly IProject project;
         private readonly List<IScriptLanguage> languages = new List<IScriptLanguage>();
         protected bool IsDisposed { get; private set; }
@@ -25,7 +26,7 @@ namespace sbtw.Editor.Scripts
 
             foreach (var type in types ?? throw new ArgumentNullException(nameof(types)))
             {
-                if (!type.IsAssignableFrom(typeof(IScriptLanguage)))
+                if (!type.IsAssignableTo(typeof(IScriptLanguage)))
                     throw new ArgumentException($"{type.Name} is not a {nameof(IScriptLanguage)}.", nameof(types));
 
                 if (type.GetConstructor(new[] { typeof(IProject) }) == null)
@@ -35,9 +36,9 @@ namespace sbtw.Editor.Scripts
             }
         }
 
-        public IEnumerable<IScript> GetScripts(ScriptResources resources) => GetScriptsAsync(resources).Result;
+        public IEnumerable<IScript> GetScripts(Dictionary<string, object> resources = null) => GetScriptsAsync(resources).Result;
 
-        public async Task<IEnumerable<IScript>> GetScriptsAsync(ScriptResources resources, CancellationToken token = default)
+        public async Task<IEnumerable<IScript>> GetScriptsAsync(Dictionary<string, object> resources = null, CancellationToken token = default)
             => (await Task.WhenAll(languages.Select(s => s.GetScriptsAsync(resources, token)))).SelectMany(s => s);
 
         protected virtual void Dispose(bool disposing)

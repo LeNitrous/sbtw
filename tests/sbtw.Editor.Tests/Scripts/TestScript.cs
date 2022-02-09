@@ -9,11 +9,11 @@ namespace sbtw.Editor.Tests.Scripts
 {
     public class TestScript : Script
     {
-        public Action Action;
+        public Action<Script> Action;
 
         protected override Task PerformAsync()
         {
-            Action?.Invoke();
+            Action?.Invoke(this);
             return Task.CompletedTask;
         }
     }
