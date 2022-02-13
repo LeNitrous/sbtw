@@ -4,6 +4,7 @@
 using osu.Framework.Audio;
 using osu.Framework.Audio.Mixing;
 using osu.Framework.Platform;
+using osu.Game.Rulesets;
 using sbtw.Editor.Beatmaps;
 
 namespace sbtw.Editor.Projects
@@ -13,6 +14,6 @@ namespace sbtw.Editor.Projects
     /// </summary>
     public interface ICanProvideBeatmap
     {
-        BeatmapProvider GetBeatmapProvider(GameHost host, AudioManager audioManager, AudioMixer audioMixer = null);
+        BeatmapProvider GetBeatmapProvider(GameHost host, AudioManager audioManager, RulesetStore rulesets = null, AudioMixer audioMixer = null);
     }
 }

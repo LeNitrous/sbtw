@@ -7,10 +7,8 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Localisation;
-using osu.Game.Graphics.UserInterface;
 using osu.Game.Overlays.Settings;
 using sbtw.Editor.Configuration;
-using sbtw.Editor.Studios;
 
 namespace sbtw.Editor.Overlays.Settings
 {
@@ -37,8 +35,8 @@ namespace sbtw.Editor.Overlays.Settings
             [Resolved]
             private EditorConfigManager config { get; set; }
 
-            [Resolved]
-            private StudioManager studioManager { get; set; }
+            // [Resolved]
+            // private StudioManager studioManager { get; set; }
 
             [BackgroundDependencyLoader]
             private void load()
@@ -50,24 +48,7 @@ namespace sbtw.Editor.Overlays.Settings
                         LabelText = @"Hot Reload",
                         Current = config.GetBindable<bool>(EditorSetting.HotReload),
                     },
-                    new StudioSettingsDropdown
-                    {
-                        LabelText = @"Preferred Editor",
-                        Current = studioManager.Current,
-                        Items = studioManager.Studios,
-                        ShowsDefaultIndicator = false,
-                    }
                 };
-            }
-        }
-
-        private class StudioSettingsDropdown : SettingsDropdown<Studio>
-        {
-            protected override OsuDropdown<Studio> CreateDropdown() => new StudioDropdownControl();
-
-            private class StudioDropdownControl : DropdownControl
-            {
-                protected override LocalisableString GenerateItemText(Studio item) => item?.FriendlyName ?? "None";
             }
         }
     }

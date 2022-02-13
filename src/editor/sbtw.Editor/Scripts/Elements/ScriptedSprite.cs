@@ -18,7 +18,7 @@ namespace sbtw.Editor.Scripts.Elements
         public Layer Layer { get; }
         public double Duration => EndTime - StartTime;
         public Anchor Origin { get; }
-        public Vector2 Position { get; }
+        public Vector2 Position { get; internal set; }
 
         public double StartTime
         {

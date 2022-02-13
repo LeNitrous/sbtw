@@ -13,7 +13,7 @@ namespace sbtw.Editor.Scripts
 {
     public class GroupCollection : IList<Group>, ICollection<Group>, IEnumerable<Group>, IEnumerable
     {
-        public event Action GroupPropertyChanged;
+        public event Action<GroupChangeType> GroupPropertyChanged;
         public readonly BindableList<Group> Bindable = new BindableList<Group>();
         public int Count => Bindable.Count;
         public bool IsReadOnly => false;
@@ -86,10 +86,10 @@ namespace sbtw.Editor.Scripts
             => Bindable.GetEnumerator();
 
         private void handleVisibilityChange(ValueChangedEvent<bool> e)
-            => GroupPropertyChanged?.Invoke();
+            => GroupPropertyChanged?.Invoke(GroupChangeType.Visibility);
 
         private void handleTargetChange(ValueChangedEvent<ExportTarget> e)
-            => GroupPropertyChanged?.Invoke();
+            => GroupPropertyChanged?.Invoke(GroupChangeType.Target);
 
         private void registerGroup(Group item)
         {

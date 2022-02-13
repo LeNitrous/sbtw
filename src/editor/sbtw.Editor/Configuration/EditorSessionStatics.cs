@@ -3,6 +3,7 @@
 
 using osu.Framework.Bindables;
 using osu.Game.Configuration;
+using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Configuration
 {
@@ -22,6 +23,7 @@ namespace sbtw.Editor.Configuration
             ensure_default(SetDefault(EditorSessionStatic.StoryboardShowOverlay, true));
             ensure_default(SetDefault(EditorSessionStatic.TrackRate, 1.0));
             ensure_default(SetDefault(EditorSessionStatic.TrackRateAffectsPitch, true));
+            ensure_default(SetDefault<Group>(EditorSessionStatic.GroupSelected, null));
         }
 
         private static void ensure_default<T>(Bindable<T> bindable) => bindable.SetDefault();
@@ -39,5 +41,6 @@ namespace sbtw.Editor.Configuration
         StoryboardShowOverlay,
         TrackRate,
         TrackRateAffectsPitch,
+        GroupSelected,
     }
 }

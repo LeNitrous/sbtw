@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using NUnit.Framework;
 using sbtw.Editor.Tests.Projects;
 
@@ -39,7 +38,7 @@ namespace sbtw.Editor.Tests.Scripts
         [Test]
         public void TestScriptManagerGetScripts()
         {
-            var scripts = project.Scripts.GetScripts();
+            var scripts = project.Scripts.Execute();
             Assert.That(scripts, Is.Not.Empty);
             Assert.That((project.Language as TestFileBasedScriptLanguage).Cache, Is.Not.Empty);
         }
@@ -47,26 +46,31 @@ namespace sbtw.Editor.Tests.Scripts
         [Test]
         public void TestScriptManagerScriptCompiling()
         {
-            var scripts = project.Scripts.GetScripts().ToArray();
-            Assert.That((scripts[0] as TestFileBasedScript).Compiled, Is.EqualTo("Hello World"));
-            Assert.That((scripts[1] as TestFileBasedScript).Compiled, Is.EqualTo("Lorem Ipsum"));
+            project.Scripts.Execute();
+
+            var cache = (project.Language as TestFileBasedScriptLanguage).Cache;
+            Assert.That(cache[0].Compiled, Is.EqualTo("Hello World"));
+            Assert.That(cache[1].Compiled, Is.EqualTo("Lorem Ipsum"));
         }
 
         [Test]
         public void TestScriptManagerScriptRecompiling()
         {
-            var scripts = project.Scripts.GetScripts().ToArray();
-            Assert.That((scripts[0] as TestFileBasedScript).CompileCount, Is.EqualTo(1));
-            Assert.That((scripts[1] as TestFileBasedScript).CompileCount, Is.EqualTo(1));
-            Assert.That((scripts[0] as TestFileBasedScript).Compiled, Is.EqualTo("Hello World"));
+            project.Scripts.Execute();
+
+            var cache = (project.Language as TestFileBasedScriptLanguage).Cache;
+
+            Assert.That(cache[0].CompileCount, Is.EqualTo(1));
+            Assert.That(cache[1].CompileCount, Is.EqualTo(1));
+            Assert.That(cache[0].Compiled, Is.EqualTo("Hello World"));
             Assert.That((project.Language as TestFileBasedScriptLanguage).Cache.Count, Is.EqualTo(2));
 
             writeToStorage("a", "Goodbye World");
-            scripts = project.Scripts.GetScripts().ToArray();
+            project.Scripts.Execute();
 
-            Assert.That((scripts[0] as TestFileBasedScript).CompileCount, Is.EqualTo(2));
-            Assert.That((scripts[1] as TestFileBasedScript).CompileCount, Is.EqualTo(1));
-            Assert.That((scripts[0] as TestFileBasedScript).Compiled, Is.EqualTo("Goodbye World"));
+            Assert.That(cache[0].CompileCount, Is.EqualTo(2));
+            Assert.That(cache[1].CompileCount, Is.EqualTo(1));
+            Assert.That(cache[0].Compiled, Is.EqualTo("Goodbye World"));
             Assert.That((project.Language as TestFileBasedScriptLanguage).Cache.Count, Is.EqualTo(2));
         }
 

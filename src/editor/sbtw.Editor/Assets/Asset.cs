@@ -6,7 +6,6 @@ using System.IO;
 using Newtonsoft.Json;
 using osu.Framework.Platform;
 using sbtw.Editor.Projects;
-using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Assets
 {
@@ -25,12 +24,7 @@ namespace sbtw.Editor.Assets
         /// <summary>
         /// The number of times this asset was referenced.
         /// </summary>
-        internal int ReferenceCount { get; set; }
-
-        /// <summary>
-        /// The script that generated this asset.
-        /// </summary>
-        internal IScript Owner { get; set; }
+        public int ReferenceCount { get; set; }
 
         /// <summary>
         /// The project this asset is owned by.
@@ -72,12 +66,10 @@ namespace sbtw.Editor.Assets
         /// </summary>
         /// <remarks>
         /// This must be overridden if the asset provides other properties.
-        /// As by default it only checks for type equality only.
         /// </remarks>
         /// <param name="other">The other asset to test against.</param>
-        /// <returns>True if the assets match. Otherwise false.</returns>
         public virtual bool Equals(Asset other)
-            => other.GetType() == GetType();
+            => other.GetType().Equals(GetType()) && Path.Equals(other.Path);
 
         public override bool Equals(object obj)
             => Equals(obj as Asset);

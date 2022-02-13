@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
+using sbtw.Editor.Scripts.Commands;
 using sbtw.Editor.Scripts.Elements;
 using sbtw.Editor.Scripts.Types;
 
@@ -15,32 +16,50 @@ namespace sbtw.Editor.Generators
 {
     public abstract class Generator<TResult, TElement>
     {
-        public TResult Generate(IProject project, Dictionary<string, object> resources = null, ExportTarget? target = null, bool includeHidden = true)
-            => GenerateAsync(project, resources, target, includeHidden).Result;
+        protected readonly IProject Project;
+        private readonly int precisionMove = 4;
+        private readonly int precisionScale = 4;
+        private readonly int precisionAlpha = 4;
+        private readonly int precisionRotation = 4;
 
-        public async Task<TResult> GenerateAsync(IProject project, Dictionary<string, object> resources = null, ExportTarget? target = null, bool includeHidden = true, CancellationToken token = default)
+        public Generator(IProject project)
         {
-            if (project is not ICanProvideScripts scriptsProvider)
+            if (project is not ICanProvideScripts)
                 throw new ArgumentException("Project does not support managing scripts.", nameof(project));
 
-            if (project is not ICanProvideGroups groupsProvider)
-                throw new ArgumentException("Project does not support providing groups.", nameof(project));
+            Project = project;
+
+            if (project is not IGeneratorConfig config)
+                return;
+
+            precisionMove = config.PrecisionMove.Value;
+            precisionScale = config.PrecisionScale.Value;
+            precisionAlpha = config.PrecisionAlpha.Value;
+            precisionRotation = config.PrecisionRotation.Value;
+        }
+
+        public GeneratorResult<TResult> Generate(ScriptGlobals globals = null, ExportTarget? target = null, bool includeHidden = true)
+            => GenerateAsync(globals, target, includeHidden).Result;
+
+        public async Task<GeneratorResult<TResult>> GenerateAsync(ScriptGlobals globals = null, ExportTarget? target = null, bool includeHidden = true, CancellationToken token = default)
+        {
+            var scriptProvider = Project as ICanProvideScripts;
 
             var context = CreateContext();
 
-            PreGenerate(context);
-
-            IEnumerable<Group> groups = groupsProvider.Groups;
+            IEnumerable<Group> groups = globals.GroupProvider.Groups ?? Enumerable.Empty<Group>();
 
             foreach (var group in groups)
                 group.Clear();
 
-            var scripts = await scriptsProvider.Scripts.GetScriptsAsync(resources, token);
+            PreGenerate(context);
 
-            foreach (var script in scripts)
+            var scripts = await scriptProvider.Scripts.ExecuteAsync(globals, token);
+
+            foreach (var group in groups.ToArray())
             {
-                token.ThrowIfCancellationRequested();
-                await script.ExecuteAsync(token);
+                if (!group.Elements.Any())
+                    globals.GroupProvider.Groups.Remove(group);
             }
 
             if (target.HasValue && target.Value != ExportTarget.None)
@@ -48,6 +67,11 @@ namespace sbtw.Editor.Generators
 
             if (!includeHidden)
                 groups = groups.Where(g => g.Visible.Value);
+
+            if (Project is IGeneratorConfig config && config.UseWidescreen.Value)
+                offsetForWideScreen(groups);
+
+            roundFloatsToPrecision(groups);
 
             foreach (var group in groups)
             {
@@ -63,7 +87,7 @@ namespace sbtw.Editor.Generators
 
             PostGenerate(context);
 
-            return context;
+            return new GeneratorResult<TResult> { Result = context, Scripts = scripts };
         }
 
         protected virtual void PreGenerate(TResult context)
@@ -79,6 +103,96 @@ namespace sbtw.Editor.Generators
         protected abstract TElement CreateSample(TResult context, ScriptedSample sample);
         protected abstract TElement CreateSprite(TResult context, ScriptedSprite sprite);
         protected abstract TElement CreateVideo(TResult context, ScriptedVideo video);
+
+        private static void offsetForWideScreen(IEnumerable<Group> groups)
+        {
+            foreach (var element in groups.SelectMany(g => g.Elements))
+            {
+                if (element is not ScriptedSprite sprite)
+                    continue;
+
+                sprite.Position = Vector2.Subtract(sprite.Position, new Vector2(107, 0));
+            }
+
+            performOnTimelines(groups, timeline =>
+            {
+                foreach (var command in timeline.X.Commands)
+                {
+                    command.StartValue -= 107;
+                    command.EndValue -= 107;
+                }
+
+                foreach (var command in timeline.Move.Commands)
+                {
+                    command.StartValue = Vector2.Subtract(command.StartValue, new Vector2(107, 0));
+                    command.EndValue = Vector2.Subtract(command.EndValue, new Vector2(107, 0));
+                }
+            });
+        }
+
+        private void roundFloatsToPrecision(IEnumerable<Group> groups)
+        {
+            performOnTimelines(groups, timeline =>
+            {
+                foreach (var command in timeline.X.Commands)
+                {
+                    command.StartValue = MathF.Round(command.StartValue, precisionMove);
+                    command.EndValue = MathF.Round(command.EndValue, precisionMove);
+                }
+
+                foreach (var command in timeline.Y.Commands)
+                {
+                    command.StartValue = MathF.Round(command.StartValue, precisionMove);
+                    command.EndValue = MathF.Round(command.EndValue, precisionMove);
+                }
+
+                foreach (var command in timeline.Alpha.Commands)
+                {
+                    command.StartValue = MathF.Round(command.StartValue, precisionAlpha);
+                    command.EndValue = MathF.Round(command.EndValue, precisionAlpha);
+                }
+
+                foreach (var command in timeline.Rotation.Commands)
+                {
+                    command.StartValue = MathF.Round(command.StartValue, precisionRotation);
+                    command.EndValue = MathF.Round(command.EndValue, precisionRotation);
+                }
+
+                foreach (var command in timeline.Scale.Commands)
+                {
+                    command.StartValue = MathF.Round(command.StartValue, precisionScale);
+                    command.EndValue = MathF.Round(command.EndValue, precisionScale);
+                }
+
+                foreach (var command in timeline.Move.Commands)
+                {
+                    command.StartValue = new Vector2(MathF.Round(command.StartValue.X), MathF.Round(command.StartValue.Y));
+                    command.EndValue = new Vector2(MathF.Round(command.EndValue.X), MathF.Round(command.EndValue.Y));
+                }
+
+                foreach (var command in timeline.VectorScale.Commands)
+                {
+                    command.StartValue = new Vector2(MathF.Round(command.StartValue.X), MathF.Round(command.StartValue.Y));
+                    command.EndValue = new Vector2(MathF.Round(command.EndValue.X), MathF.Round(command.EndValue.Y));
+                }
+            });
+        }
+
+        private static void performOnTimelines(IEnumerable<Group> groups, Action<IScriptCommandTimelineGroup> action)
+        {
+            foreach (var element in groups.SelectMany(g => g.Elements))
+            {
+                if (element is not ScriptedSprite sprite)
+                    continue;
+
+                var timelines = sprite.Loops.Cast<IScriptCommandTimelineGroup>()
+                    .Concat(sprite.Triggers.Cast<IScriptCommandTimelineGroup>())
+                    .Append(sprite.Timeline);
+
+                foreach (var timeline in timelines)
+                    action.Invoke(timeline);
+            }
+        }
 
         private TElement create(TResult context, IScriptElement element)
         {

@@ -121,20 +121,16 @@ namespace sbtw.Editor.Overlays
             popOutSample = audio.Samples.Get("UI/overlay-pop-out");
         }
 
-        private Message lastMessage;
-
         public new void Clear()
         {
-            lastMessage = null;
             flow.Clear();
         }
 
-        public void Print(string message, LogLevel level = LogLevel.Verbose)
+        public void AddSeparator() => flow.AddSeparator();
+
+        public void AddLine(string message, LogLevel level = LogLevel.Verbose)
         {
             var nextMessage = new Message { Content = message, Timestamp = DateTimeOffset.Now.ToLocalTime() };
-
-            if (lastMessage == null || lastMessage.Timestamp.Date != nextMessage.Timestamp.Date)
-                flow.AddSeparator(nextMessage.Timestamp);
 
             switch (level)
             {
@@ -155,16 +151,15 @@ namespace sbtw.Editor.Overlays
             }
 
             flow.AddLine(nextMessage);
-            lastMessage = nextMessage;
         }
 
         public void Error(Exception e, string message)
         {
-            Print($"{message}\n{e}", LogLevel.Error);
+            AddLine($"{message}\n{e}", LogLevel.Error);
             Logger.Error(e, message);
         }
 
-        public void Debug(string message) => Print(message, LogLevel.Debug);
+        public void Debug(string message) => AddLine(message, LogLevel.Debug);
 
         public override bool Contains(Vector2 screenSpacePos) => outputContainer.ReceivePositionalInputAt(screenSpacePos);
 

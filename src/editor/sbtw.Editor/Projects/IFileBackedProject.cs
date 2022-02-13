@@ -1,9 +1,11 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using osu.Framework.Configuration;
+
 namespace sbtw.Editor.Projects
 {
-    public interface IFileBackedProject : IProject, ICanProvideFiles, ICanProvideAssets, ICanProvideScripts, ICanProvideBeatmap
+    public interface IFileBackedProject : IProject, IConfigManager, ICanProvideFiles, ICanProvideAssets, ICanProvideScripts, ICanProvideBeatmap
     {
         /// <summary>
         /// The project's name.
@@ -11,8 +13,13 @@ namespace sbtw.Editor.Projects
         string Name { get; }
 
         /// <summary>
-        /// The local absolute path to this project.
+        /// The absolute path to this project.
         /// </summary>
         string Path { get; }
+
+        /// <summary>
+        /// The absolute path to the file backing this project.
+        /// </summary>
+        string FullPath { get; }
     }
 }

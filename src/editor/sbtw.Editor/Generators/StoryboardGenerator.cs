@@ -2,8 +2,8 @@
 // See LICENSE in the repository root for more details.
 
 using System;
-using osu.Game.Beatmaps;
 using osu.Game.Storyboards;
+using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts.Commands;
 using sbtw.Editor.Scripts.Elements;
 using sbtw.Editor.Scripts.Types;
@@ -12,14 +12,12 @@ namespace sbtw.Editor.Generators
 {
     public class StoryboardGenerator : Generator<Storyboard, IStoryboardElement>
     {
-        private readonly BeatmapInfo beatmapInfo;
-
-        public StoryboardGenerator(BeatmapInfo beatmapInfo)
+        public StoryboardGenerator(IProject project)
+            : base(project)
         {
-            this.beatmapInfo = beatmapInfo ?? throw new ArgumentNullException(nameof(beatmapInfo));
         }
 
-        protected override Storyboard CreateContext() => new Storyboard { BeatmapInfo = beatmapInfo };
+        protected override Storyboard CreateContext() => new Storyboard();
 
         private static IStoryboardElement add(Storyboard storyboard, Layer layer, IStoryboardElement element)
             => add(storyboard, Enum.GetName(layer), element);

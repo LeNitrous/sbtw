@@ -5,6 +5,8 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using sbtw.Editor.Assets;
+using sbtw.Editor.Projects;
+using sbtw.Editor.Scripts;
 using sbtw.Editor.Tests.Projects;
 
 namespace sbtw.Editor.Tests.Scripts
@@ -14,20 +16,18 @@ namespace sbtw.Editor.Tests.Scripts
         [Test]
         public void TestScriptException()
         {
-            var script = new TestScript { Action = s => s.GetGroup("test") };
-            script.Execute();
+            var result = run(null, null, s => s.GetGroup("test"));
 
-            Assert.That(script.Faulted, Is.True);
-            Assert.That(script.Exception, Is.InstanceOf<NotSupportedException>());
+            Assert.That(result.Faulted, Is.True);
+            Assert.That(result.Exception, Is.InstanceOf<ScriptExecutionException>());
         }
 
         [Test]
         public void TestScriptGroupProvider()
         {
             var provider = new TestProject();
-            var script = new TestScript { Action = s => s.GetGroup("test") };
-            script.GroupProvider = provider;
-            script.Execute();
+            var globals = new ScriptGlobals { GroupProvider = provider };
+            var script = run(provider, globals, s => s.GetGroup("test"));
 
             Assert.That(script.Faulted, Is.False);
             Assert.That(provider.Groups, Is.Not.Empty);
@@ -37,9 +37,8 @@ namespace sbtw.Editor.Tests.Scripts
         public void TestScriptLogger()
         {
             var provider = new TestProject();
-            var script = new TestScript { Action = s => s.Log("Hello World") };
-            script.Logger = provider;
-            script.Execute();
+            var globals = new ScriptGlobals { Logger = provider };
+            var script = run(provider, globals, s => s.Log("Hello World"));
 
             Assert.That(script.Faulted, Is.False);
             Assert.That(provider.Logs, Is.Not.Empty);
@@ -50,25 +49,31 @@ namespace sbtw.Editor.Tests.Scripts
         public void TestScriptFileProvider()
         {
             var provider = new TestProject();
-            var script = new TestScript { Action = s => s.Fetch("test.png") };
-            script.FileProvider = provider;
-            script.Execute();
+            var globals = new ScriptGlobals { FileProvider = provider };
+            var result = run(provider, globals, s => s.Fetch("test.png"));
 
-            Assert.That(script.Faulted, Is.False);
+            Assert.That(result.Faulted, Is.False);
         }
 
         [Test]
         public void TestScriptAssetProvider()
         {
             var provider = new TestProject();
-            var script = new TestScript { Action = s => s.GetAsset("test.png", new Rectangle()) };
-            script.AssetProvider = provider;
-            script.Execute();
+            var globals = new ScriptGlobals { AssetProvider = provider };
+            var result = run(provider, globals, s => s.GetAsset("test.png", new Rectangle()));
 
-            Assert.That(script.Faulted, Is.False);
+            Assert.That(result.Faulted, Is.False);
             Assert.That(provider.Assets, Is.Not.Empty);
             Assert.That(provider.Assets.First(), Is.InstanceOf<Rectangle>());
             Assert.That(provider.Assets.First().Path, Is.EqualTo("test.png"));
         }
+
+        private static ScriptExecutionResult run(IProject project, ScriptGlobals globals, Action<dynamic> action) => new TestScriptLanguage(project)
+        {
+            Scripts = new[]
+            {
+                new TestScript { Action = action }
+            }
+        }.Execute(globals).FirstOrDefault();
     }
 }

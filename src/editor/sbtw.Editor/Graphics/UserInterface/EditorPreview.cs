@@ -8,94 +8,61 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Input.Events;
-using osu.Framework.IO.Stores;
-using osu.Framework.Threading;
+using osu.Framework.Logging;
 using osu.Game.Beatmaps;
-using osu.Game.Graphics.Backgrounds;
 using osu.Game.Rulesets;
-using osu.Game.Rulesets.Edit;
 using osu.Game.Screens.Edit;
-using osu.Game.Screens.Play;
+using osu.Game.Skinning;
 using osu.Game.Storyboards;
-using osuTK;
-using osuTK.Input;
+using sbtw.Editor.Beatmaps;
 using sbtw.Editor.Configuration;
+using sbtw.Editor.Generators;
 using sbtw.Editor.Graphics.Containers;
 using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Graphics.UserInterface
 {
-    [Cached(typeof(IBeatSnapProvider))]
-    [Cached(typeof(ISamplePlaybackDisabler))]
-    public class EditorPreview : CompositeDrawable, IBeatSnapProvider, ISamplePlaybackDisabler
+    public class EditorPreview : CompositeDrawable
     {
-        private readonly BindableBeatDivisor beatDivisor = new BindableBeatDivisor();
-        private readonly Bindable<bool> samplePlaybackDisabled = new Bindable<bool>();
-
-        private EditorClock clock;
-        private EditorBeatmap editorBeatmap;
-
+        private readonly IBeatmap beatmap;
+        private readonly Ruleset ruleset;
+        private readonly ISkin skin;
         private EditorDrawableRuleset playfield;
         private Container storyboardMain;
         private Container storyboardOver;
         private Bindable<bool> showPlayfield;
 
         [Resolved]
-        private Bindable<IProject> project { get; set; }
+        private IBindable<IProject> project { get; set; }
 
         [Resolved]
-        private Bindable<WorkingBeatmap> beatmap { get; set; }
+        private EditorBase editor { get; set; }
 
-        private DependencyContainer dependencies;
+        [Resolved]
+        private IBeatmapProvider beatmapProvider { get; set; }
 
-        protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
-            => dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
+        public EditorPreview(IBeatmap beatmap, ISkin skin, IRulesetInfo ruleset)
+        {
+            this.skin = skin;
+            this.beatmap = beatmap;
+            this.ruleset = ruleset.CreateInstance();
+        }
 
         [BackgroundDependencyLoader]
-        private void load(Bindable<EditorClock> clockBindable, Bindable<EditorBeatmap> beatmapBindable, EditorSessionStatics statics, Bindable<RulesetInfo> rulesetInfo)
+        private void load(EditorSessionStatics statics, EditorClock clock)
         {
             RelativeSizeAxes = Axes.Both;
 
-            if (beatmap.Value is DummyWorkingBeatmap)
-                return;
-
-            IBeatmap playableBeatmap;
-
-            try
-            {
-                playableBeatmap = beatmap.Value.GetPlayableBeatmap(beatmap.Value.BeatmapInfo.Ruleset);
-            }
-            catch (Exception)
-            {
-                return;
-            }
-
-            dependencies.Cache(beatDivisor);
-
-            AddInternal(clock = new EditorClock(playableBeatmap, beatDivisor) { IsCoupled = false });
-            clock.ChangeSource(beatmap.Value.Track);
-            clock.SeekingOrStopped.BindValueChanged(e => samplePlaybackDisabled.Value = e.NewValue, true);
-            dependencies.CacheAs(clock);
-
-            AddInternal(editorBeatmap = new EditorBeatmap(playableBeatmap, beatmap.Value.Skin, beatmap.Value.BeatmapInfo));
-            dependencies.CacheAs(editorBeatmap);
-
-            AddInternal(new EditorSkinProvidingContainer(editorBeatmap)
+            AddInternal(new RulesetSkinProvidingContainer(ruleset, beatmap, skin)
             {
                 Children = new Drawable[]
                 {
-                    new AspectRatioPreservingContainer
+                    storyboardMain = new AspectRatioPreservingContainer
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        Children = new Drawable[]
-                        {
-                            new BeatmapBackground(beatmap.Value),
-                            storyboardMain = new Container { RelativeSizeAxes = Axes.Both },
-                        }
                     },
-                    playfield = new EditorDrawableRuleset(playableBeatmap, rulesetInfo.Value.CreateInstance())
+                    playfield = new EditorDrawableRuleset(beatmap, ruleset)
                     {
                         Clock = clock,
                         ProcessCustomClock = false,
@@ -111,86 +78,35 @@ namespace sbtw.Editor.Graphics.UserInterface
             showPlayfield = statics.GetBindable<bool>(EditorSessionStatic.ShowPlayfield);
             showPlayfield.BindValueChanged(e => playfield.Alpha = e.NewValue ? 1 : 0, true);
 
-            clockBindable.Value = clock;
-            beatmapBindable.Value = editorBeatmap;
+            Generate();
         }
 
-        public async Task SetStoryboardAsync(Storyboard storyboard, IResourceStore<byte[]> resources)
+        public void Generate() => Task.Run(async () =>
         {
-            Task task = null;
-
-            var del = new ScheduledDelegate(() => task = LoadComponentAsync(new EditorDrawableStoryboard(storyboard, resources), loaded =>
+            Schedule(() =>
             {
                 storyboardMain.Clear();
                 storyboardOver.Clear();
-                storyboardMain.Add(loaded);
-                storyboardOver.Add(loaded.Children.FirstOrDefault(l => l.Name == "Overlay").CreateProxy());
-            }));
+            });
 
-            Scheduler.Add(del);
-
-            while (!IsDisposed && !del.Completed)
-                await Task.Delay(10);
-
-            await task;
-        }
-
-        public void Seek(double time) => clock?.Seek(time);
-
-        public void Start() => clock?.Start();
-
-        public void Stop() => clock?.Stop();
-
-        protected override void Update()
-        {
-            base.Update();
-            clock?.ProcessFrame();
-        }
-
-        protected override bool OnKeyDown(KeyDownEvent e)
-        {
-            switch (e.Key)
+            try
             {
-                case Key.Left:
-                    seek(e, -1);
-                    return true;
+                var output = (await editor.Generate(GenerateKind.Storyboard, null, false)) as GeneratorResult<Storyboard>;
+                output.Result.BeatmapInfo = beatmap.BeatmapInfo;
 
-                case Key.Right:
-                    seek(e, 1);
-                    return true;
+                var resources = (beatmapProvider as IBeatmapResourceProvider).Resources;
+                var storyboard = new EditorDrawableStoryboard(output.Result, resources);
+
+                Schedule(() => LoadComponentAsync(storyboard, _ =>
+                {
+                    storyboardMain.Add(storyboard);
+                    storyboardOver.Add(storyboard.Children.FirstOrDefault(l => l.Name == "Overlay").CreateProxy());
+                }));
             }
-
-            return base.OnKeyDown(e);
-        }
-
-        private void seek(UIEvent e, int direction)
-        {
-            double amount = e.ShiftPressed ? 4 : 1;
-
-            bool trackPlaying = clock.IsRunning;
-
-            if (trackPlaying)
-                amount *= beatDivisor.Value;
-
-            if (direction < 1)
-                clock.SeekBackward(!trackPlaying, amount);
-            else
-                clock.SeekForward(!trackPlaying, amount);
-        }
-
-        private class AspectRatioPreservingContainer : Container
-        {
-            protected override Vector2 DrawScale => new Vector2(Parent.DrawHeight / 480);
-
-            public AspectRatioPreservingContainer()
+            catch (Exception e)
             {
-                Size = new Vector2(854, 480);
-            }
-        }
-
-        int IBeatSnapProvider.BeatDivisor => beatDivisor.Value;
-        double IBeatSnapProvider.SnapTime(double time, double? referenceTime) => editorBeatmap.SnapTime(time, referenceTime);
-        double IBeatSnapProvider.GetBeatLengthAtTime(double referenceTime) => editorBeatmap.GetBeatLengthAtTime(referenceTime);
-        IBindable<bool> ISamplePlaybackDisabler.SamplePlaybackDisabled => samplePlaybackDisabled;
+                Logger.Error(e, "Failed to load preview.");
+            };
+        });
     }
 }

@@ -3,9 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using osu.Framework;
 using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Scripts
@@ -17,7 +20,7 @@ namespace sbtw.Editor.Scripts
         private readonly List<IScriptLanguage> languages = new List<IScriptLanguage>();
         protected bool IsDisposed { get; private set; }
 
-        public ScriptManager(IProject project, IEnumerable<Type> types)
+        public ScriptManager(IProject project, IEnumerable<Type> types, bool loadAssemblies = false)
         {
             this.project = project ?? throw new ArgumentNullException(nameof(project));
 
@@ -30,16 +33,43 @@ namespace sbtw.Editor.Scripts
                     throw new ArgumentException($"{type.Name} is not a {nameof(IScriptLanguage)}.", nameof(types));
 
                 if (type.GetConstructor(new[] { typeof(IProject) }) == null)
-                    throw new ArgumentException($"{type.Name} does not have a matching constructor.");
+                    throw new ArgumentException($"{type.Name} does not have the required constructor.");
 
                 languages.Add(Activator.CreateInstance(type, new object[] { project }) as IScriptLanguage);
             }
+
+            if (!loadAssemblies)
+                return;
+
+            string[] files = Directory.GetFiles(RuntimeInfo.StartupDirectory, @"sbtw.Editor.Scripts.*.dll");
+
+            foreach (string file in files)
+            {
+                var assembly = Assembly.LoadFrom(file);
+                var type = assembly.GetTypes().First(t => t.IsPublic && t.IsSubclassOf(typeof(ScriptLanguage)));
+
+                if (type != null)
+                    languages.Add(Activator.CreateInstance(type, new object[] { project }) as IScriptLanguage);
+            }
         }
 
-        public IEnumerable<IScript> GetScripts(Dictionary<string, object> resources = null) => GetScriptsAsync(resources).Result;
+        public IEnumerable<ScriptExecutionResult> Execute()
+            => Execute<object>(null);
 
-        public async Task<IEnumerable<IScript>> GetScriptsAsync(Dictionary<string, object> resources = null, CancellationToken token = default)
-            => (await Task.WhenAll(languages.Select(s => s.GetScriptsAsync(resources, token)))).SelectMany(s => s);
+        public Task<IEnumerable<ScriptExecutionResult>> ExecuteAsync(CancellationToken token = default)
+            => ExecuteAsync<object>(null, token);
+
+        public IEnumerable<ScriptExecutionResult> Execute<T>(T globals)
+            where T : class
+        {
+            return ExecuteAsync(globals).Result;
+        }
+
+        public async Task<IEnumerable<ScriptExecutionResult>> ExecuteAsync<T>(T globals, CancellationToken token = default)
+            where T : class
+        {
+            return (await Task.WhenAll(languages.Select(s => s.ExecuteAsync(globals, token)))).SelectMany(s => s);
+        }
 
         protected virtual void Dispose(bool disposing)
         {

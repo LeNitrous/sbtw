@@ -1,10 +1,10 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Shapes;
 using osu.Framework.Utils;
 using osu.Game.Graphics.Containers;
 using osu.Game.Online.Chat;
@@ -38,7 +38,7 @@ namespace sbtw.Editor.Overlays.Output
 
         public void AddLine(Message message) => Add(new ChatLine(message));
 
-        public void AddSeparator(DateTimeOffset date) => Add(new DrawableChannel.DaySeparator(date) { Alpha = 0.1f });
+        public void AddSeparator() => Add(new Separator { Alpha = 0.1f });
 
         private class OutputScrollContainer : UserTrackingScrollContainer
         {
@@ -72,6 +72,22 @@ namespace sbtw.Editor.Overlays.Output
 
                     lastExtent = ScrollableExtent;
                 });
+            }
+        }
+
+        private class Separator : Container
+        {
+            public Separator()
+            {
+                Height = 10;
+                RelativeSizeAxes = Axes.X;
+                Child = new Box
+                {
+                    Height = 2,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    RelativeSizeAxes = Axes.X,
+                };
             }
         }
     }

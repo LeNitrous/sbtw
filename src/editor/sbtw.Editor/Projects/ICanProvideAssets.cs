@@ -11,6 +11,6 @@ namespace sbtw.Editor.Projects
     /// </summary>
     public interface ICanProvideAssets
     {
-        ICollection<Asset> Assets { get; }
+        HashSet<Asset> Assets { get; }
     }
 }

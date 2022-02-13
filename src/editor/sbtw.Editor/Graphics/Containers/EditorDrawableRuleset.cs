@@ -21,6 +21,7 @@ namespace sbtw.Editor.Graphics.Containers
         {
             this.beatmap = beatmap;
             this.ruleset = ruleset;
+
             RelativeSizeAxes = Axes.Both;
             InternalChild = drawableRuleset = ruleset.CreateDrawableRulesetWith(beatmap);
         }

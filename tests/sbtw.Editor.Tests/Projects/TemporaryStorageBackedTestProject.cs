@@ -9,13 +9,15 @@ namespace sbtw.Editor.Tests.Projects
 {
     public class TemporaryStorageBackedTestProject : TestProject
     {
+        private TemporaryNativeStorage storage;
+
         protected override Storage CreateStorage()
-            => new TemporaryNativeStorage($"test-project-{Guid.NewGuid()}");
+            => storage = new TemporaryNativeStorage($"test-project-{Guid.NewGuid()}");
 
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-            (Files as TemporaryNativeStorage)?.Dispose();
+            storage?.Dispose();
         }
     }
 }

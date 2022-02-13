@@ -1,6 +1,7 @@
 <Project>
 
   <PropertyGroup>
+    <AssemblyName>sbtw</AssemblyName>
     <AssemblyVersion>0.0.0</AssemblyVersion>
     <OutputType>WinExe</OutputType>
     <ApplicationIcon>../../../assets/icon.ico</ApplicationIcon>
@@ -8,9 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="../../../assets/icon.ico">
-      <LogicalName>icon.ico</LogicalName>
-    </EmbeddedResource>
+    <ProjectReference Include="..\..\editor\sbtw.Editor\sbtw.Editor.csproj" />
+    <ProjectReference Include="..\..\editor\sbtw.Editor.Scripts.Javascript\sbtw.Editor.Scripts.Javascript.csproj" />
   </ItemGroup>
 
 </Project>

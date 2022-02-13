@@ -18,8 +18,7 @@ namespace sbtw.Editor.Scripts
     /// <summary>
     /// A scripting language that relies on external scripts.
     /// </summary>
-    public abstract class FileBasedScriptLanguage<T> : ScriptLanguage<T>
-        where T : FileBasedScript
+    public abstract class FileBasedScriptLanguage : ScriptLanguage
     {
         /// <summary>
         /// An array of extensions (including the period at the start)
@@ -32,6 +31,18 @@ namespace sbtw.Editor.Scripts
         /// </summary>
         public virtual IReadOnlyList<string> Exclude { get; } = Array.Empty<string>();
 
+        protected FileBasedScriptLanguage(IProject project)
+            : base(project)
+        {
+        }
+    }
+
+    /// <summary>
+    /// A scripting language that relies on external scripts.
+    /// </summary>
+    public abstract class FileBasedScriptLanguage<T> : FileBasedScriptLanguage
+        where T : FileBasedScript
+    {
         protected readonly List<CachedScript> Cache = new List<CachedScript>();
         private readonly Storage storage;
 
@@ -41,7 +52,7 @@ namespace sbtw.Editor.Scripts
             storage = (Project as ICanProvideFiles)?.Files ?? throw new NotSupportedException(@"Project does not provide files.");
         }
 
-        protected override async Task<IEnumerable<IScript>> GetScriptsInternalAsync(Dictionary<string, object> resources = null, CancellationToken token = default)
+        protected sealed override async Task<IEnumerable<IScript>> GetScriptsAsync(CancellationToken token = default)
         {
             var scripts = new List<T>();
 
@@ -65,26 +76,13 @@ namespace sbtw.Editor.Scripts
                         if (!cached.Hash.SequenceEqual(hash))
                         {
                             cached.Hash = hash;
-                            await cached.Script.CompileAsync();
+                            await cached.Script.CompileAsync(token);
                         }
                     }
                     else
                     {
                         Cache.Add(cached = new CachedScript { Path = path, Hash = hash, Script = CreateScript(storage.GetFullPath(path)) });
-
-                        foreach ((var type, var method) in FileBasedScript.METHODS)
-                            cached.Script.RegisterDelegate(method.CreateDelegate(type, cached.Script));
-
-                        foreach (var type in FileBasedScript.TYPES)
-                            cached.Script.RegisterType(type);
-
-                        await cached.Script.CompileAsync();
-                    }
-
-                    if (resources != null)
-                    {
-                        foreach ((string name, object obj) in resources)
-                            cached.Script.RegisterMember(name, obj);
+                        await cached.Script.CompileAsync(token);
                     }
 
                     scripts.Add(cached.Script);

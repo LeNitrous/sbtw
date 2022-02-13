@@ -1,65 +1,65 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System;
 using System.Linq;
+using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
+using osu.Framework.Configuration;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
 using osu.Framework.Platform;
+using osu.Framework.Threading;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Overlays;
+using osu.Game.Rulesets;
 using osu.Game.Screens.Edit.Components.Menus;
 using osuTK;
 using osuTK.Graphics;
 using sbtw.Editor.Configuration;
 using sbtw.Editor.Overlays;
+using sbtw.Editor.Platform;
 using sbtw.Editor.Projects;
-using sbtw.Editor.Studios;
 
 namespace sbtw.Editor.Graphics.UserInterface
 {
     public class MainMenuBar : OsuMenu
     {
         private Bindable<WorkingBeatmap> beatmap;
+        private Bindable<RulesetInfo> ruleset;
         private Bindable<IProject> project;
-        private Bindable<Studio> studio;
         private Bindable<bool> showInterface;
 
         [Resolved]
         private GameHost host { get; set; }
 
         [Resolved]
-        private Bindable<IProject> resolvedProject { get; set; }
-
-        [Resolved]
-        private Bindable<WorkingBeatmap> resolvedBeatmap { get; set; }
-
-        [Resolved]
-        private Bindable<Studio> resolvedStudio { get; set; }
-
-        [Resolved]
-        private EditorSessionStatics statics { get; set; }
+        private EditorBase editorBase { get; set; }
 
         [Resolved(canBeNull: true)]
         private Editor editor { get; set; }
 
-        [Resolved(canBeNull: true)]
+        [Resolved]
         private EditorSettingsOverlay settings { get; set; }
 
-        [Resolved(canBeNull: true)]
+        [Resolved]
         private OutputOverlay output { get; set; }
 
-        [Resolved(canBeNull: true)]
+        [Resolved]
         private NotificationOverlay notifications { get; set; }
 
-        [Resolved(canBeNull: true)]
+        [Resolved]
         private SetupOverlay setup { get; set; }
+
+        [Resolved]
+        private RulesetStore rulesets { get; set; }
 
         public MainMenuBar()
             : base(Direction.Horizontal, true)
@@ -72,161 +72,218 @@ namespace sbtw.Editor.Graphics.UserInterface
         }
 
         [BackgroundDependencyLoader(true)]
-        private void load()
+        private void load(EditorSessionStatics statics, Bindable<RulesetInfo> ruleset, Bindable<WorkingBeatmap> beatmap, Bindable<IProject> project)
         {
-            beatmap = resolvedBeatmap.GetBoundCopy();
-            project = resolvedProject.GetBoundCopy();
-            studio = resolvedStudio.GetBoundCopy();
             showInterface = statics.GetBindable<bool>(EditorSessionStatic.ShowInterface);
 
-            beatmap.ValueChanged += _ => createItems();
-            project.ValueChanged += _ => createItems();
+            this.beatmap = beatmap.GetBoundCopy();
+            this.project = project.GetBoundCopy();
+            this.ruleset = ruleset.GetBoundCopy();
+
+            this.beatmap.ValueChanged += _ => createItems();
+            this.project.ValueChanged += _ => createItems();
+            this.ruleset.ValueChanged += _ => createItems();
 
             createItems();
         }
 
-        private void createItems() => Schedule(() => Items = new[]
+        private ScheduledDelegate createItemsSchedule;
+
+        private void createItems()
         {
-            new MenuItem("Project")
-        {
-                Items = new[]
-                {
-                    new EditorMenuItem("New", MenuItemType.Standard, () => setup?.Show()),
-                    new EditorMenuItemSpacer(),
-                    new EditorMenuItem("Save", MenuItemType.Standard)
-                    {
-                        Action =
-                        {
-                            Disabled = project.Value is DummyProject,
-                        }
-                    },
-                    new EditorMenuItemSpacer(),
-                    new EditorMenuItem("Open", MenuItemType.Standard, openProject),
-                    new EditorMenuItem("Open Recent", MenuItemType.Standard),
-                    new EditorMenuItemSpacer(),
-                    new EditorMenuItem("Close")
-                    {
-                        Action =
-                        {
-                            Disabled = project.Value is DummyProject,
-                        }
-                    },
-                    new EditorMenuItemSpacer(),
-                    new EditorMenuItem("Reveal in File Explorer")
-                    {
-                        Action =
-                        {
-                            Value = revealProject,
-                            Disabled = project.Value is DummyProject
-                        }
-                    },
-                    new EditorMenuItem("Reveal in Code")
-                    {
-                        Action =
-                        {
-                            Value = revealProjectWorkspace,
-                            Disabled = project.Value is DummyProject
-                        }
-                    },
-                    new EditorMenuItemSpacer(),
-                    new EditorMenuItem("Export")
-                    {
-                        Action =
-                        {
-                            Disabled = project.Value is DummyProject
-                        }
-                    },
-                    new EditorMenuItemSpacer(),
-                    new EditorMenuItem("Exit", MenuItemType.Standard) { Action = { Value = host.Exit } },
-                }
-            },
-            new MenuItem("Beatmap")
+            createItemsSchedule?.Cancel();
+            createItemsSchedule = Schedule(() => Items = new[]
             {
-                Items = new[]
+                new MenuItem("Project")
                 {
-                    new EditorMenuItem("Switch Difficulty")
+                    Items = new[]
                     {
-                        Items = beatmap.Value?.BeatmapInfo.BeatmapSet.Beatmaps?
-                            .Select(b => new DifficultyMenuItem(b, b.DifficultyName == beatmap.Value.BeatmapInfo.DifficultyName, b => { }))
-                            .ToArray() ?? new MenuItem[] { new EditorMenuItemSpacer() }
-                    },
-                    new EditorMenuItem("Reload Beatmap")
-                    {
-                        Action =
+                        new EditorMenuItem("New", MenuItemType.Standard)
                         {
-                            Disabled = beatmap.Value is DummyWorkingBeatmap
-                        }
-                    },
-                    new EditorMenuItemSpacer(),
-                    new EditorMenuItem("Reveal Beatmap File")
-                    {
-                        Action =
+                            Action =
+                            {
+                                Value = () => setup?.Show(),
+                                Disabled = project.Disabled,
+                            },
+                        },
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("Save", MenuItemType.Standard)
                         {
-                            Value = revealBeatmapFile,
-                            Disabled = beatmap.Value is DummyWorkingBeatmap
-                        }
+                            Action =
+                            {
+                                Value = () => (project as IConfigManager)?.Save(),
+                                Disabled = project.Value is not IFileBackedProject,
+                            },
+                        },
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("Open", MenuItemType.Standard)
+                        {
+                            Action =
+                            {
+                                Value = () => Task.Run(openProject),
+                                Disabled = project.Disabled,
+                            },
+                        },
+                        new EditorMenuItem("Open Recent", MenuItemType.Standard)
+                        {
+                            Action =
+                            {
+                                Disabled = project.Disabled,
+                            },
+                        },
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("Close")
+                        {
+                            Action =
+                            {
+                                Value = project.SetDefault,
+                                Disabled = project.Disabled || project.Value is not IFileBackedProject,
+                            }
+                        },
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("Reveal in File Explorer")
+                        {
+                            Action =
+                            {
+                                Value = revealProjectInExplorer,
+                                Disabled = project.Value is not ICanProvideFiles,
+                            }
+                        },
+                        new EditorMenuItem("Reveal in Code")
+                        {
+                            Action =
+                            {
+                                Value = revealProjectInCode,
+                                Disabled = project.Value is not ICanProvideFiles,
+                            }
+                        },
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("Export")
+                        {
+                            Action =
+                            {
+                                Disabled = project.Value is not IFileBackedProject,
+                            },
+                        },
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("Exit", MenuItemType.Standard) { Action = { Value = host.Exit } },
+                    }
+                },
+                new MenuItem("Beatmap")
+                {
+                    Items = new[]
+                    {
+                        new EditorMenuItem("Switch Ruleset")
+                        {
+                            Items = rulesets.AvailableRulesets
+                                .Select(r => new RulesetMenuItem(r, r.ShortName == ruleset.Value.ShortName, r => editorBase.SetRuleset(r))).ToArray()
+                        },
+                        new EditorMenuItem("Switch Difficulty")
+                        {
+                            Items = beatmap.Value?.BeatmapInfo.BeatmapSet.Beatmaps?
+                                .Select(b => new DifficultyMenuItem(b, b.DifficultyName == beatmap.Value.BeatmapInfo.DifficultyName, b => editorBase.SetBeatmap(b)))
+                                .ToArray() ?? new MenuItem[] { new EditorMenuItemSpacer() }
+                        },
+                        new EditorMenuItem("Reload Beatmap")
+                        {
+                            Action =
+                            {
+                                Value = editor.RefreshBeatmap,
+                                Disabled = project.Value is not ICanProvideBeatmap,
+                            }
+                        },
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("Reveal Beatmap File")
+                        {
+                            Action =
+                            {
+                                Value = revealBeatmapFile,
+                                Disabled = project.Value is not ICanProvideBeatmap,
+                            }
+                        },
                     },
                 },
-            },
-            new MenuItem("Editor")
-            {
-                Items = new MenuItem[]
+                new MenuItem("Editor")
                 {
-                    new ToggleMenuItem("Show Interface", MenuItemType.Standard) { State = { BindTarget = showInterface } },
-                    new EditorMenuItem("Show Output", MenuItemType.Standard, () => output?.Show()),
-                    new EditorMenuItem("Show Notifications", MenuItemType.Standard, () => notifications?.Show()),
-                    new EditorMenuItemSpacer(),
-                    new EditorMenuItem("Reload Preview")
+                    Items = new MenuItem[]
                     {
-                        Action =
+                        new ToggleMenuItem("Show Interface", MenuItemType.Standard) { State = { BindTarget = showInterface } },
+                        new EditorMenuItem("Show Output", MenuItemType.Standard, () => output?.Show()),
+                        new EditorMenuItem("Show Notifications", MenuItemType.Standard, () => notifications?.Show()),
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("Reload Preview")
                         {
-                            Disabled = project.Value is DummyProject
-                        }
+                            Action =
+                            {
+                                Value = () => editor?.Generate(),
+                                Disabled = project.Value is not IFileBackedProject,
+                            }
+                        },
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("Open Settings", MenuItemType.Standard, () => settings?.Show()),
                     },
-                    new EditorMenuItemSpacer(),
-                    new EditorMenuItem("Open Settings", MenuItemType.Standard, () => settings?.Show()),
                 },
-            },
-            new MenuItem("Help")
-            {
-                Items = new[]
+                new MenuItem("Help")
                 {
-                    new EditorMenuItem("Getting Started"),
-                    new EditorMenuItem("Tips and Tricks"),
-                    new EditorMenuItem("Documentation"),
-                    new EditorMenuItemSpacer(),
-                    new EditorMenuItem("sbtw! on GitHub") { Action = { Value = () => host.OpenUrlExternally("https://github.com/lenitrous/sbtw") } }
+                    Items = new[]
+                    {
+                        new EditorMenuItem("Getting Started"),
+                        new EditorMenuItem("Tips and Tricks"),
+                        new EditorMenuItem("Documentation"),
+                        new EditorMenuItemSpacer(),
+                        new EditorMenuItem("sbtw! on GitHub") { Action = { Value = () => host.OpenUrlExternally("https://github.com/lenitrous/sbtw") } }
+                    }
                 }
-            }
-        });
+            });
+        }
 
         protected override Menu CreateSubMenu() => new SubMenu();
         protected override DrawableMenuItem CreateDrawableMenuItem(MenuItem item) => new DrawableEditorBarMenuItem(item);
 
-        private void openProject()
+        private async Task openProject()
         {
-            if (editor == null)
+            if (editorBase is not DesktopEditor desktopEditor)
                 return;
 
-            Schedule(async () =>
-            {
-                string path = await editor.RequestSingleFileAsync(extensions: new[] { ".json" });
+            var filters = new[] { new PickerFilter { Description = "sbtw! Projects", Files = new[] { "*.sbtw.json" } } };
+            string path = (await desktopEditor.Picker.OpenFileAsync(filters)).FirstOrDefault();
 
-                if (string.IsNullOrEmpty(path))
-                    return;
-            });
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            if ((project.Value as IFileBackedProject)?.FullPath == path)
+                return;
+
+            project.Value = new JsonBackedProject(path);
         }
 
-        private void revealProject()
+        private void revealProjectInExplorer()
         {
+            if (project.Value is ICanProvideFiles filesProvider)
+                host.OpenFileExternally(filesProvider.Files.GetFullPath("."));
         }
 
-        private void revealProjectWorkspace()
+        private void revealProjectInCode()
         {
         }
 
         private void revealBeatmapFile()
         {
+        }
+
+        private class RulesetMenuItem : StatefulMenuItem<bool>
+        {
+            public RulesetMenuItem(RulesetInfo rulesetInfo, bool selected, Action<RulesetInfo> action)
+                : base(rulesetInfo.ShortName, null)
+            {
+                State.Value = selected;
+
+                if (!selected)
+                    Action.Value = () => action(rulesetInfo);
+            }
+
+            public override IconUsage? GetIconForState(bool state)
+                => state ? FontAwesome.Solid.Check : null;
         }
 
         private class DrawableEditorBarMenuItem : DrawableOsuMenuItem

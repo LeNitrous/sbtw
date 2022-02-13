@@ -4,20 +4,16 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Scripts
 {
-    public interface IScript : IDisposable
+    public interface IScript
     {
-        bool Faulted { get; }
-        Exception Exception { get; }
-        ICanProvideAssets AssetProvider { set; }
-        ICanProvideGroups GroupProvider { set; }
-        ICanProvideFiles FileProvider { set; }
-        ICanProvideLogger Logger { set; }
-
-        void Execute();
+        void Execute() => ExecuteAsync();
         Task ExecuteAsync(CancellationToken token = default);
+
+        void RegisterType(Type type);
+        void RegisterFunction(Delegate del);
+        void RegisterVariable(string name, object value);
     }
 }

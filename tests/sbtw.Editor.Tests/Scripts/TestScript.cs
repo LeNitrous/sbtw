@@ -2,19 +2,17 @@
 // See LICENSE in the repository root for more details.
 
 using System;
-using System.Threading.Tasks;
 using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Tests.Scripts
 {
-    public class TestScript : Script
+    public class TestScript : BuiltInScript
     {
-        public Action<Script> Action;
+        public Action<dynamic> Action;
 
-        protected override Task PerformAsync()
+        protected override void Perform(dynamic context)
         {
-            Action?.Invoke(this);
-            return Task.CompletedTask;
+            Action?.Invoke(context);
         }
     }
 }

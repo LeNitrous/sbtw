@@ -1,6 +1,7 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System.Linq;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -8,6 +9,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Localisation;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Graphics.UserInterfaceV2;
+using sbtw.Editor.Platform;
 
 namespace sbtw.Editor.Overlays.Setup
 {
@@ -21,12 +23,14 @@ namespace sbtw.Editor.Overlays.Setup
         [Resolved]
         private EditorBase editor { get; set; }
 
+        private LabelledTextBox location;
+
         [BackgroundDependencyLoader]
         private void load()
         {
             Children = new Drawable[]
             {
-                new LabelledTextBox
+                location = new LabelledTextBox
                 {
                     Label = "Location",
                     Current = beatmapPath,
@@ -36,15 +40,23 @@ namespace sbtw.Editor.Overlays.Setup
                 {
                     Text = "Browse",
                     Width = 200,
-                    Action = browse,
+                    Action = () => Task.Run(browseBeatmapArchive),
                 },
             };
         }
 
-        private void browse() => Task.Run(async () =>
+        private async Task browseBeatmapArchive()
         {
-            string path = await editor.RequestSingleFileAsync("Open beatmap", null, extensions: new[] { ".osz" });
-            Schedule(() => beatmapPath.Value = path ?? string.Empty);
-        });
+            if (editor is not DesktopEditor desktopEditor)
+                return;
+
+            var filter = new PickerFilter { Files = new[] { "*.osz" }, Description = "osu! Beatmap Archive" };
+            string result = (await desktopEditor.Picker.OpenFileAsync(new[] { filter })).FirstOrDefault();
+
+            if (string.IsNullOrEmpty(result))
+                return;
+
+            Schedule(() => location.Text = result);
+        }
     }
 }

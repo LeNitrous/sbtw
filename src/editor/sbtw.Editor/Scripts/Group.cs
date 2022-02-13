@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -24,7 +25,7 @@ namespace sbtw.Editor.Scripts
         /// The name of the group.
         /// </summary>
         [JsonProperty]
-        public readonly string Name;
+        public string Name { get; }
 
         /// <summary>
         /// The <see cref="GroupCollection"/> this group is provided by.
@@ -35,20 +36,40 @@ namespace sbtw.Editor.Scripts
         /// Whether this group should be visible in the editor.
         /// </summary>
         [JsonProperty]
-        internal readonly BindableBool Visible = new BindableBool(true);
+        internal BindableBool Visible { get; } = new BindableBool(true);
 
         /// <summary>
         /// Determines where this group should be exported to.
         /// </summary>
         [JsonProperty]
-        internal readonly Bindable<ExportTarget> Target = new Bindable<ExportTarget>(ExportTarget.Storyboard);
+        internal Bindable<ExportTarget> Target { get; } = new Bindable<ExportTarget>(ExportTarget.Storyboard);
 
         /// <summary>
         /// Gets the elements this group has.
         /// </summary>
         public IReadOnlyList<IScriptElement> Elements => elements;
 
+        /// <summary>
+        /// Gets the start time for this group.
+        /// </summary>
+        public double StartTime => elements.Min(e => e.StartTime);
+
+        /// <summary>
+        /// Gets the end time for this group.
+        /// </summary>
+        public double EndTime => elements.Max(e => (e as IScriptElementHasDuration)?.EndTime ?? e.StartTime);
+
+        /// <summary>
+        /// Gets the duration for this group.
+        /// </summary>
+        public double Duration => EndTime - StartTime;
+
         private readonly SortedList<IScriptElement> elements = new SortedList<IScriptElement>(new ScriptedElementComparer());
+
+        [JsonConstructor]
+        private Group()
+        {
+        }
 
         internal Group(string name)
         {

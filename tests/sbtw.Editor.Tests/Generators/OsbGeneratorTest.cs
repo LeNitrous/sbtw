@@ -7,13 +7,14 @@ using System.Text;
 using NUnit.Framework;
 using osu.Framework.Graphics;
 using sbtw.Editor.Generators;
+using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Tests.Generators
 {
     public class OsbGeneratorTest : GeneratorTestBase<OsbGenerator, Dictionary<string, StringBuilder>, StringBuilder>
     {
-        protected override OsbGenerator CreateGenerator() => new OsbGenerator();
+        protected override OsbGenerator CreateGenerator(IProject project) => new OsbGenerator(project);
 
         [Test]
         public void TestGenerateSprite()

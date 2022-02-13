@@ -6,48 +6,30 @@
             "type": "coreclr",
             "request": "launch",
             "program": "dotnet",
-            "args": [
-                "${workspaceRoot}/src/desktop/sbtw.Desktop/bin/Debug/net5.0/sbtw.dll"
-            ],
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build sbtw (Debug)",
-            "console": "internalConsole"
+            "console": "internalConsole",
+            "windows": {
+                "args": "${workspaceRoot}/src/desktop/sbtw.Desktop.Windows/bin/Debug/net6.0-windows/sbtw.dll"
+            },
+            "linux": {
+                "args": "${workspaceRoot}/src/desktop/sbtw.Desktop.Linux/bin/Debug/net6.0-linux/sbtw.dll"
+            }
         },
         {
             "name": "sbtw (Release)",
             "type": "coreclr",
             "request": "launch",
             "program": "dotnet",
-            "args": [
-                "${workspaceRoot}/src/desktop/sbtw.Desktop/bin/Release/net5.0/sbtw.dll"
-            ],
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build sbtw (Release)",
-            "console": "internalConsole"
-        },
-        {
-            "name": "sbtw (Tests, Debug)",
-            "type": "coreclr",
-            "request": "launch",
-            "program": "dotnet",
-            "args": [
-                "${workspaceRoot}/tests/sbtw.Editor.Tests/bin/Debug/net5.0/sbtw.Editor.Tests.dll"
-            ],
-            "cwd": "${workspaceRoot}",
-            "preLaunchTask": "Build tests (Debug)",
-            "console": "internalConsole"
-        },
-        {
-            "name": "sbtw (Tests, Release)",
-            "type": "coreclr",
-            "request": "launch",
-            "program": "dotnet",
-            "args": [
-                "${workspaceRoot}/tests/sbtw.Editor.Tests/bin/Release/net5.0/sbtw.Editor.Tests.dll"
-            ],
-            "cwd": "${workspaceRoot}",
-            "preLaunchTask": "Build tests (Release)",
-            "console": "internalConsole"
+            "console": "internalConsole",
+            "windows": {
+                "args": "${workspaceRoot}/src/desktop/sbtw.Desktop.Windows/bin/Debug/net6.0-windows/sbtw.dll"
+            },
+            "linux": {
+                "args": "${workspaceRoot}/src/desktop/sbtw.Desktop.Linux/bin/Debug/net6.0-linux/sbtw.dll"
+            }
         }
     ]
 }

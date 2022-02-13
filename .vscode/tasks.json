@@ -5,59 +5,53 @@
             "label" : "Build sbtw (Debug)",
             "type": "shell",
             "command": "dotnet",
-            "args": [
-                "build",
-                "src/desktop/sbtw.Desktop",
-                "-p:GeneratedFullPaths=true",
-                "-m",
-                "-verbosity:m"
-            ],
             "group": "build",
-            "problemMatcher": "$msCompile"
+            "problemMatcher": "$msCompile",
+            "windows": {
+                "args": [
+                    "build",
+                    "src/desktop/sbtw.Desktop.Windows",
+                    "-p:GeneratedFullPaths=true",
+                    "-m",
+                    "-verbosity:m"
+                ]
+            },
+            "linux": {
+                "args": [
+                    "build",
+                    "src/desktop/sbtw.Desktop.Linux",
+                    "-p:GeneratedFullPaths=true",
+                    "-m",
+                    "-verbosity:m"
+                ]
+            }
         },
         {
             "label" : "Build sbtw (Release)",
             "type": "shell",
             "command": "dotnet",
-            "args": [
-                "build",
-                "src/desktop/sbtw.Desktop",
-                "-p:Configuration=Release",
-                "-p:GeneratedFullPaths=true",
-                "-m",
-                "-verbosity:m"
-            ],
             "group": "build",
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label" : "Build tests (Debug)",
-            "type": "shell",
-            "command": "dotnet",
-            "args": [
-                "build",
-                "tests/sbtw.Editor.Tests",
-                "-p:GeneratedFullPaths=true",
-                "-m",
-                "-verbosity:m"
-            ],
-            "group": "build",
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label" : "Build tests (Release)",
-            "type": "shell",
-            "command": "dotnet",
-            "args": [
-                "build",
-                "tests/sbtw.Editor.Tests",
-                "-p:Configuration=Release",
-                "-p:GeneratedFullPaths=true",
-                "-m",
-                "-verbosity:m"
-            ],
-            "group": "build",
-            "problemMatcher": "$msCompile"
-        },
+            "problemMatcher": "$msCompile",
+            "windows": {
+                "args": [
+                    "build",
+                    "src/desktop/sbtw.Desktop.Windows",
+                    "-p:Configuration=Release",
+                    "-p:GeneratedFullPaths=true",
+                    "-m",
+                    "-verbosity:m"
+                ],
+            },
+            "linux": {
+                "args": [
+                    "build",
+                    "src/desktop/sbtw.Desktop.Linux",
+                    "-p:Configuration=Release",
+                    "-p:GeneratedFullPaths=true",
+                    "-m",
+                    "-verbosity:m"
+                ],
+            }
+        }
     ]
 }

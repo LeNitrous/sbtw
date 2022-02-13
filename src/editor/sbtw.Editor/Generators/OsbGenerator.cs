@@ -5,10 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Lists;
 using osu.Game.Storyboards;
 using osuTK.Graphics;
+using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts.Commands;
 using sbtw.Editor.Scripts.Elements;
 using sbtw.Editor.Scripts.Types;
@@ -17,6 +19,30 @@ namespace sbtw.Editor.Generators
 {
     public class OsbGenerator : Generator<Dictionary<string, StringBuilder>, StringBuilder>
     {
+        private readonly string fmtMove;
+        private readonly string fmtScale;
+        private readonly string fmtAlpha;
+        private readonly string fmtRotation;
+
+        public OsbGenerator(IProject project)
+            : base(project)
+        {
+            if (project is IGeneratorConfig config)
+            {
+                fmtMove = get_formatting(config.PrecisionMove);
+                fmtScale = get_formatting(config.PrecisionScale);
+                fmtAlpha = get_formatting(config.PrecisionAlpha);
+                fmtRotation = get_formatting(config.PrecisionRotation);
+            }
+            else
+            {
+                fmtMove = fmtScale = fmtAlpha = fmtRotation = $"0.####";
+            }
+        }
+
+        private static string get_formatting(Bindable<int> bindable)
+            => $"0.{new string('#', bindable.Value)}";
+
         protected override Dictionary<string, StringBuilder> CreateContext() => new Dictionary<string, StringBuilder>();
 
         protected override void PreGenerate(Dictionary<string, StringBuilder> context)
@@ -40,7 +66,7 @@ namespace sbtw.Editor.Generators
         protected override StringBuilder CreateVideo(Dictionary<string, StringBuilder> context, ScriptedVideo video)
             => context["Video"].AppendLine($"Video,{video.StartTime},\"{video.Path}\"");
 
-        private static string encode_sprite(ScriptedSprite sprite, string header)
+        private string encode_sprite(ScriptedSprite sprite, string header)
         {
             var builder = new StringBuilder();
 
@@ -62,20 +88,20 @@ namespace sbtw.Editor.Generators
             return builder.ToString();
         }
 
-        private static void encode_timeline_group(StringBuilder builder, IScriptCommandTimelineGroup group, int depth = 1)
+        private void encode_timeline_group(StringBuilder builder, IScriptCommandTimelineGroup group, int depth = 1)
         {
             var commands = new SortedList<TimelineCommand>();
-            commands.AddRange(group.Move.Commands.Select(cmd => new TimelineCommand("M", cmd, format_vector)));
-            commands.AddRange(group.X.Commands.Select(cmd => new TimelineCommand("MX", cmd, format_float_no_decimal)));
-            commands.AddRange(group.Y.Commands.Select(cmd => new TimelineCommand("MY", cmd, format_float_no_decimal)));
-            commands.AddRange(group.Alpha.Commands.Select(cmd => new TimelineCommand("F", cmd, format_float)));
+            commands.AddRange(group.Move.Commands.Select(cmd => new TimelineCommand("M", cmd, format_vector_move)));
+            commands.AddRange(group.X.Commands.Select(cmd => new TimelineCommand("MX", cmd, format_float_move)));
+            commands.AddRange(group.Y.Commands.Select(cmd => new TimelineCommand("MY", cmd, format_float_move)));
+            commands.AddRange(group.Alpha.Commands.Select(cmd => new TimelineCommand("F", cmd, format_float_alpha)));
             commands.AddRange(group.Colour.Commands.Select(cmd => new TimelineCommand("C", cmd, format_color)));
             commands.AddRange(group.FlipH.Commands.Select(cmd => new TimelineCommand("P", cmd, _ => "H")));
             commands.AddRange(group.FlipV.Commands.Select(cmd => new TimelineCommand("P", cmd, _ => "V")));
             commands.AddRange(group.BlendingParameters.Commands.Select(cmd => new TimelineCommand("P", cmd, _ => "A")));
-            commands.AddRange(group.Scale.Commands.Select(cmd => new TimelineCommand("S", cmd, format_float)));
-            commands.AddRange(group.Rotation.Commands.Select(cmd => new TimelineCommand("R", cmd, format_float)));
-            commands.AddRange(group.VectorScale.Commands.Select(cmd => new TimelineCommand("V", cmd, format_vector)));
+            commands.AddRange(group.Scale.Commands.Select(cmd => new TimelineCommand("S", cmd, format_float_scale)));
+            commands.AddRange(group.Rotation.Commands.Select(cmd => new TimelineCommand("R", cmd, format_float_rotation)));
+            commands.AddRange(group.VectorScale.Commands.Select(cmd => new TimelineCommand("V", cmd, format_vector_scale)));
 
             foreach (var command in commands)
             {
@@ -135,36 +161,60 @@ namespace sbtw.Editor.Generators
                 => Command.CompareTo(other.Command);
         }
 
-        private static string format_vector(object value)
+        private string format_vector_scale(object value)
         {
             if (value is not osuTK.Vector2 vector)
                 return null;
 
-            return $"{vector.X:0.##},{vector.Y:0.##}";
+            return $"{vector.X.ToString(fmtScale)},{vector.Y.ToString(fmtScale)}";
+        }
+
+        private string format_vector_move(object value)
+        {
+            if (value is not osuTK.Vector2 vector)
+                return null;
+
+            return $"{vector.X.ToString(fmtMove)},{vector.Y.ToString(fmtMove)}";
+        }
+
+        private string format_float_scale(object value)
+        {
+            if (value is not float floatValue)
+                throw new InvalidCastException();
+
+            return floatValue.ToString(fmtScale);
+        }
+
+        private string format_float_move(object value)
+        {
+            if (value is not float floatValue)
+                throw new InvalidCastException();
+
+            return floatValue.ToString(fmtMove);
+        }
+
+        private string format_float_alpha(object value)
+        {
+            if (value is not float floatValue)
+                throw new InvalidCastException();
+
+            return floatValue.ToString(fmtAlpha);
+        }
+
+        private string format_float_rotation(object value)
+        {
+            if (value is not float floatValue)
+                throw new InvalidCastException();
+
+            return floatValue.ToString(fmtRotation);
         }
 
         private static string format_color(object value)
         {
             if (value is not Color4 color)
-                return null;
+                throw new InvalidCastException();
 
             return $"{color.R * 255:0},{color.G * 255:0},{color.B * 255:0}";
-        }
-
-        private static string format_float(object value)
-        {
-            if (value is not float floatValue)
-                return null;
-
-            return (floatValue % 1) > float.Epsilon ? floatValue.ToString("0.####") : floatValue.ToString("0");
-        }
-
-        private static string format_float_no_decimal(object value)
-        {
-            if (value is not float floatValue)
-                return null;
-
-            return floatValue.ToString("0");
         }
 
         private static string format(object value) => value.ToString();

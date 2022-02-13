@@ -53,7 +53,15 @@ namespace sbtw.Editor.IO.Storage
         }
 
         public override Stream GetStream(string path, FileAccess access = FileAccess.Read, FileMode mode = FileMode.OpenOrCreate)
-            => archive.GetEntry(path).Open();
+        {
+            var memory = new MemoryStream();
+
+            using (var stream = archive.GetEntry(path).Open())
+                stream.CopyTo(memory);
+
+            memory.Position = 0;
+            return memory;
+        }
 
         public override void OpenFileExternally(string filename)
         {

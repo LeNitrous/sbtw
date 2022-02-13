@@ -39,7 +39,7 @@ namespace sbtw.Editor.Tests
             Assert.IsTrue(task.Wait(timeout), @"Failed to load editor in time.");
         }
 
-        protected class GameHostTestEditor : TestEditor
+        protected class GameHostTestEditor : EditorBase
         {
             public new RulesetStore RulesetStore => base.RulesetStore;
         }

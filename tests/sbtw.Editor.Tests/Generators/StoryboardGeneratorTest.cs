@@ -4,16 +4,16 @@
 using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Graphics;
-using osu.Game.Beatmaps;
 using osu.Game.Storyboards;
 using sbtw.Editor.Generators;
+using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Tests.Generators
 {
     public class StoryboardGeneratorTest : GeneratorTestBase<StoryboardGenerator, Storyboard, IStoryboardElement>
     {
-        protected override StoryboardGenerator CreateGenerator() => new StoryboardGenerator(new BeatmapInfo());
+        protected override StoryboardGenerator CreateGenerator(IProject project) => new StoryboardGenerator(project);
 
         [Test]
         public void TestGenerateSprite()

@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using sbtw.Editor.Projects;
@@ -20,37 +19,56 @@ namespace sbtw.Editor.Scripts
             Project = project;
         }
 
-        public virtual string GetExceptionMessage(Exception exception)
-            => exception.Message;
 
-        public IEnumerable<IScript> GetScripts(Dictionary<string, object> resources = null)
-            => GetScriptsAsync(resources).Result;
-
-        public async Task<IEnumerable<IScript>> GetScriptsAsync(Dictionary<string, object> resources = null, CancellationToken token = default)
+        public IEnumerable<ScriptExecutionResult> Execute<T>(T globals)
+            where T : class
         {
-            var scripts = await GetScriptsInternalAsync(resources, token);
+            return ExecuteAsync(globals).Result;
+        }
+
+        public async Task<IEnumerable<ScriptExecutionResult>> ExecuteAsync<T>(T globals, CancellationToken token = default)
+            where T : class
+        {
+            var scripts = await GetScriptsAsync(token);
+            var results = new List<ScriptExecutionResult>();
 
             foreach (var script in scripts)
             {
                 token.ThrowIfCancellationRequested();
 
-                if (Project is ICanProvideAssets assets)
-                    script.AssetProvider = assets;
+                if (globals != null)
+                {
+                    foreach (var del in ScriptGlobalsHelper<T>.GetMethods(globals))
+                        script.RegisterFunction(del);
 
-                if (Project is ICanProvideGroups groups)
-                    script.GroupProvider = groups;
+                    foreach ((string name, object value) in ScriptGlobalsHelper<T>.GetValues(globals))
+                        script.RegisterVariable(name, value);
 
-                if (Project is ICanProvideFiles files)
-                    script.FileProvider = files;
+                    foreach (var type in ScriptGlobalsHelper<T>.GetTypes(globals))
+                        script.RegisterType(type);
+                }
 
-                if (Project is ICanProvideLogger logger)
-                    script.Logger = logger;
+                var result = new ScriptExecutionResult { Script = script };
+
+                try
+                {
+                    await script.ExecuteAsync(token);
+                }
+                catch (Exception exception)
+                {
+                    result.Exception = new ScriptExecutionException(GetExceptionMessage(exception), exception);
+                }
+
+                results.Add(result);
             }
 
-            return scripts;
+            return results;
         }
 
-        protected abstract Task<IEnumerable<IScript>> GetScriptsInternalAsync(Dictionary<string, object> resources = null, CancellationToken token = default);
+        protected abstract Task<IEnumerable<IScript>> GetScriptsAsync(CancellationToken token = default);
+
+        protected virtual string GetExceptionMessage(Exception exception)
+            => exception.Message;
 
         protected virtual void Dispose(bool disposing)
         {
@@ -63,20 +81,5 @@ namespace sbtw.Editor.Scripts
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-    }
-
-    public abstract class ScriptLanguage<T> : ScriptLanguage, IScriptLanguage<T>
-        where T : IScript
-    {
-        protected ScriptLanguage(IProject project)
-            : base(project)
-        {
-        }
-
-        IEnumerable<T> IScriptLanguage<T>.GetScripts(Dictionary<string, object> resources)
-            => ((IScriptLanguage<T>)this).GetScriptsAsync(resources).Result;
-
-        async Task<IEnumerable<T>> IScriptLanguage<T>.GetScriptsAsync(Dictionary<string, object> resources, CancellationToken token)
-            => (await GetScriptsAsync(resources, token)).Cast<T>();
     }
 }

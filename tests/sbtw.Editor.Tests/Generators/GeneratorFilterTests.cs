@@ -25,7 +25,6 @@ namespace sbtw.Editor.Tests.Generators
 
             var script = new TestScript
             {
-                GroupProvider = provider,
                 Action = s =>
                 {
                     s.GetGroup("a").CreateSample("a", 100, 50, Layer.Foreground);
@@ -38,9 +37,9 @@ namespace sbtw.Editor.Tests.Generators
             });
 
             (provider.Language as TestScriptLanguage).Scripts = new[] { script };
-            var generated = new TestGenerator().Generate(provider, target: generatorTarget);
+            var generated = new TestGenerator(provider).Generate(target: generatorTarget);
 
-            Assert.That(generated.Count, Is.EqualTo(expectedCount));
+            Assert.That(generated.Result.Count, Is.EqualTo(expectedCount));
         }
 
         [TestCase(true, 1)]
@@ -48,10 +47,8 @@ namespace sbtw.Editor.Tests.Generators
         public void TestGeneratorFilterVisibility(bool includeHidden, int expectedCount)
         {
             var provider = new TestProject();
-
             var script = new TestScript
             {
-                GroupProvider = provider,
                 Action = s =>
                 {
                     s.GetGroup("a").CreateSample("a", 100, 50, Layer.Foreground);
@@ -64,13 +61,18 @@ namespace sbtw.Editor.Tests.Generators
             });
 
             (provider.Language as TestScriptLanguage).Scripts = new[] { script };
-            var generated = new TestGenerator().Generate(provider, includeHidden: includeHidden);
+            var generated = new TestGenerator(provider).Generate(includeHidden: includeHidden);
 
-            Assert.That(generated.Count, Is.EqualTo(expectedCount));
+            Assert.That(generated.Result.Count, Is.EqualTo(expectedCount));
         }
 
         private class TestGenerator : Generator<List<IScriptElement>, IScriptElement>
         {
+            public TestGenerator(IProject project)
+                : base(project)
+            {
+            }
+
             protected override List<IScriptElement> CreateContext()
                 => new List<IScriptElement>();
 

@@ -1,7 +1,9 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System;
 using System.IO;
+using System.IO.Compression;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -14,6 +16,7 @@ using osu.Game.Graphics.UserInterface;
 using osu.Game.Overlays;
 using osuTK;
 using sbtw.Editor.Overlays.Setup;
+using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Overlays
 {
@@ -31,8 +34,8 @@ namespace sbtw.Editor.Overlays
         [Cached(name: "BeatmapPath")]
         private readonly Bindable<string> beatmapPath = new Bindable<string>();
 
-        [Resolved(canBeNull: true)]
-        private Editor editor { get; set; }
+        [Resolved]
+        private Bindable<IProject> project { get; set; }
 
         public SetupOverlay()
         {
@@ -98,9 +101,6 @@ namespace sbtw.Editor.Overlays
 
         private void createProject()
         {
-            if (editor == null)
-                return;
-
             if (string.IsNullOrEmpty(projectName.Value) &&
                 projectPath.Value.IndexOfAny(Path.GetInvalidPathChars()) != -1 &&
                 beatmapPath.Value.IndexOfAny(Path.GetInvalidPathChars()) != -1)
@@ -114,6 +114,28 @@ namespace sbtw.Editor.Overlays
                 Logger.Log("Beatmap path is not a beatmap archive.", level: LogLevel.Error);
                 return;
             }
+
+            if (!File.Exists(beatmapPath.Value))
+            {
+                Logger.Log("Beatmap archive is not found.", level: LogLevel.Error);
+                return;
+            }
+
+            try
+            {
+                string fullPath = Path.Combine(projectPath.Value, Path.ChangeExtension(projectName.Value, ".sbtw.json"));
+                var project = new JsonBackedProject(fullPath);
+                project.Save();
+
+                ZipFile.ExtractToDirectory(beatmapPath.Value, project.BeatmapFiles.GetFullPath("."));
+                this.project.Value = project;
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, "There was a problem during project creation");
+            }
+
+            Hide();
         }
 
         protected override void PopIn()

@@ -8,6 +8,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Localisation;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Graphics.UserInterfaceV2;
+using sbtw.Editor.Platform;
 
 namespace sbtw.Editor.Overlays.Setup
 {
@@ -24,6 +25,8 @@ namespace sbtw.Editor.Overlays.Setup
         [Resolved]
         private EditorBase editor { get; set; }
 
+        private LabelledTextBox location;
+
 
         [BackgroundDependencyLoader]
         private void load()
@@ -36,7 +39,7 @@ namespace sbtw.Editor.Overlays.Setup
                     Current = projectName,
                     RelativeSizeAxes = Axes.X,
                 },
-                new LabelledTextBox
+                location = new LabelledTextBox
                 {
                     Label = "Location",
                     Current = projectPath,
@@ -46,15 +49,22 @@ namespace sbtw.Editor.Overlays.Setup
                 {
                     Text = "Browse",
                     Width = 200,
-                    Action = browse,
+                    Action = () => Task.Run(browsePath),
                 },
             };
         }
 
-        private void browse() => Task.Run(async () =>
+        private async Task browsePath()
         {
-            string path = await editor.RequestPathAsync("Select project path");
-            Schedule(() => projectPath.Value = path);
-        });
+            if (editor is not DesktopEditor desktopEditor)
+                return;
+
+            string result = await desktopEditor.Picker.OpenFolderAsync();
+
+            if (string.IsNullOrEmpty(result))
+                return;
+
+            Schedule(() => location.Text = result);
+        }
     }
 }

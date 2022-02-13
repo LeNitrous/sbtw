@@ -54,7 +54,7 @@ namespace sbtw.Editor.Tests.Scripts
             groups.Add(a);
 
             int count = 0;
-            groups.GroupPropertyChanged += () => count++;
+            groups.GroupPropertyChanged += _ => count++;
 
             a.Target.Value = ExportTarget.Difficulty;
 

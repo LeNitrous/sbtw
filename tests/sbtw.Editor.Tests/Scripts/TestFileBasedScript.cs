@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using sbtw.Editor.Scripts;
 
@@ -22,21 +23,21 @@ namespace sbtw.Editor.Tests.Scripts
         {
         }
 
-        public override async Task CompileAsync()
+        public override async Task CompileAsync(CancellationToken token = default)
         {
-            Compiled = await File.ReadAllTextAsync(Path);
+            Compiled = await File.ReadAllTextAsync(Path, token);
             CompileCount++;
         }
 
-        protected override Task PerformAsync()
+        public override Task ExecuteAsync(CancellationToken token = default)
         {
             return Task.CompletedTask;
         }
 
-        public override void RegisterDelegate(Delegate del)
+        public override void RegisterFunction(Delegate del)
             => Delegates.Add(del);
 
-        public override void RegisterMember(string name, object value)
+        public override void RegisterVariable(string name, object value)
             => Members[name] = value;
 
         public override void RegisterType(Type type)
