@@ -30,7 +30,6 @@ namespace sbtw.Editor.Graphics.UserInterface.Bottom
 
         public SeekControl()
         {
-            Height = 80;
             Width = 600;
             Content.Padding = new MarginPadding { Horizontal = 10 };
         }
