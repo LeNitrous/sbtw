@@ -2,6 +2,7 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using System.Collections.Specialized;
 using Humanizer;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -31,6 +32,7 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
         private void load(BindableList<Group> groups)
         {
             Child = list = new GroupsList { RelativeSizeAxes = Axes.Both };
+            list.Items.BindCollectionChanged((_, args) => handleGroupsReorder(args));
             this.groups = groups.GetBoundCopy();
             this.groups.BindCollectionChanged((_, __) => Schedule(handleGroupsChange), true);
         }
@@ -39,6 +41,16 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
         {
             list.Items.Clear();
             list.Items.AddRange(groups);
+        }
+
+        private void handleGroupsReorder(NotifyCollectionChangedEventArgs args)
+        {
+            switch (args.Action)
+            {
+                case NotifyCollectionChangedAction.Move:
+                    groups.Move(args.OldStartingIndex, args.NewStartingIndex);
+                    break;
+            }
         }
 
         private class GroupsList : OsuRearrangeableListContainer<Group>

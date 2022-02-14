@@ -110,6 +110,7 @@ namespace sbtw.Editor
                 },
                 controlContainer = new Container
                 {
+                    AlwaysPresent = true,
                     RelativeSizeAxes = Axes.Both,
                     Children = new Drawable[]
                     {

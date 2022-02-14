@@ -48,10 +48,10 @@ namespace sbtw.Editor.Graphics.UserInterface.Bottom
         private void load(EditorSessionStatics statics)
         {
             affectsTempo = statics.GetBindable<bool>(EditorSessionStatic.TrackRateAffectsPitch);
-            affectsTempo.ValueChanged += _ => updateRate();
+            affectsTempo.ValueChanged += _ => updateRate(rate.Value);
 
             rate = statics.GetBindable<double>(EditorSessionStatic.TrackRate);
-            rate.ValueChanged += _ => updateRate();
+            rate.ValueChanged += _ => updateRate(rate.Value);
 
             items = new MenuItem[]
             {
@@ -66,13 +66,14 @@ namespace sbtw.Editor.Graphics.UserInterface.Bottom
 
             clock.Track.BindValueChanged(e =>
             {
+                updateRate(1.0);
                 e.OldValue?.RemoveAdjustment(AdjustableProperty.Frequency, frequency);
                 e.OldValue?.RemoveAdjustment(AdjustableProperty.Tempo, tempo);
                 e.NewValue?.AddAdjustment(AdjustableProperty.Frequency, frequency);
                 e.NewValue?.AddAdjustment(AdjustableProperty.Tempo, tempo);
             }, true);
 
-            updateRate();
+            updateRate(rate.Value);
         }
 
         public MenuItem[] ContextMenuItems => items;
@@ -100,13 +101,6 @@ namespace sbtw.Editor.Graphics.UserInterface.Bottom
             rate.Value = keys[index];
         }
 
-        protected override void Dispose(bool isDisposing)
-        {
-            clock.Track.Value?.RemoveAdjustment(AdjustableProperty.Frequency, frequency);
-            clock.Track.Value?.RemoveAdjustment(AdjustableProperty.Tempo, tempo);
-            base.Dispose(isDisposing);
-        }
-
         private TernaryStateRadioMenuItem createMenuItem(double newRate)
         {
             var item = new TernaryStateRadioMenuItem($"{newRate * 100}%", MenuItemType.Standard, _ => rate.Value = newRate);
@@ -114,20 +108,20 @@ namespace sbtw.Editor.Graphics.UserInterface.Bottom
             return item;
         }
 
-        private void updateRate()
+        private void updateRate(double rate)
         {
-            text.Text = $"{rate.Value * 100}%";
+            text.Text = $"{rate * 100}%";
             foreach ((double rateSetting, TernaryStateRadioMenuItem item) in itemMap)
-                item.State.Value = rateSetting == rate.Value ? TernaryState.True : TernaryState.False;
+                item.State.Value = rateSetting == rate ? TernaryState.True : TernaryState.False;
 
             if (!affectsTempo.Value)
             {
                 frequency.Value = 1.0;
-                tempo.Value = rate.Value / 1.0;
+                tempo.Value = rate / 1.0;
             }
             else
             {
-                frequency.Value = rate.Value;
+                frequency.Value = rate;
                 tempo.Value = 1.0;
             }
         }

@@ -11,6 +11,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Cursor;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Localisation;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
@@ -74,12 +75,12 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
             where T : IScriptElement
         {
             protected abstract IconUsage Icon { get; }
-
-            protected readonly T Element;
+            public T TooltipContent { get; }
+            private readonly SpriteIcon indicator;
 
             public GroupElementItem(T element)
             {
-                Element = element;
+                TooltipContent = element;
                 RelativeSizeAxes = Axes.X;
                 Height = 30;
                 InternalChild = new GridContainer
@@ -89,6 +90,7 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
                     {
                         new Dimension(GridSizeMode.Absolute, 40),
                         new Dimension(GridSizeMode.Distributed),
+                        new Dimension(GridSizeMode.Absolute, 40),
                     },
                     RowDimensions = new[]
                     {
@@ -115,13 +117,37 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
                                 Anchor = Anchor.CentreLeft,
                                 Origin = Anchor.CentreLeft,
                             },
+                            new Container
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Child = indicator = new MissingAssetIndicator
+                                {
+                                    Icon = FontAwesome.Solid.ExclamationTriangle,
+                                    Size = new Vector2(20),
+                                    Alpha = 0,
+                                    Anchor = Anchor.Centre,
+                                    Origin = Anchor.Centre,
+                                },
+                            }
                         }
                     },
                 };
             }
 
-            public T TooltipContent => Element;
+            [BackgroundDependencyLoader]
+            private void load(IBeatmapProvider beatmapProvider)
+            {
+                string path = (beatmapProvider.BeatmapSet as BeatmapSetInfo).GetPathForFile(TooltipContent.Path);
+                indicator.Alpha = string.IsNullOrEmpty(path) ? 1 : 0;
+            }
+
+
             public abstract ITooltip<T> GetCustomTooltip();
+
+            private class MissingAssetIndicator : SpriteIcon, IHasTooltip
+            {
+                public LocalisableString TooltipText => @"The resource for this asset could not be found.";
+            }
 
             protected abstract class GroupElementTooltip : VisibilityContainer, ITooltip<T>
             {
@@ -207,33 +233,6 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
 
             protected class GroupSpriteItemTooltip : GroupElementTooltip
             {
-                [Resolved]
-                private IBeatmapProvider beatmapProvider { get; set; }
-
-                protected override void SetContent(ScriptedSprite content, bool _)
-                {
-                    base.SetContent(content, _);
-
-                    string path = (beatmapProvider.BeatmapSet as BeatmapSetInfo).GetPathForFile(content.Path);
-
-                    if (string.IsNullOrEmpty(path))
-                        return;
-
-                    Add(new Container
-                    {
-                        Size = new Vector2(400, 300),
-                        Scale = new Vector2(0.45f),
-                        Child = new Sprite
-                        {
-                            Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
-                            RelativeSizeAxes = Axes.Both,
-                            Texture = (beatmapProvider as IBeatmapResourceProvider).LargeTextureStore.Get(path),
-                            FillMode = FillMode.Fill,
-                        }
-                    });
-                }
-
                 protected override IEnumerable<string> GetTextContent(ScriptedSprite content)
                     => base.GetTextContent(content).Append($"End Time: {content.EndTime:0}");
             }

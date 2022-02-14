@@ -77,10 +77,6 @@ namespace sbtw.Editor.Graphics.UserInterface.Bottom
         protected override void Update()
         {
             base.Update();
-
-            if (!clock.IsRunning)
-                return;
-
             progress.Width = clock.TrackLength > 0 ? (float)(clock.CurrentTime / clock.TrackLength) : 0;
         }
 
