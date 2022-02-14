@@ -1,0 +1,9 @@
+{
+    "solution": {
+        "path": "sbtw.sln",
+        "projects": [
+            "src\\editor\\sbtw.Editor\\sbtw.Editor.csproj",
+            "tests\\sbtw.Editor.Tests\\sbtw.Editor.Tests.csproj"
+        ]
+    }
+}
