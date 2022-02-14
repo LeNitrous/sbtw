@@ -201,7 +201,11 @@ namespace sbtw.Editor
             if (Project.Value is not IGeneratorConfig config)
                 return generator;
 
+            if (Project.Value is not ICanProvideAssets assetsProvider)
+                throw new InvalidOperationException(@"Project does not provide assets.");
+
             generator
+                .AddStep(new GenerateAssetStep(assetsProvider.BeatmapFiles))
                 .AddStep(new FilterGroupStep(target, includeHidden))
                 .AddStep(new RoundToPrecisionStep(
                     config.PrecisionMove.Value,

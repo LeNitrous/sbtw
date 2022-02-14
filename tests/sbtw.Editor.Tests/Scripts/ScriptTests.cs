@@ -4,7 +4,7 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
-using sbtw.Editor.Assets;
+using sbtw.Editor.Scripts.Assets;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
 using sbtw.Editor.Tests.Projects;

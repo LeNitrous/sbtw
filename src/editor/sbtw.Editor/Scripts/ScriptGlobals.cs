@@ -12,8 +12,8 @@ using osu.Framework.Logging;
 using osu.Game.Beatmaps;
 using osu.Game.Storyboards;
 using osuTK;
-using sbtw.Editor.Assets;
 using sbtw.Editor.Projects;
+using sbtw.Editor.Scripts.Assets;
 using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Scripts

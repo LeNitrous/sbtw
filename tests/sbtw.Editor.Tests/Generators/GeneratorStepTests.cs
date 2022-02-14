@@ -9,6 +9,7 @@ using sbtw.Editor.Generators;
 using sbtw.Editor.Generators.Steps;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
+using sbtw.Editor.Scripts.Assets;
 using sbtw.Editor.Scripts.Elements;
 using sbtw.Editor.Scripts.Types;
 using sbtw.Editor.Tests.Projects;
@@ -144,6 +145,27 @@ namespace sbtw.Editor.Tests.Generators
 
             static int getDecimalPlaces(float num) => num.ToString().Split('.').Last().Length;
             static void assertPrecision(float num, int amt) => Assert.That(getDecimalPlaces(num), Is.EqualTo(amt));
+        }
+
+        [Test]
+        public void TestGeneratorAssetGeneration()
+        {
+            var provider = new TemporaryStorageBackedTestProject();
+            var script = new TestScript
+            {
+                Action = s =>
+                {
+                    s.GetAsset("sb/pixel.png", new Rectangle());
+                }
+            };
+
+            (provider.Language as TestScriptLanguage).Scripts = new[] { script };
+
+            new TestGenerator(provider)
+                .AddStep(new GenerateAssetStep(provider.BeatmapFiles))
+                .Generate(new ScriptGlobals { GroupProvider = provider, AssetProvider = provider });
+
+            Assert.That(provider.BeatmapFiles.Exists("sb/pixel.png"), Is.True);
         }
 
         [Test]

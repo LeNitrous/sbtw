@@ -2,7 +2,7 @@
 // See LICENSE in the repository root for more details.
 
 using System.Collections.Generic;
-using sbtw.Editor.Assets;
+using sbtw.Editor.Scripts.Assets;
 using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Generators.Steps

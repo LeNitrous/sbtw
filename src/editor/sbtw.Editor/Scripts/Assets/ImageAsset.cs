@@ -7,7 +7,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace sbtw.Editor.Assets
+namespace sbtw.Editor.Scripts.Assets
 {
     public abstract class ImageAsset : Asset
     {

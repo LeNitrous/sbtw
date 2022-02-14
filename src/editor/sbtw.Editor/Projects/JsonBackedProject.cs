@@ -13,7 +13,7 @@ using osu.Framework.Configuration;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Game.Rulesets;
-using sbtw.Editor.Assets;
+using sbtw.Editor.Scripts.Assets;
 using sbtw.Editor.Beatmaps;
 using sbtw.Editor.Generators;
 using sbtw.Editor.Scripts;

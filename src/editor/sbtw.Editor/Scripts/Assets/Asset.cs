@@ -5,9 +5,8 @@ using System;
 using System.IO;
 using Newtonsoft.Json;
 using osu.Framework.Platform;
-using sbtw.Editor.Projects;
 
-namespace sbtw.Editor.Assets
+namespace sbtw.Editor.Scripts.Assets
 {
     /// <summary>
     /// Represents a generatable asset.
@@ -27,11 +26,6 @@ namespace sbtw.Editor.Assets
         public int ReferenceCount { get; set; }
 
         /// <summary>
-        /// The project this asset is owned by.
-        /// </summary>
-        internal IProject Project { get; private set; }
-
-        /// <summary>
         /// The storage where this asset is being generated on.
         /// </summary>
         protected Storage Storage { get; private set; }
@@ -40,17 +34,14 @@ namespace sbtw.Editor.Assets
         /// Generates this asset.
         /// </summary>
         /// <param name="storage">The target storage to generate to.</param>
-        internal void Generate(IProject project)
+        internal void Generate(Storage storage)
         {
             if (string.IsNullOrEmpty(Path))
                 throw new InvalidOperationException(@"Asset is not yet ready for generation.");
 
-            if (project is not ICanProvideFiles fileProvider)
-                throw new InvalidOperationException(@"Project cannot provide files");
+            Storage = storage;
 
-            Project = project;
-
-            using var stream = fileProvider.BeatmapFiles.GetStream(Path, FileAccess.Write, FileMode.OpenOrCreate);
+            using var stream = Storage.GetStream(Path, FileAccess.Write, FileMode.OpenOrCreate);
             stream.Position = 0;
             stream.Write(Generate());
         }
@@ -62,14 +53,10 @@ namespace sbtw.Editor.Assets
         protected abstract ReadOnlySpan<byte> Generate();
 
         /// <summary>
-        /// Check whether the asset is equal to the other asset.
+        /// Check whether the asset is equal to the other asset by its path.
         /// </summary>
-        /// <remarks>
-        /// This must be overridden if the asset provides other properties.
-        /// </remarks>
-        /// <param name="other">The other asset to test against.</param>
-        public virtual bool Equals(Asset other)
-            => other.GetType().Equals(GetType());
+        public bool Equals(Asset other)
+            => other.Path.Equals(Path);
 
         public override bool Equals(object obj)
             => Equals(obj as Asset);

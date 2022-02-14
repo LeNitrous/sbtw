@@ -3,14 +3,13 @@
 
 using System;
 using System.IO;
-using sbtw.Editor.Projects;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
-namespace sbtw.Editor.Assets
+namespace sbtw.Editor.Scripts.Assets
 {
     public class Text : ImageAsset
     {
@@ -25,11 +24,9 @@ namespace sbtw.Editor.Assets
 
         protected override Image<Rgba32> GetImage()
         {
-            var storage = (Project as ICanProvideFiles).Files;
+            string fontFullPath = Storage.GetFullPath(Config.Path);
 
-            string fontFullPath = storage.GetFullPath(Config.Path);
-
-            if (!storage.Exists(fontFullPath))
+            if (!Storage.Exists(fontFullPath))
                 throw new FileNotFoundException($@"Failed to find font in ""{fontFullPath}"".");
 
             var collection = new FontCollection();
@@ -45,14 +42,9 @@ namespace sbtw.Editor.Assets
 
             return image;
         }
-
-        public override bool Equals(Asset other)
-            => base.Equals(other)
-                && ((other as Text)?.DisplayText.Equals(DisplayText) ?? false)
-                && ((other as Text)?.Config.Equals(Config) ?? false);
     }
 
-    public struct FontConfiguration : IEquatable<FontConfiguration>
+    public struct FontConfiguration
     {
         public readonly string Path;
         public readonly string Name;
@@ -64,20 +56,5 @@ namespace sbtw.Editor.Assets
             Name = !string.IsNullOrEmpty(name) ? name : throw new ArgumentException(@"Argument must contain a valid value.", nameof(name));
             Size = size;
         }
-
-        public bool Equals(FontConfiguration other)
-            => other.Path.Equals(Path) && other.Name.Equals(Name) && other.Size.Equals(Size);
-
-        public override bool Equals(object obj)
-            => obj is FontConfiguration configuration && Equals(configuration);
-
-        public override int GetHashCode()
-            => HashCode.Combine(Path, Name, Size);
-
-        public static bool operator ==(FontConfiguration left, FontConfiguration right)
-            => left.Equals(right);
-
-        public static bool operator !=(FontConfiguration left, FontConfiguration right)
-            => !(left == right);
     }
 }

@@ -7,7 +7,7 @@ using System.IO;
 using osu.Framework.Bindables;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
-using sbtw.Editor.Assets;
+using sbtw.Editor.Scripts.Assets;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
 using sbtw.Editor.Tests.Scripts;
