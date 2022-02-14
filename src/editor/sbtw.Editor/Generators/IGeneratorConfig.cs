@@ -13,7 +13,7 @@ namespace sbtw.Editor.Generators
         BindableBool UseWidescreen { get; }
 
         /// <summary>
-        /// TThe number of decimals to be used for move-related commands.
+        /// The number of decimals to be used for move-related commands.
         /// </summary>
         BindableInt PrecisionMove { get; }
 

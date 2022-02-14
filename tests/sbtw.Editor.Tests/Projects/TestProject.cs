@@ -8,7 +8,6 @@ using osu.Framework.Bindables;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
 using sbtw.Editor.Assets;
-using sbtw.Editor.IO.Storage;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
 using sbtw.Editor.Tests.Scripts;
@@ -18,10 +17,10 @@ namespace sbtw.Editor.Tests.Projects
     public class TestProject : IProject, ICanProvideGroups, ICanProvideScripts, ICanProvideFiles, ICanProvideAssets, ICanProvideLogger
     {
         public BindableInt Precision { get; } = new BindableInt();
-        public GroupCollection Groups { get; }
-        public ReferenceTrackingStorage Files { get; }
+        public GroupCollection Groups { get; } = new GroupCollection();
+        public Storage Files { get; }
         public Storage BeatmapFiles { get; }
-        public HashSet<Asset> Assets { get; }
+        public HashSet<Asset> Assets { get; } = new HashSet<Asset>();
         public ScriptManager Scripts { get; }
         public IScriptLanguage Language => Scripts.Languages[0];
         public readonly List<string> Logs = new List<string>();
@@ -29,8 +28,7 @@ namespace sbtw.Editor.Tests.Projects
 
         public TestProject()
         {
-            Groups = new GroupCollection();
-            Files = new ReferenceTrackingStorage(CreateStorage());
+            Files = CreateStorage();
             BeatmapFiles = Files.GetStorageForDirectory("Beatmap");
             Scripts = new ScriptManager(this, GetScriptingTypes());
         }

@@ -6,15 +6,15 @@ using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
 using osu.Framework.Graphics;
+using osuTK;
 using sbtw.Editor.Generators;
 using sbtw.Editor.Projects;
-using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Tests.Generators
 {
     public class OsbGeneratorTest : GeneratorTestBase<OsbGenerator, Dictionary<string, StringBuilder>, StringBuilder>
     {
-        protected override OsbGenerator CreateGenerator(IProject project) => new OsbGenerator(project);
+        protected override OsbGenerator CreateGenerator(ICanProvideScripts provider) => new OsbGenerator(provider);
 
         [Test]
         public void TestGenerateSprite()

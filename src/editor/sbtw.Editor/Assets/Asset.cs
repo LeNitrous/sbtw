@@ -69,7 +69,7 @@ namespace sbtw.Editor.Assets
         /// </remarks>
         /// <param name="other">The other asset to test against.</param>
         public virtual bool Equals(Asset other)
-            => other.GetType().Equals(GetType()) && Path.Equals(other.Path);
+            => other.GetType().Equals(GetType());
 
         public override bool Equals(object obj)
             => Equals(obj as Asset);

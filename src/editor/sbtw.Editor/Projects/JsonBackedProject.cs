@@ -16,7 +16,6 @@ using osu.Game.Rulesets;
 using sbtw.Editor.Assets;
 using sbtw.Editor.Beatmaps;
 using sbtw.Editor.Generators;
-using sbtw.Editor.IO.Storage;
 using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Projects
@@ -29,7 +28,7 @@ namespace sbtw.Editor.Projects
         public string FullPath => System.IO.Path.Combine(Path, System.IO.Path.ChangeExtension(Name, ".sbtw.json"));
 
         public BeatmapProvider Beatmaps { get; }
-        public ReferenceTrackingStorage Files { get; }
+        public Storage Files { get; }
         public Storage BeatmapFiles { get; }
         public ScriptManager Scripts { get; }
         public GroupCollection Groups { get; }
@@ -66,9 +65,8 @@ namespace sbtw.Editor.Projects
             Name = System.IO.Path.GetFileNameWithoutExtension(path.Replace(".json", string.Empty));
             Path = System.IO.Path.GetDirectoryName(path);
 
-            var storage = CreateStorage(Path);
-            Files = new ReferenceTrackingStorage(storage);
-            BeatmapFiles = storage.GetStorageForDirectory("Beatmap");
+            Files = CreateStorage(Path);
+            BeatmapFiles = Files.GetStorageForDirectory("Beatmap");
 
             Load();
 

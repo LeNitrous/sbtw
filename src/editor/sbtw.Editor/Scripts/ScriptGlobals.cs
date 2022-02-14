@@ -2,14 +2,19 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using osu.Framework.Audio.Track;
+using osu.Framework.Graphics;
 using osu.Framework.Logging;
 using osu.Game.Beatmaps;
+using osu.Game.Storyboards;
+using osuTK;
 using sbtw.Editor.Assets;
 using sbtw.Editor.Projects;
+using sbtw.Editor.Scripts.Types;
 
 namespace sbtw.Editor.Scripts
 {
@@ -79,5 +84,22 @@ namespace sbtw.Editor.Scripts
 
             Logger.Log(message, level);
         }
+
+#pragma warning disable CA2211 // see ScriptGlobalsHelper
+
+        public static IReadOnlyList<Type> TYPES = new[]
+        {
+            typeof(Text),
+            typeof(Rectangle),
+            typeof(Layer),
+            typeof(Anchor),
+            typeof(Easing),
+            typeof(Vector2),
+            typeof(Colour4),
+            typeof(AnimationLoopType),
+        };
+
+#pragma warning restore CA2211
+
     }
 }

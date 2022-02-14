@@ -12,8 +12,8 @@ namespace sbtw.Editor.Generators
 {
     public class StoryboardGenerator : Generator<Storyboard, IStoryboardElement>
     {
-        public StoryboardGenerator(IProject project)
-            : base(project)
+        public StoryboardGenerator(ICanProvideScripts provider)
+            : base(provider)
         {
         }
 

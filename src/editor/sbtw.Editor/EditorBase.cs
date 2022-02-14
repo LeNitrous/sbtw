@@ -29,6 +29,7 @@ using osu.Game.Screens.Play;
 using sbtw.Editor.Beatmaps;
 using sbtw.Editor.Configuration;
 using sbtw.Editor.Generators;
+using sbtw.Editor.Generators.Steps;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
 
@@ -145,7 +146,7 @@ namespace sbtw.Editor
 
         public async Task<GeneratorResult> Generate(GenerateKind kind, ExportTarget? target = null, bool includeHidden = true, CancellationToken token = default)
         {
-            if (Project.Value is not IFileBackedProject)
+            if (Project.Value is not ICanProvideScripts scriptsProvider)
                 throw new InvalidOperationException($"{Project.Value.GetType()} is not capable of generating.");
 
             Schedule(() => OnPreGenerate());
@@ -167,11 +168,8 @@ namespace sbtw.Editor
                 switch (kind)
                 {
                     case GenerateKind.Storyboard:
-                        {
-                            var generator = new StoryboardGenerator(Project.Value);
-                            output = await generator.GenerateAsync(globals, target, includeHidden, token);
-                            break;
-                        }
+                        output = await applyGeneratorConfig(new StoryboardGenerator(scriptsProvider), target, includeHidden).GenerateAsync(globals, token);
+                        break;
 
                     default:
                         return null;
@@ -196,6 +194,26 @@ namespace sbtw.Editor
             });
 
             return output;
+        }
+
+        private Generator<T, U> applyGeneratorConfig<T, U>(Generator<T, U> generator, ExportTarget? target, bool includeHidden)
+        {
+            if (Project.Value is not IGeneratorConfig config)
+                return generator;
+
+            generator
+                .AddStep(new FilterGroupStep(target, includeHidden))
+                .AddStep(new RoundToPrecisionStep(
+                    config.PrecisionMove.Value,
+                    config.PrecisionAlpha.Value,
+                    config.PrecisionScale.Value,
+                    config.PrecisionScale.Value
+                ));
+
+            if (config.UseWidescreen.Value)
+                generator.AddStep(new OffsetForWidescreenStep());
+
+            return generator;
         }
 
         protected virtual void OnPreGenerate()

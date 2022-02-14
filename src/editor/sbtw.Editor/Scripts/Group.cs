@@ -9,6 +9,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Lists;
 using osu.Game.Storyboards;
+using osuTK;
 using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts.Elements;
 using sbtw.Editor.Scripts.Types;

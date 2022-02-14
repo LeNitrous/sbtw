@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Graphics;
 using osu.Game.Storyboards;
+using osuTK;
 using sbtw.Editor.Scripts.Commands;
 using sbtw.Editor.Scripts.Types;
 
