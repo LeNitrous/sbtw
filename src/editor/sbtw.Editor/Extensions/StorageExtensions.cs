@@ -55,7 +55,7 @@ namespace sbtw.Editor.Extensions
 
             foreach (string dir in directories)
             {
-                entries.AddRange(getEntries(storage, Path.Combine(path, dir), pattern));
+                entries.AddRange(getEntries(storage, Path.Combine(path, dir.Split(Path.DirectorySeparatorChar).Last()), pattern));
             }
 
             return entries;

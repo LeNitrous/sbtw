@@ -79,7 +79,7 @@ namespace sbtw.Editor.Scripts
 
             foreach (var m in members)
             {
-                if (m is PropertyInfo p && p.DeclaringType.IsAssignableTo(typeof(IReadOnlyList<Type>)))
+                if (m is PropertyInfo p && p.CanRead && p.PropertyType.IsAssignableTo(typeof(IReadOnlyList<Type>)))
                 {
                     prop = p;
                     break;

@@ -33,7 +33,7 @@ namespace sbtw.Editor.Scripts
             if (AssetProvider == null)
                 throw new NotSupportedException(@"This script does not support getting assets.");
 
-            asset.Path = path;
+            asset.Path = path.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             AssetProvider.Assets.Add(asset);
             return path;
         }
@@ -87,7 +87,7 @@ namespace sbtw.Editor.Scripts
 
 #pragma warning disable CA2211 // see ScriptGlobalsHelper
 
-        public static IReadOnlyList<Type> TYPES = new[]
+        public static IReadOnlyList<Type> TYPES { get; } = new[]
         {
             typeof(Text),
             typeof(Rectangle),

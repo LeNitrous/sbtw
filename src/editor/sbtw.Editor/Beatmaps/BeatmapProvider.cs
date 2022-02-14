@@ -2,6 +2,7 @@
 // See LICENSE in the repository root for more details.
 
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Mixing;
@@ -36,7 +37,7 @@ namespace sbtw.Editor.Beatmaps
             this.host = host;
             this.audio = audio;
 
-            var files = store.GetAvailableResources();
+            var files = store.GetAvailableResources().Select(p => p.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             var beatmaps = new List<IBeatmap>();
             var beatmapSet = new BeatmapSetInfo();
 
