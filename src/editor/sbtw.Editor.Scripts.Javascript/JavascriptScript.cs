@@ -14,6 +14,7 @@ namespace sbtw.Editor.Scripts.Javascript
     {
         protected readonly V8ScriptEngine Engine;
         protected readonly RuntimeUtilities Utilities;
+        private V8Script compiled;
 
         public JavascriptScript(V8ScriptEngine engine, RuntimeUtilities utilities, string path)
             : base(path)
@@ -25,12 +26,13 @@ namespace sbtw.Editor.Scripts.Javascript
 
         public sealed override Task CompileAsync(CancellationToken token = default)
         {
+            compiled?.Dispose();
+            compiled = Engine.Compile(GetDocumentInfo(out string code), code);
             return Task.CompletedTask;
         }
 
         public sealed override Task ExecuteAsync(CancellationToken token = default)
         {
-            using var compiled = Engine.Compile(GetDocumentInfo(out string code), code);
             Engine.Execute(compiled);
             return Task.CompletedTask;
         }
@@ -50,6 +52,7 @@ namespace sbtw.Editor.Scripts.Javascript
         {
             base.Dispose(disposing);
             Engine.Dispose();
+            compiled?.Dispose();
         }
 
         public sealed override void RegisterFunction(Delegate del)

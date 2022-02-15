@@ -43,6 +43,7 @@ namespace sbtw.Editor.Scripts
     public abstract class FileBasedScriptLanguage<T> : FileBasedScriptLanguage
         where T : FileBasedScript
     {
+        protected virtual bool AlwaysCompile => false;
         protected readonly List<CachedScript> Cache = new List<CachedScript>();
         private readonly Storage storage;
 
@@ -73,7 +74,7 @@ namespace sbtw.Editor.Scripts
 
                     if (cached != null)
                     {
-                        if (!cached.Hash.SequenceEqual(hash))
+                        if (AlwaysCompile || !cached.Hash.SequenceEqual(hash))
                         {
                             cached.Hash = hash;
                             await cached.Script.CompileAsync(token);

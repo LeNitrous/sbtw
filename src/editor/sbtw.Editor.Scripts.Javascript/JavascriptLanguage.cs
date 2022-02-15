@@ -14,6 +14,7 @@ namespace sbtw.Editor.Scripts.Javascript
     {
         public override IReadOnlyList<string> Extensions { get; } = new[] { ".ts", ".js" };
         public override IReadOnlyList<string> Exclude { get; } = new[] { "*.d.ts" };
+        protected override bool AlwaysCompile => true;
         private readonly V8Runtime runtime;
         private readonly RuntimeUtilities utilities;
 
