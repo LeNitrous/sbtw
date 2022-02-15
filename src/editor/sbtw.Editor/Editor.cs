@@ -1,6 +1,7 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using Humanizer;
@@ -14,6 +15,7 @@ using osu.Framework.Input;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Framework.Logging;
+using osu.Framework.Threading;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Input.Bindings;
@@ -51,6 +53,7 @@ namespace sbtw.Editor
         private Container toolboxContainer;
         private Container controlContainer;
         private Container bottomContainer;
+        private FileWatcher watcher;
         private Bindable<bool> showInterface;
 
         [BackgroundDependencyLoader]
@@ -185,11 +188,17 @@ namespace sbtw.Editor
             showInterface = Session.GetBindable<bool>(EditorSessionStatic.ShowInterface);
             showInterface.BindValueChanged(e => controlContainer.FadeTo(e.NewValue ? 1 : 0, 250, Easing.OutQuint), true);
 
-            Project.ValueChanged += handleProjectChange;
-            Beatmap.ValueChanged += e => handleBeatmapChange(e.NewValue);
+            Project.ValueChanged += e => Schedule(() => handleProjectChange(e));
+            Beatmap.ValueChanged += e => Schedule(() => handleBeatmapChange(e.NewValue));
         }
 
-        public void Generate() => preview?.Generate();
+        private ScheduledDelegate debounce;
+
+        public void Generate()
+        {
+            debounce?.Cancel();
+            debounce = Scheduler.AddDelayed(() => preview?.Generate(), 500);
+        }
 
         protected override void OnPreGenerate()
         {
@@ -237,6 +246,11 @@ namespace sbtw.Editor
 
         private void handleProjectChange(ValueChangedEvent<IProject> project)
         {
+            watcher?.Expire();
+
+            if (project.NewValue is IFileBackedProject fileBackedProject)
+                AddInternal(watcher = new FileWatcher(fileBackedProject));
+
             if (project.NewValue is not ICanProvideBeatmap)
             {
                 contentContainer?.Clear();
@@ -244,19 +258,22 @@ namespace sbtw.Editor
             }
 
             if (project.NewValue is ICanProvideGroups newGroupsProvider)
-                newGroupsProvider.Groups.GroupPropertyChanged += handleGroupPropertyChange;
+            {
+                newGroupsProvider.Groups.GroupPropertyChanged += e =>
+                {
+                    if (e == GroupChangeType.Visibility)
+                        Generate();
+                };
 
-            if (project.OldValue is ICanProvideGroups oldGroupsProvider)
-                oldGroupsProvider.Groups.GroupPropertyChanged -= handleGroupPropertyChange;
+                newGroupsProvider.Groups.Bindable.CollectionChanged += (_, e) =>
+                {
+                    if (e.Action == NotifyCollectionChangedAction.Move)
+                        Generate();
+                };
+            }
 
             if (project.NewValue is IGeneratorConfig newConfig)
                 newConfig.UseWidescreen.ValueChanged += _ => Generate();
-        }
-
-        private void handleGroupPropertyChange(GroupChangeType e)
-        {
-            if (e == GroupChangeType.Visibility)
-                Generate();
         }
 
         public bool OnPressed(KeyBindingPressEvent<GlobalAction> e)

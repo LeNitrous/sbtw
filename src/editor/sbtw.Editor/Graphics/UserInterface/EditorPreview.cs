@@ -3,6 +3,7 @@
 
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -81,32 +82,45 @@ namespace sbtw.Editor.Graphics.UserInterface
             Generate();
         }
 
-        public void Generate() => Task.Run(async () =>
+        private CancellationTokenSource cts;
+
+        public void Generate()
         {
-            Schedule(() =>
+            cts?.Cancel();
+            cts = new CancellationTokenSource();
+            Task.Run(async () =>
             {
-                storyboardMain.Clear();
-                storyboardOver.Clear();
-            });
-
-            try
-            {
-                var output = (await editor.Generate(GenerateKind.Storyboard, null, false)) as GeneratorResult<Storyboard>;
-                output.Result.BeatmapInfo = beatmap.BeatmapInfo;
-
-                var resources = (beatmapProvider as IBeatmapResourceProvider).Resources;
-                var storyboard = new EditorDrawableStoryboard(output.Result, resources);
-
-                Schedule(() => LoadComponentAsync(storyboard, _ =>
+                Schedule(() =>
                 {
-                    storyboardMain.Add(storyboard);
-                    storyboardOver.Add(storyboard.Children.FirstOrDefault(l => l.Name == "Overlay").CreateProxy());
-                }));
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e, "Failed to load preview.");
-            };
-        });
+                    storyboardMain.Clear();
+                    storyboardOver.Clear();
+                });
+
+                try
+                {
+                    var output = (await editor.Generate(GenerateKind.Storyboard, null, false)) as GeneratorResult<Storyboard>;
+                    output.Result.BeatmapInfo = beatmap.BeatmapInfo;
+
+                    var resources = (beatmapProvider as IBeatmapResourceProvider).Resources;
+                    var storyboard = new EditorDrawableStoryboard(output.Result, resources);
+
+                    Schedule(() => LoadComponentAsync(storyboard, _ =>
+                    {
+                        storyboardMain.Add(storyboard);
+                        storyboardOver.Add(storyboard.Children.FirstOrDefault(l => l.Name == "Overlay").CreateProxy());
+                    }));
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e, "Failed to load preview.");
+                };
+            }, cts.Token);
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            cts?.Cancel();
+            base.Dispose(isDisposing);
+        }
     }
 }

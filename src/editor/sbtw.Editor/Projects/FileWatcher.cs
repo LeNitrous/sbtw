@@ -5,9 +5,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using GlobExpressions;
+using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Threading;
 using osu.Game.Extensions;
+using sbtw.Editor.Configuration;
 using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Projects
@@ -18,6 +21,10 @@ namespace sbtw.Editor.Projects
         private readonly FileSystemWatcher watcher;
         private readonly IEnumerable<string> filters;
         private readonly IEnumerable<string> exclude;
+        private IBindable<bool> hotReload;
+
+        [Resolved]
+        private Editor editor { get; set; }
 
         public FileWatcher(IFileBackedProject project)
         {
@@ -30,7 +37,7 @@ namespace sbtw.Editor.Projects
             };
 
             var languages = project.Scripts.Languages.OfType<FileBasedScriptLanguage>();
-            filters = languages.SelectMany(lang => lang.Extensions).Select(ext => $"*.{ext}");
+            filters = languages.SelectMany(lang => lang.Extensions).Select(ext => $"*{ext}");
             exclude = languages.SelectMany(lang => lang.Exclude);
 
             watcher.Filters.AddRange(filters.Concat(extensions));
@@ -45,6 +52,13 @@ namespace sbtw.Editor.Projects
             watcher.Changed += (_, e) => handleChange(e.FullPath);
         }
 
+        [BackgroundDependencyLoader]
+        private void load(EditorConfigManager config)
+        {
+            hotReload = config.GetBindable<bool>(EditorSetting.HotReload);
+            hotReload.BindValueChanged(e => watcher.EnableRaisingEvents = e.NewValue, true);
+        }
+
         private ScheduledDelegate debounce;
 
         private void handleChange(string fullPath)
@@ -57,7 +71,20 @@ namespace sbtw.Editor.Projects
             {
                 string path = fullPath.Replace(project.Files.GetFullPath("."), string.Empty);
 
+                if (Path.GetDirectoryName(path) == "Beatmap")
+                {
+                    editor.RefreshBeatmap();
+                    return;
+                }
+
+                editor.Generate();
             }, 500);
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            base.Dispose(isDisposing);
+            watcher?.Dispose();
         }
 
         private static readonly string[] extensions = new[]
