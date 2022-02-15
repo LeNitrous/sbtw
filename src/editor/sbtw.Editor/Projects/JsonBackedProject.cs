@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Newtonsoft.Json;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Mixing;
@@ -13,10 +12,10 @@ using osu.Framework.Configuration;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Game.Rulesets;
-using sbtw.Editor.Scripts.Assets;
 using sbtw.Editor.Beatmaps;
 using sbtw.Editor.Generators;
 using sbtw.Editor.Scripts;
+using sbtw.Editor.Scripts.Assets;
 
 namespace sbtw.Editor.Projects
 {
@@ -31,7 +30,6 @@ namespace sbtw.Editor.Projects
         public Storage Files { get; }
         public Storage BeatmapFiles { get; }
         public ScriptManager Scripts { get; }
-        public GroupCollection Groups { get; }
 
         [JsonProperty(Required = Required.Always)]
         public BindableBool UseWidescreen { get; } = new BindableBool(true);
@@ -48,11 +46,11 @@ namespace sbtw.Editor.Projects
         [JsonProperty]
         public BindableInt PrecisionRotation { get; } = new BindableInt { Default = 4, Value = 4, MinValue = 0, MaxValue = 6 };
 
-        [JsonProperty(Required = Required.Always, ItemTypeNameHandling = TypeNameHandling.Auto)]
+        [JsonProperty(Required = Required.Always)]
         public HashSet<Asset> Assets { get; } = new HashSet<Asset>();
 
-        [JsonProperty("Groups", Required = Required.Always)]
-        private IReadOnlyList<Group> groups { get; set; }
+        [JsonProperty(Required = Required.Always)]
+        public GroupCollection Groups { get; } = new GroupCollection();
 
         public JsonBackedProject(string path)
         {
@@ -70,7 +68,6 @@ namespace sbtw.Editor.Projects
 
             Load();
 
-            Groups = new GroupCollection(groups);
             Groups.GroupPropertyChanged += _ => QueueBackgroundSave();
             Groups.Bindable.CollectionChanged += (_, __) => QueueBackgroundSave();
             UseWidescreen.ValueChanged += _ => QueueBackgroundSave();
@@ -79,7 +76,7 @@ namespace sbtw.Editor.Projects
             PrecisionScale.ValueChanged += _ => QueueBackgroundSave();
             PrecisionRotation.ValueChanged += _ => QueueBackgroundSave();
 
-            Scripts = new ScriptManager(this, new[] { typeof(BuiltinScriptLanguage) }, true);
+            Scripts = new ScriptManager(this, new[] { typeof(BuiltinScriptLanguage) });
         }
 
         public BeatmapProvider GetBeatmapProvider(GameHost host, AudioManager audioManager, RulesetStore rulesets = null, AudioMixer audioMixer = null)
@@ -102,10 +99,9 @@ namespace sbtw.Editor.Projects
         {
             try
             {
-                groups = Groups.ToArray();
-
                 using var stream = Files.GetStream(System.IO.Path.ChangeExtension(Name, ".sbtw.json"), FileAccess.Write);
                 using var writer = new StreamWriter(stream);
+                stream.Position = 0;
                 writer.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
                 return true;
             }

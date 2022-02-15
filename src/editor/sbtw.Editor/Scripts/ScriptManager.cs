@@ -17,15 +17,18 @@ namespace sbtw.Editor.Scripts
     {
         public IReadOnlyList<IScriptLanguage> Languages => languages;
         private readonly IProject project;
+        private readonly BuiltinScriptLanguage builtins;
         private readonly List<IScriptLanguage> languages = new List<IScriptLanguage>();
         protected bool IsDisposed { get; private set; }
 
-        public ScriptManager(IProject project, IEnumerable<Type> types, bool loadAssemblies = false)
+        public ScriptManager(IProject project, IEnumerable<Type> types)
         {
             this.project = project ?? throw new ArgumentNullException(nameof(project));
 
             if (this.project is not ICanProvideFiles)
                 throw new ArgumentException($"{nameof(IProject)} does not implement {nameof(ICanProvideFiles)}.");
+
+            languages.Add(builtins = new BuiltinScriptLanguage(project));
 
             foreach (var type in types ?? throw new ArgumentNullException(nameof(types)))
             {
@@ -38,19 +41,8 @@ namespace sbtw.Editor.Scripts
                 languages.Add(Activator.CreateInstance(type, new object[] { project }) as IScriptLanguage);
             }
 
-            if (!loadAssemblies)
-                return;
-
-            string[] files = Directory.GetFiles(RuntimeInfo.StartupDirectory, @"sbtw.Editor.Scripts.*.dll");
-
-            foreach (string file in files)
-            {
-                var assembly = Assembly.LoadFrom(file);
-                var type = assembly.GetTypes().First(t => t.IsPublic && t.IsSubclassOf(typeof(ScriptLanguage)));
-
-                if (type != null)
-                    languages.Add(Activator.CreateInstance(type, new object[] { project }) as IScriptLanguage);
-            }
+            foreach (var type in loadedFromAssembly)
+                languages.Add(Activator.CreateInstance(type, new object[] { project }) as IScriptLanguage);
         }
 
         public IEnumerable<ScriptExecutionResult> Execute()
@@ -86,6 +78,22 @@ namespace sbtw.Editor.Scripts
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        private static readonly List<Type> loadedFromAssembly = new List<Type>();
+
+        static ScriptManager()
+        {
+            string[] files = Directory.GetFiles(RuntimeInfo.StartupDirectory, @"sbtw.Editor.Scripts.*.dll");
+
+            foreach (string file in files)
+            {
+                var assembly = Assembly.LoadFrom(file);
+                var type = assembly.GetTypes().First(t => t.IsPublic && t.IsSubclassOf(typeof(ScriptLanguage)));
+
+                if (type != null)
+                    loadedFromAssembly.Add(type);
+            }
         }
     }
 }

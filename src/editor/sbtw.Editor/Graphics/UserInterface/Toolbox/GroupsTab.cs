@@ -185,7 +185,7 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
                             break;
 
                         case ExportTarget.None:
-                            Icon = FontAwesome.Solid.MinusCircle;
+                            Icon = FontAwesome.Solid.TimesCircle;
                             TooltipText = @"Do not export";
                             break;
                     }

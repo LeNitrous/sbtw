@@ -5,19 +5,19 @@ using System;
 using System.IO;
 using Newtonsoft.Json;
 using osu.Framework.Platform;
+using sbtw.Editor.IO.Serialization;
 
 namespace sbtw.Editor.Scripts.Assets
 {
     /// <summary>
     /// Represents a generatable asset.
     /// </summary>
-    [JsonObject(MemberSerialization.OptIn)]
+    [JsonConverter(typeof(AssetConverter))]
     public abstract class Asset : IEquatable<Asset>
     {
         /// <summary>
         /// The relative path to the given asset.
         /// </summary>
-        [JsonProperty]
         internal string Path { get; set; }
 
         /// <summary>

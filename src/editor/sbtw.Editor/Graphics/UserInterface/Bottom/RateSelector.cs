@@ -48,10 +48,10 @@ namespace sbtw.Editor.Graphics.UserInterface.Bottom
         private void load(EditorSessionStatics statics)
         {
             affectsTempo = statics.GetBindable<bool>(EditorSessionStatic.TrackRateAffectsPitch);
-            affectsTempo.ValueChanged += _ => updateRate(rate.Value);
+            affectsTempo.ValueChanged += _ => updateRate();
 
             rate = statics.GetBindable<double>(EditorSessionStatic.TrackRate);
-            rate.ValueChanged += _ => updateRate(rate.Value);
+            rate.ValueChanged += _ => updateRate();
 
             items = new MenuItem[]
             {
@@ -66,14 +66,15 @@ namespace sbtw.Editor.Graphics.UserInterface.Bottom
 
             clock.Track.BindValueChanged(e =>
             {
-                updateRate(1.0);
+                e.OldValue?.ResetSpeedAdjustments();
+                e.NewValue?.ResetSpeedAdjustments();
                 e.OldValue?.RemoveAdjustment(AdjustableProperty.Frequency, frequency);
                 e.OldValue?.RemoveAdjustment(AdjustableProperty.Tempo, tempo);
                 e.NewValue?.AddAdjustment(AdjustableProperty.Frequency, frequency);
                 e.NewValue?.AddAdjustment(AdjustableProperty.Tempo, tempo);
             }, true);
 
-            updateRate(rate.Value);
+            updateRate();
         }
 
         public MenuItem[] ContextMenuItems => items;
@@ -108,20 +109,20 @@ namespace sbtw.Editor.Graphics.UserInterface.Bottom
             return item;
         }
 
-        private void updateRate(double rate)
+        private void updateRate()
         {
-            text.Text = $"{rate * 100}%";
+            text.Text = $"{rate.Value * 100}%";
             foreach ((double rateSetting, TernaryStateRadioMenuItem item) in itemMap)
-                item.State.Value = rateSetting == rate ? TernaryState.True : TernaryState.False;
+                item.State.Value = rateSetting == rate.Value ? TernaryState.True : TernaryState.False;
 
             if (!affectsTempo.Value)
             {
                 frequency.Value = 1.0;
-                tempo.Value = rate / 1.0;
+                tempo.Value = rate.Value / 1.0;
             }
             else
             {
-                frequency.Value = rate;
+                frequency.Value = rate.Value;
                 tempo.Value = 1.0;
             }
         }

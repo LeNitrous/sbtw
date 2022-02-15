@@ -26,8 +26,8 @@ namespace sbtw.Editor.Scripts.BuiltIns
 
             ScriptedSprite bg = group.CreateSprite(filename);
             bg.Scale(0, 854.0 / width);
-            bg.Fade(0, 500, 0, 1);
-            bg.Fade(end, end + 100, 1, 0);
+            bg.Fade(0, 1);
+            bg.Fade(end, 0);
         }
     }
 }

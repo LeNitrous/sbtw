@@ -5,16 +5,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using sbtw.Editor.Projects;
-using sbtw.Editor.Scripts.BuiltIns;
 
 namespace sbtw.Editor.Scripts
 {
     public class BuiltinScriptLanguage : ScriptLanguage
     {
-        private readonly IEnumerable<BuiltInScript> scripts = new[]
-        {
-            new BeatmapBackgroundScript(),
-        };
+        private readonly List<BuiltInScript> scripts = new List<BuiltInScript>();
 
         public BuiltinScriptLanguage(IProject project)
             : base(project)

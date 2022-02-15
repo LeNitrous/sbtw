@@ -6,11 +6,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using Newtonsoft.Json;
 using osu.Framework.Bindables;
+using sbtw.Editor.IO.Serialization;
 using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Scripts
 {
+    [JsonConverter(typeof(GroupCollectionConverter))]
     public class GroupCollection : IList<Group>, ICollection<Group>, IEnumerable<Group>, IEnumerable
     {
         public event Action<GroupChangeType> GroupPropertyChanged;

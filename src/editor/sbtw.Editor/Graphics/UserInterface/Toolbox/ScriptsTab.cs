@@ -41,10 +41,28 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
         private void load(BindableList<ScriptExecutionResult> results)
         {
             this.results = results.GetBoundCopy();
-            this.results.BindCollectionChanged((_, __) => Schedule(() => Children = results.Select(s => new ScriptItem(s)).ToArray()), true);
+            this.results.BindCollectionChanged((_, __) => Schedule(handleResultsChange), true);
         }
 
-        private class ScriptItem : CompositeDrawable
+        private void handleResultsChange()
+        {
+            Children = results.Select(s =>
+            {
+                switch (s.Script)
+                {
+                    case BuiltInScript builtin:
+                        return new BuiltInScriptItem(s);
+
+                    case FileBasedScript fileBased:
+                        return new FileBasedScriptItem(s);
+
+                    default:
+                        return new ScriptItem(s);
+                }
+            }).ToArray();
+        }
+
+        private class ScriptItem : Container
         {
             private readonly ScriptExecutionResult result;
 
@@ -58,7 +76,7 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
             {
                 RelativeSizeAxes = Axes.X;
                 Height = 40;
-                InternalChildren = new Drawable[]
+                Children = new Drawable[]
                 {
                     new LabelSpriteText(result.Script)
                     {
@@ -74,14 +92,6 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
                         Anchor = Anchor.CentreLeft,
                         Origin = Anchor.CentreLeft,
                     },
-                    new IconButton
-                    {
-                        Icon = FontAwesome.Regular.Edit,
-                        Size = new Vector2(40),
-                        Anchor = Anchor.TopRight,
-                        Origin = Anchor.TopRight,
-                        TooltipText = @"Reveal script in code.",
-                    }
                 };
             }
 
@@ -102,6 +112,50 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
                     if (script is FileBasedScript file)
                         TooltipText = file.Path;
                 }
+            }
+        }
+
+        private class BuiltInScriptItem : ScriptItem
+        {
+            public BuiltInScriptItem(ScriptExecutionResult result)
+                : base(result)
+            {
+            }
+
+            [BackgroundDependencyLoader]
+            private void load()
+            {
+                Add(new IconButton
+                {
+                    Icon = FontAwesome.Solid.Times,
+                    Size = new Vector2(40),
+                    Anchor = Anchor.TopRight,
+                    Origin = Anchor.TopRight,
+                });
+            }
+        }
+
+        private class FileBasedScriptItem : ScriptItem
+        {
+            private readonly FileBasedScript script;
+
+            public FileBasedScriptItem(ScriptExecutionResult result)
+                : base(result)
+            {
+                script = result.Script as FileBasedScript;
+            }
+
+            [BackgroundDependencyLoader]
+            private void load()
+            {
+                Add(new IconButton
+                {
+                    Icon = FontAwesome.Regular.Edit,
+                    Size = new Vector2(40),
+                    Anchor = Anchor.TopRight,
+                    Origin = Anchor.TopRight,
+                    TooltipText = @"Reveal script in code.",
+                });
             }
         }
     }
