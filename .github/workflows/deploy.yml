@@ -10,8 +10,8 @@ jobs:
     strategy:
       matrix:
         os:
-          - { runner: windows-latest, runtime: win-x64 }
-          - { runner: ubuntu-latest, runtime: ubuntu.20.04-x64 }
+          - { name: Windows, runner: windows-latest, runtime: win-x64 }
+          - { name: Linux, runner: ubuntu-latest, runtime: ubuntu.20.04-x64 }
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -23,7 +23,7 @@ jobs:
 
       - name: Build
         run: |
-          dotnet publish ./src/desktop/sbtw.Desktop --nologo -c Release -o ./output -r ${{ matrix.os.runtime }} --self-contained true -p:Version=${{ github.ref_name }}
+          dotnet publish ./src/desktop/sbtw.Desktop.${{ matrix.os.name }} --nologo -c Release -o ./output -r ${{ matrix.os.runtime }} --self-contained true -p:Version=${{ github.ref_name }}
           7z a -tzip sbtw-${{ matrix.os.runtime }}.zip output/*
 
       - name: Upload Artifact
