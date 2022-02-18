@@ -26,7 +26,7 @@ namespace sbtw.Editor.Projects
         [Resolved]
         private Editor editor { get; set; }
 
-        public FileWatcher(IFileBackedProject project)
+        public FileWatcher(IFileBackedProject project, ScriptManager manager)
         {
             this.project = project;
 
@@ -36,7 +36,7 @@ namespace sbtw.Editor.Projects
                 IncludeSubdirectories = true
             };
 
-            var languages = project.Scripts.Languages.OfType<FileBasedScriptLanguage>();
+            var languages = manager.Languages.OfType<FileBasedScriptLanguage>();
             filters = languages.SelectMany(lang => lang.Extensions).Select(ext => $"*{ext}");
             exclude = languages.SelectMany(lang => lang.Exclude);
 

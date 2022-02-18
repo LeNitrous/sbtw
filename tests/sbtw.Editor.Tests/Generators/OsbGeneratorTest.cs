@@ -8,13 +8,13 @@ using NUnit.Framework;
 using osu.Framework.Graphics;
 using osuTK;
 using sbtw.Editor.Generators;
-using sbtw.Editor.Projects;
+using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Tests.Generators
 {
     public class OsbGeneratorTest : GeneratorTestBase<OsbGenerator, Dictionary<string, StringBuilder>, StringBuilder>
     {
-        protected override OsbGenerator CreateGenerator(ICanProvideScripts provider) => new OsbGenerator(provider);
+        protected override OsbGenerator CreateGenerator(ScriptManager manager) => new OsbGenerator(manager);
 
         [Test]
         public void TestGenerateSprite()

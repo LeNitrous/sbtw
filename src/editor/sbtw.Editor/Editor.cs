@@ -249,7 +249,7 @@ namespace sbtw.Editor
             watcher?.Expire();
 
             if (project.NewValue is IFileBackedProject fileBackedProject)
-                AddInternal(watcher = new FileWatcher(fileBackedProject));
+                AddInternal(watcher = new FileWatcher(fileBackedProject, ScriptManager));
 
             if (project.NewValue is not ICanProvideBeatmap)
             {

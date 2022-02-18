@@ -4,18 +4,12 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Scripts
 {
     public class BuiltinScriptLanguage : ScriptLanguage
     {
         private readonly List<BuiltInScript> scripts = new List<BuiltInScript>();
-
-        public BuiltinScriptLanguage(IProject project)
-            : base(project)
-        {
-        }
 
         protected override Task<IEnumerable<IScript>> GetScriptsAsync(CancellationToken token = default)
         {

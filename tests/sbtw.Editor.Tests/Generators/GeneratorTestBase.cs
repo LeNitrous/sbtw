@@ -4,7 +4,6 @@
 using System;
 using NUnit.Framework;
 using sbtw.Editor.Generators;
-using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
 using sbtw.Editor.Tests.Projects;
 using sbtw.Editor.Tests.Scripts;
@@ -15,27 +14,33 @@ namespace sbtw.Editor.Tests.Generators
         where TGenerator : Generator<TGenerated, TElement>
     {
         protected TGenerator Generator { get; private set; }
+        private ScriptManager manager;
         private TestProject project;
+        private TestScriptLanguage language;
 
         [SetUp]
         public void SetUp()
         {
             project = new TestProject();
-            Generator = CreateGenerator(project);
+            manager = new ScriptManager(project.Files);
+            manager.AddLanguage(language = new TestScriptLanguage());
+            Generator = CreateGenerator(manager);
         }
 
         [TearDown]
         public void TearDown()
         {
             Generator = null;
+            language = null;
+            manager = null;
             project = null;
         }
 
-        protected abstract TGenerator CreateGenerator(ICanProvideScripts project);
+        protected abstract TGenerator CreateGenerator(ScriptManager manager);
 
         protected TGenerated Generate(Action<dynamic> action)
         {
-            (project.Language as TestScriptLanguage).Scripts = new[] { new TestScript { Action = action } };
+            language.Scripts = new[] { new TestScript { Action = action } };
             return Generator.Generate(new ScriptGlobals { GroupProvider = project }).Result;
         }
     }

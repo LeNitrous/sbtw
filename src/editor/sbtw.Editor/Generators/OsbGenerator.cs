@@ -9,7 +9,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Lists;
 using osu.Game.Storyboards;
 using osuTK.Graphics;
-using sbtw.Editor.Projects;
+using sbtw.Editor.Scripts;
 using sbtw.Editor.Scripts.Commands;
 using sbtw.Editor.Scripts.Elements;
 using sbtw.Editor.Scripts.Types;
@@ -20,8 +20,8 @@ namespace sbtw.Editor.Generators
     {
         private const string fmt = "0.######";
 
-        public OsbGenerator(ICanProvideScripts provider)
-            : base(provider)
+        public OsbGenerator(ScriptManager manager)
+            : base(manager)
         {
         }
 

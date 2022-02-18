@@ -29,7 +29,6 @@ namespace sbtw.Editor.Projects
         public BeatmapProvider Beatmaps { get; }
         public Storage Files { get; }
         public Storage BeatmapFiles { get; }
-        public ScriptManager Scripts { get; }
 
         [JsonProperty(Required = Required.Always)]
         public BindableBool UseWidescreen { get; } = new BindableBool(true);
@@ -75,8 +74,6 @@ namespace sbtw.Editor.Projects
             PrecisionAlpha.ValueChanged += _ => QueueBackgroundSave();
             PrecisionScale.ValueChanged += _ => QueueBackgroundSave();
             PrecisionRotation.ValueChanged += _ => QueueBackgroundSave();
-
-            Scripts = new ScriptManager(this, new[] { typeof(BuiltinScriptLanguage) });
         }
 
         public BeatmapProvider GetBeatmapProvider(GameHost host, AudioManager audioManager, RulesetStore rulesets = null, AudioMixer audioMixer = null)
@@ -109,12 +106,6 @@ namespace sbtw.Editor.Projects
             {
                 return false;
             }
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-            Scripts?.Dispose();
         }
 
         public void Log(object message, LogLevel level = LogLevel.Verbose)

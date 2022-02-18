@@ -9,41 +9,34 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using osu.Framework;
-using sbtw.Editor.Projects;
+using osu.Framework.Platform;
 
 namespace sbtw.Editor.Scripts
 {
     public class ScriptManager : IDisposable
     {
         public IReadOnlyList<IScriptLanguage> Languages => languages;
-        private readonly IProject project;
-        private readonly BuiltinScriptLanguage builtins;
         private readonly List<IScriptLanguage> languages = new List<IScriptLanguage>();
         protected bool IsDisposed { get; private set; }
 
-        public ScriptManager(IProject project, IEnumerable<Type> types)
+        public ScriptManager(Storage storage)
         {
-            this.project = project ?? throw new ArgumentNullException(nameof(project));
+            if (storage == null)
+                throw new ArgumentNullException(nameof(storage));
 
-            if (this.project is not ICanProvideFiles)
-                throw new ArgumentException($"{nameof(IProject)} does not implement {nameof(ICanProvideFiles)}.");
+            languages.Add(new BuiltinScriptLanguage());
 
-            languages.Add(builtins = new BuiltinScriptLanguage(project));
-
-            foreach (var type in types ?? throw new ArgumentNullException(nameof(types)))
+            foreach (var type in loadedTypeFromAssembly)
             {
-                if (!type.IsAssignableTo(typeof(IScriptLanguage)))
-                    throw new ArgumentException($"{type.Name} is not a {nameof(IScriptLanguage)}.", nameof(types));
-
-                if (type.GetConstructor(new[] { typeof(IProject) }) == null)
-                    throw new ArgumentException($"{type.Name} does not have the required constructor.");
-
-                languages.Add(Activator.CreateInstance(type, new object[] { project }) as IScriptLanguage);
+                if (type.IsAssignableTo(typeof(FileBasedScriptLanguage)))
+                    languages.Add(Activator.CreateInstance(type, new object[] { storage }) as IScriptLanguage);
+                else
+                    languages.Add(Activator.CreateInstance(type) as IScriptLanguage);
             }
-
-            foreach (var type in loadedFromAssembly)
-                languages.Add(Activator.CreateInstance(type, new object[] { project }) as IScriptLanguage);
         }
+
+        public void AddLanguage(IScriptLanguage language) => languages.Add(language);
+        public void RemoveLanguage(IScriptLanguage language) => languages.Remove(language);
 
         public IEnumerable<ScriptExecutionResult> Execute()
             => Execute<object>(null);
@@ -80,11 +73,13 @@ namespace sbtw.Editor.Scripts
             GC.SuppressFinalize(this);
         }
 
-        private static readonly List<Type> loadedFromAssembly = new List<Type>();
+        public static readonly IReadOnlyList<Assembly> Loaded;
+        private static readonly List<Type> loadedTypeFromAssembly = new List<Type>();
 
         static ScriptManager()
         {
             string[] files = Directory.GetFiles(RuntimeInfo.StartupDirectory, @"sbtw.Editor.Scripts.*.dll");
+            var loadedAssemblies = new List<Assembly>();
 
             foreach (string file in files)
             {
@@ -92,8 +87,13 @@ namespace sbtw.Editor.Scripts
                 var type = assembly.GetTypes().First(t => t.IsPublic && t.IsSubclassOf(typeof(ScriptLanguage)));
 
                 if (type != null)
-                    loadedFromAssembly.Add(type);
+                {
+                    loadedAssemblies.Add(assembly);
+                    loadedTypeFromAssembly.Add(type);
+                }
             }
+
+            Loaded = loadedAssemblies;
         }
     }
 }

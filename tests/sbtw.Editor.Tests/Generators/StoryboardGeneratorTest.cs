@@ -7,13 +7,13 @@ using osu.Framework.Graphics;
 using osu.Game.Storyboards;
 using osuTK;
 using sbtw.Editor.Generators;
-using sbtw.Editor.Projects;
+using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Tests.Generators
 {
     public class StoryboardGeneratorTest : GeneratorTestBase<StoryboardGenerator, Storyboard, IStoryboardElement>
     {
-        protected override StoryboardGenerator CreateGenerator(ICanProvideScripts provider) => new StoryboardGenerator(provider);
+        protected override StoryboardGenerator CreateGenerator(ScriptManager manager) => new StoryboardGenerator(manager);
 
         [Test]
         public void TestGenerateSprite()

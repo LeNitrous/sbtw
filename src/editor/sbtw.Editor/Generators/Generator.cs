@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using sbtw.Editor.Generators.Steps;
-using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
 using sbtw.Editor.Scripts.Elements;
 using sbtw.Editor.Scripts.Types;
@@ -16,12 +15,12 @@ namespace sbtw.Editor.Generators
 {
     public abstract class Generator<TResult, TElement>
     {
-        protected readonly ICanProvideScripts Provider;
+        private readonly ScriptManager manager;
         private readonly Queue<GeneratorStep> steps = new Queue<GeneratorStep>();
 
-        public Generator(ICanProvideScripts provider)
+        public Generator(ScriptManager manager)
         {
-            Provider = provider ?? throw new ArgumentNullException(nameof(provider));
+            this.manager = manager ?? throw new ArgumentNullException(nameof(manager));
         }
 
         public Generator<TResult, TElement> AddStep(GeneratorStep step)
@@ -55,7 +54,7 @@ namespace sbtw.Editor.Generators
             foreach (var step in steps)
                 stepContext = await step.PreProcess(stepContext, token);
 
-            var scripts = await Provider.Scripts.ExecuteAsync(globals, token);
+            var scripts = await manager.ExecuteAsync(globals, token);
 
             foreach (var group in stepContext.Groups.ToArray())
             {

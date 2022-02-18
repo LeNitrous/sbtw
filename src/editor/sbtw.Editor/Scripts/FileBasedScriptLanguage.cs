@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using GlobExpressions;
 using osu.Framework.Platform;
 using sbtw.Editor.Extensions;
-using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Scripts
 {
@@ -31,9 +30,11 @@ namespace sbtw.Editor.Scripts
         /// </summary>
         public virtual IReadOnlyList<string> Exclude { get; } = Array.Empty<string>();
 
-        protected FileBasedScriptLanguage(IProject project)
-            : base(project)
+        protected readonly Storage Storage;
+
+        protected FileBasedScriptLanguage(Storage storage)
         {
+            Storage = storage;
         }
     }
 
@@ -45,12 +46,10 @@ namespace sbtw.Editor.Scripts
     {
         protected virtual bool AlwaysCompile => false;
         protected readonly List<CachedScript> Cache = new List<CachedScript>();
-        private readonly Storage storage;
 
-        protected FileBasedScriptLanguage(IProject project)
-            : base(project)
+        protected FileBasedScriptLanguage(Storage storage)
+            : base(storage)
         {
-            storage = (Project as ICanProvideFiles)?.Files ?? throw new NotSupportedException(@"Project does not provide files.");
         }
 
         protected sealed override async Task<IEnumerable<IScript>> GetScriptsAsync(CancellationToken token = default)
@@ -59,14 +58,14 @@ namespace sbtw.Editor.Scripts
 
             foreach (string extension in Extensions)
             {
-                foreach (string path in storage.GetFiles(".", $"*{extension}", SearchOption.AllDirectories))
+                foreach (string path in Storage.GetFiles(".", $"*{extension}", SearchOption.AllDirectories))
                 {
                     token.ThrowIfCancellationRequested();
 
                     if (Exclude.Any(pattern => Glob.IsMatch(path, pattern, GlobOptions.CaseInsensitive)))
                         continue;
 
-                    using var stream = storage.GetStream(path, FileAccess.Read, FileMode.Open);
+                    using var stream = Storage.GetStream(path, FileAccess.Read, FileMode.Open);
                     using var md5 = MD5.Create();
                     byte[] hash = await md5.ComputeHashAsync(stream, token);
 
@@ -82,7 +81,7 @@ namespace sbtw.Editor.Scripts
                     }
                     else
                     {
-                        Cache.Add(cached = new CachedScript { Path = path, Hash = hash, Script = CreateScript(storage.GetFullPath(path)) });
+                        Cache.Add(cached = new CachedScript { Path = path, Hash = hash, Script = CreateScript(Storage.GetFullPath(path)) });
                         await cached.Script.CompileAsync(token);
                     }
 
@@ -92,7 +91,7 @@ namespace sbtw.Editor.Scripts
 
             foreach (var cached in Cache)
             {
-                if (storage.Exists(cached.Path))
+                if (Storage.Exists(cached.Path))
                     continue;
 
                 cached.Script.Dispose();

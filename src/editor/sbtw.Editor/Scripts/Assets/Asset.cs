@@ -21,11 +21,6 @@ namespace sbtw.Editor.Scripts.Assets
         internal string Path { get; set; }
 
         /// <summary>
-        /// The number of times this asset was referenced.
-        /// </summary>
-        public int ReferenceCount { get; set; }
-
-        /// <summary>
         /// The storage where this asset is being generated on.
         /// </summary>
         protected Storage Storage { get; private set; }

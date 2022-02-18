@@ -5,7 +5,7 @@ using osu.Framework.Configuration;
 
 namespace sbtw.Editor.Projects
 {
-    public interface IFileBackedProject : IProject, IConfigManager, ICanProvideFiles, ICanProvideAssets, ICanProvideScripts, ICanProvideBeatmap
+    public interface IFileBackedProject : IProject, IConfigManager, ICanProvideFiles, ICanProvideAssets, ICanProvideBeatmap
     {
         /// <summary>
         /// The project's name.

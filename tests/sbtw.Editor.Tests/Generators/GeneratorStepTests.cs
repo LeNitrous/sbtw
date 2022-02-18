@@ -26,6 +26,9 @@ namespace sbtw.Editor.Tests.Generators
         public void TestGeneratorFilterTarget(ExportTarget groupTarget, ExportTarget? generatorTarget, int expectedCount)
         {
             var provider = new TestProject();
+            var manager = new ScriptManager(provider.Files);
+            var language = new TestScriptLanguage();
+            manager.AddLanguage(language);
 
             var script = new TestScript
             {
@@ -40,9 +43,9 @@ namespace sbtw.Editor.Tests.Generators
                 new Group("a") { Target = { Value = groupTarget } }
             });
 
-            (provider.Language as TestScriptLanguage).Scripts = new[] { script };
+            language.Scripts = new[] { script };
 
-            var generated = new TestGenerator(provider)
+            var generated = new TestGenerator(manager)
                 .AddStep(new FilterGroupStep(generatorTarget))
                 .Generate(new ScriptGlobals { GroupProvider = provider });
 
@@ -54,6 +57,10 @@ namespace sbtw.Editor.Tests.Generators
         public void TestGeneratorFilterVisibility(bool includeHidden, int expectedCount)
         {
             var provider = new TestProject();
+            var manager = new ScriptManager(provider.Files);
+            var language = new TestScriptLanguage();
+            manager.AddLanguage(language);
+
             var script = new TestScript
             {
                 Action = s =>
@@ -67,9 +74,9 @@ namespace sbtw.Editor.Tests.Generators
                 new Group("a") { Visible = { Value = false } }
             });
 
-            (provider.Language as TestScriptLanguage).Scripts = new[] { script };
+            language.Scripts = new[] { script };
 
-            var generated = new TestGenerator(provider)
+            var generated = new TestGenerator(manager)
                 .AddStep(new FilterGroupStep(null, includeHidden))
                 .Generate(new ScriptGlobals { GroupProvider = provider });
 
@@ -79,9 +86,13 @@ namespace sbtw.Editor.Tests.Generators
         [Test]
         public void TestGeneratorPrecision()
         {
-            float num = 0.7272727f;
+            const float num = 0.7272727f;
 
             var provider = new TestProject();
+            var manager = new ScriptManager(provider.Files);
+            var language = new TestScriptLanguage();
+            manager.AddLanguage(language);
+
             var script = new TestScript
             {
                 Action = s =>
@@ -98,9 +109,9 @@ namespace sbtw.Editor.Tests.Generators
                 }
             };
 
-            (provider.Language as TestScriptLanguage).Scripts = new[] { script };
+            language.Scripts = new[] { script };
 
-            var generated = new TestGenerator(provider)
+            var generated = new TestGenerator(manager)
                 .AddStep(new RoundToPrecisionStep())
                 .Generate(new ScriptGlobals { GroupProvider = provider });
 
@@ -151,6 +162,10 @@ namespace sbtw.Editor.Tests.Generators
         public void TestGeneratorAssetGeneration()
         {
             var provider = new TemporaryStorageBackedTestProject();
+            var manager = new ScriptManager(provider.Files);
+            var language = new TestScriptLanguage();
+            manager.AddLanguage(language);
+
             var script = new TestScript
             {
                 Action = s =>
@@ -159,9 +174,9 @@ namespace sbtw.Editor.Tests.Generators
                 }
             };
 
-            (provider.Language as TestScriptLanguage).Scripts = new[] { script };
+            language.Scripts = new[] { script };
 
-            new TestGenerator(provider)
+            new TestGenerator(manager)
                 .AddStep(new GenerateAssetStep(provider.BeatmapFiles))
                 .Generate(new ScriptGlobals { GroupProvider = provider, AssetProvider = provider });
 
@@ -172,6 +187,10 @@ namespace sbtw.Editor.Tests.Generators
         public void TestGeneratorWidescreenOffset()
         {
             var provider = new TestProject();
+            var manager = new ScriptManager(provider.Files);
+            var language = new TestScriptLanguage();
+            manager.AddLanguage(language);
+
             var script = new TestScript
             {
                 Action = s =>
@@ -183,9 +202,9 @@ namespace sbtw.Editor.Tests.Generators
                 }
             };
 
-            (provider.Language as TestScriptLanguage).Scripts = new[] { script };
+            language.Scripts = new[] { script };
 
-            var generated = new TestGenerator(provider)
+            var generated = new TestGenerator(manager)
                 .AddStep(new OffsetForWidescreenStep())
                 .Generate(new ScriptGlobals { GroupProvider = provider });
 
@@ -205,8 +224,8 @@ namespace sbtw.Editor.Tests.Generators
 
         private class TestGenerator : Generator<List<IScriptElement>, IScriptElement>
         {
-            public TestGenerator(ICanProvideScripts provider)
-                : base(provider)
+            public TestGenerator(ScriptManager manager)
+                : base(manager)
             {
             }
 

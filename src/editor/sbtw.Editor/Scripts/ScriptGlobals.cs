@@ -74,9 +74,6 @@ namespace sbtw.Editor.Scripts
         public void Log(object message)
             => Log(message, LogLevel.Debug);
 
-        public void Error(object message)
-            => Log(message, LogLevel.Error);
-
         protected void Log(object message, LogLevel level = LogLevel.Debug)
         {
             if (Logger == null)

@@ -5,28 +5,20 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using sbtw.Editor.Projects;
 
 namespace sbtw.Editor.Scripts
 {
     public abstract class ScriptLanguage : IScriptLanguage
     {
         public bool IsDisposed { get; private set; }
-        protected readonly IProject Project;
 
-        public ScriptLanguage(IProject project)
-        {
-            Project = project;
-        }
-
-
-        public IEnumerable<ScriptExecutionResult> Execute<T>(T globals)
+        public IEnumerable<ScriptExecutionResult> Execute<T>(T globals = null)
             where T : class
         {
             return ExecuteAsync(globals).Result;
         }
 
-        public async Task<IEnumerable<ScriptExecutionResult>> ExecuteAsync<T>(T globals, CancellationToken token = default)
+        public async Task<IEnumerable<ScriptExecutionResult>> ExecuteAsync<T>(T globals = null, CancellationToken token = default)
             where T : class
         {
             var scripts = await GetScriptsAsync(token);

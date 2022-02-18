@@ -14,15 +14,13 @@ using sbtw.Editor.Tests.Scripts;
 
 namespace sbtw.Editor.Tests.Projects
 {
-    public class TestProject : IProject, ICanProvideGroups, ICanProvideScripts, ICanProvideFiles, ICanProvideAssets, ICanProvideLogger
+    public class TestProject : IProject, ICanProvideGroups, ICanProvideFiles, ICanProvideAssets, ICanProvideLogger, IDisposable
     {
         public BindableInt Precision { get; } = new BindableInt();
         public GroupCollection Groups { get; } = new GroupCollection();
         public Storage Files { get; }
         public Storage BeatmapFiles { get; }
         public HashSet<Asset> Assets { get; } = new HashSet<Asset>();
-        public ScriptManager Scripts { get; }
-        public IScriptLanguage Language => Scripts.Languages[0];
         public readonly List<string> Logs = new List<string>();
         private bool isDisposed;
 
@@ -30,7 +28,6 @@ namespace sbtw.Editor.Tests.Projects
         {
             Files = CreateStorage();
             BeatmapFiles = Files.GetStorageForDirectory("Beatmap");
-            Scripts = new ScriptManager(this, GetScriptingTypes());
         }
 
         protected virtual Storage CreateStorage() => new ShamStorage();
@@ -40,8 +37,6 @@ namespace sbtw.Editor.Tests.Projects
         {
             if (isDisposed)
                 return;
-
-            Scripts.Dispose();
 
             isDisposed = true;
         }

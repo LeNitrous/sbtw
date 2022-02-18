@@ -9,6 +9,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.IO.Stores;
 using osu.Framework.Logging;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
@@ -17,6 +18,7 @@ using osu.Game.Overlays;
 using osuTK;
 using sbtw.Editor.Overlays.Setup;
 using sbtw.Editor.Projects;
+using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Overlays
 {
@@ -127,7 +129,7 @@ namespace sbtw.Editor.Overlays
                 var project = new JsonBackedProject(fullPath);
                 project.Save();
 
-                ZipFile.ExtractToDirectory(beatmapPath.Value, project.BeatmapFiles.GetFullPath("."));
+                makeProjectFiles(project);
                 this.project.Value = project;
             }
             catch (Exception e)
@@ -136,6 +138,28 @@ namespace sbtw.Editor.Overlays
             }
 
             Hide();
+        }
+
+        private void makeProjectFiles(JsonBackedProject project)
+        {
+            foreach (var asm in ScriptManager.Loaded)
+            {
+                var resources = new NamespacedResourceStore<byte[]>(new DllResourceStore(asm), "Resources/Template");
+                foreach (string path in resources.GetAvailableResources())
+                {
+                    string targetName = path.Replace('_', '.').Replace('@', '.');
+
+                    if (targetName.StartsWith('/'))
+                        targetName = targetName.Remove(0);
+
+                    using var target = project.Files.GetStream(targetName, FileAccess.Write);
+                    using var stream = resources.GetStream(path);
+                    target.Position = 0;
+                    stream.CopyTo(target);
+                }
+            }
+
+            ZipFile.ExtractToDirectory(beatmapPath.Value, project.BeatmapFiles.GetFullPath("."));
         }
 
         protected override void PopIn()

@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using sbtw.Editor.Projects;
+using osu.Framework.Platform;
 using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Tests.Scripts
@@ -13,8 +13,8 @@ namespace sbtw.Editor.Tests.Scripts
         public override IReadOnlyList<string> Extensions { get; } = new[] { ".txt" };
         public new IReadOnlyList<TestFileBasedScript> Cache => base.Cache.Select(c => c.Script).ToArray();
 
-        public TestFileBasedScriptLanguage(IProject project)
-            : base(project)
+        public TestFileBasedScriptLanguage(Storage storage)
+            : base(storage)
         {
         }
 

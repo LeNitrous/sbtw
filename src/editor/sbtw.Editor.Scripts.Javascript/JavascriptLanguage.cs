@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
-using sbtw.Editor.Projects;
+using osu.Framework.Platform;
 
 namespace sbtw.Editor.Scripts.Javascript
 {
@@ -18,8 +18,8 @@ namespace sbtw.Editor.Scripts.Javascript
         private readonly V8Runtime runtime;
         private readonly RuntimeUtilities utilities;
 
-        public JavascriptLanguage(IProject project)
-            : base(project)
+        public JavascriptLanguage(Storage storage)
+            : base(storage)
         {
             var flags = V8RuntimeFlags.EnableDebugging
                 | V8RuntimeFlags.EnableRemoteDebugging

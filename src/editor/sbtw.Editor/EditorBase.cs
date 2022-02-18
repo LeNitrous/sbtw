@@ -53,6 +53,7 @@ namespace sbtw.Editor
         protected readonly BindableList<Group> Groups = new BindableList<Group>();
         protected readonly BindableList<ScriptExecutionResult> Scripts = new BindableList<ScriptExecutionResult>();
         protected readonly Bindable<IProject> Project = new NonNullableBindable<IProject>(new DummyProject());
+        protected ScriptManager ScriptManager { get; private set; }
         protected EditorConfigManager EditorConfig { get; private set; }
         protected new Bindable<WorkingBeatmap> Beatmap { get; private set; }
         protected new Bindable<RulesetInfo> Ruleset { get; private set; }
@@ -146,7 +147,7 @@ namespace sbtw.Editor
 
         public async Task<GeneratorResult> Generate(GenerateKind kind, ExportTarget? target = null, bool includeHidden = true, CancellationToken token = default)
         {
-            if (Project.Value is not ICanProvideScripts scriptsProvider)
+            if (ScriptManager == null)
                 throw new InvalidOperationException($"{Project.Value.GetType()} is not capable of generating.");
 
             Schedule(() => OnPreGenerate());
@@ -168,7 +169,7 @@ namespace sbtw.Editor
                 switch (kind)
                 {
                     case GenerateKind.Storyboard:
-                        output = await applyGeneratorConfig(new StoryboardGenerator(scriptsProvider), target, includeHidden).GenerateAsync(globals, token);
+                        output = await applyGeneratorConfig(new StoryboardGenerator(ScriptManager), target, includeHidden).GenerateAsync(globals, token);
                         break;
 
                     default:
@@ -240,6 +241,16 @@ namespace sbtw.Editor
 
                 Scripts.Clear();
             });
+
+            ScriptManager?.Dispose();
+            ScriptManager = null;
+
+            if (Project.Value is ICanProvideFiles fileProvidingProject)
+            {
+                ScriptManager = new ScriptManager(fileProvidingProject.Files);
+            }
+
+            beatmapProvider.Current = null;
 
             if (Project.Value is ICanProvideBeatmap beatmapProvidingProject)
             {

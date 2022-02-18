@@ -1,22 +1,22 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using System;
-using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
-using sbtw.Editor.Tests.Projects;
+using osu.Framework.Testing;
 
 namespace sbtw.Editor.Tests.Scripts
 {
     public class FileBasedScriptLanguageTests
     {
-        private FileBasedScriptLanguageTestProject project;
+        private TestFileBasedScriptLanguage lang;
+        private TemporaryNativeStorage storage;
 
         [SetUp]
         public void SetUp()
         {
-            project = new FileBasedScriptLanguageTestProject();
+            storage = new TemporaryNativeStorage(nameof(FileBasedScriptLanguageTests));
+            lang = new TestFileBasedScriptLanguage(storage);
             writeToStorage("a", "Hello World");
             writeToStorage("b", "Lorem Ipsum");
         }
@@ -24,12 +24,13 @@ namespace sbtw.Editor.Tests.Scripts
         [TearDown]
         public void TearDown()
         {
-            project?.Dispose();
+            lang?.Dispose();
+            storage?.Dispose();
         }
 
         private void writeToStorage(string name, string text)
         {
-            using var stream = project.Files.GetStream($"{name}.txt", FileAccess.Write);
+            using var stream = storage.GetStream($"{name}.txt", FileAccess.Write);
             using var writer = new StreamWriter(stream);
             stream.Position = 0;
             writer.Write(text);
@@ -38,17 +39,17 @@ namespace sbtw.Editor.Tests.Scripts
         [Test]
         public void TestScriptManagerGetScripts()
         {
-            var scripts = project.Scripts.Execute();
+            var scripts = lang.Execute<object>(null);
             Assert.That(scripts, Is.Not.Empty);
-            Assert.That((project.Language as TestFileBasedScriptLanguage).Cache, Is.Not.Empty);
+            Assert.That(lang.Cache, Is.Not.Empty);
         }
 
         [Test]
         public void TestScriptManagerScriptCompiling()
         {
-            project.Scripts.Execute();
+            lang.Execute<object>(null);
 
-            var cache = (project.Language as TestFileBasedScriptLanguage).Cache;
+            var cache = lang.Cache;
             Assert.That(cache[0].Compiled, Is.EqualTo("Hello World"));
             Assert.That(cache[1].Compiled, Is.EqualTo("Lorem Ipsum"));
         }
@@ -56,28 +57,22 @@ namespace sbtw.Editor.Tests.Scripts
         [Test]
         public void TestScriptManagerScriptRecompiling()
         {
-            project.Scripts.Execute();
+            lang.Execute<object>(null);
 
-            var cache = (project.Language as TestFileBasedScriptLanguage).Cache;
+            var cache = lang.Cache;
 
             Assert.That(cache[0].CompileCount, Is.EqualTo(1));
             Assert.That(cache[1].CompileCount, Is.EqualTo(1));
             Assert.That(cache[0].Compiled, Is.EqualTo("Hello World"));
-            Assert.That((project.Language as TestFileBasedScriptLanguage).Cache.Count, Is.EqualTo(2));
+            Assert.That(lang.Cache.Count, Is.EqualTo(2));
 
             writeToStorage("a", "Goodbye World");
-            project.Scripts.Execute();
+            lang.Execute<object>(null);
 
             Assert.That(cache[0].CompileCount, Is.EqualTo(2));
             Assert.That(cache[1].CompileCount, Is.EqualTo(1));
             Assert.That(cache[0].Compiled, Is.EqualTo("Goodbye World"));
-            Assert.That((project.Language as TestFileBasedScriptLanguage).Cache.Count, Is.EqualTo(2));
-        }
-
-        private class FileBasedScriptLanguageTestProject : TemporaryStorageBackedTestProject
-        {
-            protected override IEnumerable<Type> GetScriptingTypes()
-                => new[] { typeof(TestFileBasedScriptLanguage) };
+            Assert.That(lang.Cache.Count, Is.EqualTo(2));
         }
     }
 }
