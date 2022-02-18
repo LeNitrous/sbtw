@@ -23,7 +23,7 @@ jobs:
 
       - name: Build
         run: |
-          sudo dotnet publish ./src/desktop/sbtw.Desktop.${{ matrix.os.name }} --nologo -c Release -o ./output -r ${{ matrix.os.runtime }} --self-contained true -p:Version=${{ github.ref_name }}
+          dotnet publish ./src/desktop/sbtw.Desktop.${{ matrix.os.name }} --nologo -c Release -o ./output -r ${{ matrix.os.runtime }} --self-contained true -p:Version=${{ github.ref_name }}
           7z a -tzip sbtw-${{ matrix.os.runtime }}.zip output/*
 
       - name: Upload Artifact
