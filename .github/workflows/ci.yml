@@ -23,7 +23,7 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
 
       - name: Test
-        run: dotnet test sbtw-tests.slnf --logger "trx;LogFileName=TestResults-sbtw.Editor.Tests.trx"
+        run: sudo dotnet test sbtw-tests.slnf --logger "trx;LogFileName=TestResults-sbtw.Editor.Tests.trx"
 
       - name: Upload Results
         uses: actions/upload-artifact@v2
