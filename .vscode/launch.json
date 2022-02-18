@@ -13,7 +13,7 @@
                 "args": "${workspaceRoot}/src/desktop/sbtw.Desktop.Windows/bin/Debug/net6.0-windows/sbtw.dll"
             },
             "linux": {
-                "args": "${workspaceRoot}/src/desktop/sbtw.Desktop.Linux/bin/Debug/net6.0-linux/sbtw.dll"
+                "args": "${workspaceRoot}/src/desktop/sbtw.Desktop.Linux/bin/Debug/net6.0/sbtw.dll"
             }
         },
         {
@@ -28,7 +28,7 @@
                 "args": "${workspaceRoot}/src/desktop/sbtw.Desktop.Windows/bin/Debug/net6.0-windows/sbtw.dll"
             },
             "linux": {
-                "args": "${workspaceRoot}/src/desktop/sbtw.Desktop.Linux/bin/Debug/net6.0-linux/sbtw.dll"
+                "args": "${workspaceRoot}/src/desktop/sbtw.Desktop.Linux/bin/Debug/net6.0/sbtw.dll"
             }
         }
     ]
