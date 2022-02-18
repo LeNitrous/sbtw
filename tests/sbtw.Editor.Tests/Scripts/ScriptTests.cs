@@ -5,7 +5,6 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using sbtw.Editor.Scripts.Assets;
-using sbtw.Editor.Projects;
 using sbtw.Editor.Scripts;
 using sbtw.Editor.Tests.Projects;
 
@@ -16,7 +15,7 @@ namespace sbtw.Editor.Tests.Scripts
         [Test]
         public void TestScriptException()
         {
-            var result = run(null, null, s => s.GetGroup("test"));
+            var result = run(null, s => s.GetGroup("test"));
 
             Assert.That(result.Faulted, Is.True);
             Assert.That(result.Exception, Is.InstanceOf<ScriptExecutionException>());
@@ -27,7 +26,7 @@ namespace sbtw.Editor.Tests.Scripts
         {
             var provider = new TestProject();
             var globals = new ScriptGlobals { GroupProvider = provider };
-            var script = run(provider, globals, s => s.GetGroup("test"));
+            var script = run(globals, s => s.GetGroup("test"));
 
             Assert.That(script.Faulted, Is.False);
             Assert.That(provider.Groups, Is.Not.Empty);
@@ -38,7 +37,7 @@ namespace sbtw.Editor.Tests.Scripts
         {
             var provider = new TestProject();
             var globals = new ScriptGlobals { Logger = provider };
-            var script = run(provider, globals, s => s.Log("Hello World"));
+            var script = run(globals, s => s.Log("Hello World"));
 
             Assert.That(script.Faulted, Is.False);
             Assert.That(provider.Logs, Is.Not.Empty);
@@ -50,7 +49,7 @@ namespace sbtw.Editor.Tests.Scripts
         {
             var provider = new TestProject();
             var globals = new ScriptGlobals { FileProvider = provider };
-            var result = run(provider, globals, s => s.Fetch("test.png"));
+            var result = run(globals, s => s.Fetch("test.png"));
 
             Assert.That(result.Faulted, Is.False);
         }
@@ -60,7 +59,7 @@ namespace sbtw.Editor.Tests.Scripts
         {
             var provider = new TestProject();
             var globals = new ScriptGlobals { AssetProvider = provider };
-            var result = run(provider, globals, s => s.GetAsset("test.png", new Rectangle()));
+            var result = run(globals, s => s.GetAsset("test.png", new Rectangle()));
 
             Assert.That(result.Faulted, Is.False);
             Assert.That(provider.Assets, Is.Not.Empty);
@@ -68,7 +67,7 @@ namespace sbtw.Editor.Tests.Scripts
             Assert.That(provider.Assets.First().Path, Is.EqualTo("test.png"));
         }
 
-        private static ScriptExecutionResult run(IProject project, ScriptGlobals globals, Action<dynamic> action) => new TestScriptLanguage(project)
+        private static ScriptExecutionResult run(ScriptGlobals globals, Action<dynamic> action) => new TestScriptLanguage()
         {
             Scripts = new[]
             {

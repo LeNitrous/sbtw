@@ -33,7 +33,7 @@ namespace sbtw.Editor.Generators
         }
 
         public GeneratorResult<TResult> Generate(ScriptGlobals globals)
-            => GenerateAsync(globals).Result;
+            => GenerateAsync(globals).GetAwaiter().GetResult();
 
         public async Task<GeneratorResult<TResult>> GenerateAsync(ScriptGlobals globals, CancellationToken token = default)
         {
@@ -44,7 +44,7 @@ namespace sbtw.Editor.Generators
                 throw new ArgumentException($"{nameof(ScriptGlobals)} must provide groups.");
 
             var generatorContext = CreateContext();
-            var stepContext = new GeneratorContext { Groups = globals.GroupProvider.Groups, Assets = globals.AssetProvider.Assets };
+            var stepContext = new GeneratorContext { Groups = globals.GroupProvider.Groups, Assets = globals.AssetProvider?.Assets };
 
             foreach (var group in stepContext.Groups)
                 group.Clear();
