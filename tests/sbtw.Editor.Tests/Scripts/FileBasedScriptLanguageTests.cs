@@ -17,8 +17,8 @@ namespace sbtw.Editor.Tests.Scripts
         {
             storage = new TemporaryNativeStorage(nameof(FileBasedScriptLanguageTests));
             lang = new TestFileBasedScriptLanguage(storage);
-            writeToStorage("file one.txt", "Hello World");
-            writeToStorage("file two.txt", "Lorem Ipsum");
+            writeToStorage("file one", "Hello World");
+            writeToStorage("file two", "Lorem Ipsum");
         }
 
         [TearDown]
