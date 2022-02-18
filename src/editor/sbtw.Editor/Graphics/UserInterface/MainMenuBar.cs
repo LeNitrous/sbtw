@@ -2,6 +2,7 @@
 // See LICENSE in the repository root for more details.
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
@@ -276,8 +277,14 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         private void revealBeatmapFile()
         {
-            if (project.Value is ICanProvideFiles filesProvider)
-                host.OpenFileExternally(filesProvider.BeatmapFiles.GetFullPath($"{beatmap.Value}.osu"));
+            if (project.Value is not IFileBackedProject fileBackedProject)
+                return;
+
+            if (editorBase is not DesktopEditor desktopEditor)
+                return;
+
+            string filename = Path.ChangeExtension(string.Join(string.Empty, beatmap.Value.ToString().Split(Path.GetInvalidFileNameChars())), ".osu");
+            desktopEditor.Studios.Current.Value?.Open(fileBackedProject.BeatmapFiles.GetFullPath(filename));
         }
 
         private class RulesetMenuItem : StatefulMenuItem<bool>
