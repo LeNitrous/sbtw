@@ -40,10 +40,10 @@ namespace sbtw.Editor.Studios
             currentString = config.GetBindable<string>(EditorSetting.PreferredStudio);
             var preferred = studios.FirstOrDefault(s => s.FriendlyName == currentString.Value);
 
-            if (preferred == null)
-                Current.Value = studios.FirstOrDefault();
+            if (preferred != null)
+                Current.Value = preferred;
 
-            Current.BindValueChanged(s => currentString.Value = s.NewValue?.FriendlyName ?? string.Empty, true);
+            Current.BindValueChanged(s => currentString.Value = s.NewValue?.FriendlyName ?? string.Empty);
         }
 
         private static readonly char separator = RuntimeInfo.OS == RuntimeInfo.Platform.Windows ? ';' : ':';
