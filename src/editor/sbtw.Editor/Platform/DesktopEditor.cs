@@ -2,16 +2,20 @@
 // See LICENSE in the repository root for more details.
 
 using osu.Framework.Platform;
+using sbtw.Editor.Studios;
 
 namespace sbtw.Editor.Platform
 {
     public abstract class DesktopEditor : Editor
     {
-        public readonly Picker Picker;
+        public Picker Picker { get; private set; }
+        public StudioManager Studios { get; private set; }
 
-        public DesktopEditor()
+        protected override void LoadComplete()
         {
+            base.LoadComplete();
             Picker = CreatePicker();
+            Studios = new StudioManager(EditorConfig);
         }
 
         protected abstract Picker CreatePicker();

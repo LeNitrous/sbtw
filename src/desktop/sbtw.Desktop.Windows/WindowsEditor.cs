@@ -1,7 +1,6 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
-using osu.Framework.Platform;
 using osu.Framework.Platform.Windows;
 using sbtw.Editor.Platform;
 
@@ -11,11 +10,11 @@ namespace sbtw.Desktop.Windows
     {
         protected override Picker CreatePicker() => new WindowsPicker();
 
-        public override void SetHost(GameHost host)
+        protected override void LoadComplete()
         {
-            base.SetHost(host);
+            base.LoadComplete();
 
-            if (host.Window is not WindowsWindow window)
+            if (Host.Window is not WindowsWindow window)
                 return;
 
             (Picker as WindowsPicker).WindowHandle = window.WindowHandle;

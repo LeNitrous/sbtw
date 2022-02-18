@@ -1,28 +1,40 @@
 // Copyright (c) 2021 Nathan Alo. Licensed under MIT License.
 // See LICENSE in the repository root for more details.
 
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using osu.Framework;
 using osu.Framework.Bindables;
 using sbtw.Editor.Configuration;
 
 namespace sbtw.Editor.Studios
 {
-    public abstract class StudioManager
+    public class StudioManager
     {
         public IReadOnlyList<Studio> Studios => studios;
-        public abstract IEnumerable<Studio> Supported { get; }
-        public readonly Bindable<Studio> Current = new Bindable<Studio>();
+        public readonly Bindable<Studio> Current = new NonNullableBindable<Studio>(new NoStudio());
 
         private readonly Bindable<string> currentString;
         private readonly List<Studio> studios = new List<Studio>();
+        private readonly IReadOnlyList<Studio> supported = new Studio[]
+        {
+            new VSCodeInsidersStudio(),
+            new VSCodeStudio(),
+            new SublimeStudio(),
+            new NppStudio(),
+        };
 
         public StudioManager(EditorConfigManager config)
         {
-            foreach (var studio in Supported)
+            foreach (var studio in supported)
             {
-                if (IsSupported(studio))
-                    studios.Add(studio);
+                foreach (var path in Environment.GetEnvironmentVariable("PATH").Split(separator))
+                {
+                    if (File.Exists(Path.Combine(path, studio.Name)))
+                        studios.Add(studio);
+                }
             }
 
             currentString = config.GetBindable<string>(EditorSetting.PreferredStudio);
@@ -34,6 +46,6 @@ namespace sbtw.Editor.Studios
             Current.BindValueChanged(s => currentString.Value = s.NewValue?.FriendlyName ?? string.Empty, true);
         }
 
-        protected abstract bool IsSupported(Studio studio);
+        private static readonly char separator = RuntimeInfo.OS == RuntimeInfo.Platform.Windows ? ';' : ':';
     }
 }

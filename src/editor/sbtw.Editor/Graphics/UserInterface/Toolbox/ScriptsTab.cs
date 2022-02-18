@@ -13,6 +13,7 @@ using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osuTK;
+using sbtw.Editor.Platform;
 using sbtw.Editor.Scripts;
 
 namespace sbtw.Editor.Graphics.UserInterface.Toolbox
@@ -146,8 +147,11 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
             }
 
             [BackgroundDependencyLoader]
-            private void load()
+            private void load(Editor editor)
             {
+                if (editor is not DesktopEditor desktopEditor)
+                    return;
+
                 Add(new IconButton
                 {
                     Icon = FontAwesome.Regular.Edit,
@@ -155,6 +159,7 @@ namespace sbtw.Editor.Graphics.UserInterface.Toolbox
                     Anchor = Anchor.TopRight,
                     Origin = Anchor.TopRight,
                     TooltipText = @"Reveal script in code.",
+                    Action = () => desktopEditor.Studios.Current.Value?.Open(script.Path),
                 });
             }
         }

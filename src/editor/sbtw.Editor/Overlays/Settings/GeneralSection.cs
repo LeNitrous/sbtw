@@ -7,8 +7,11 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Localisation;
+using osu.Game.Graphics.UserInterface;
 using osu.Game.Overlays.Settings;
 using sbtw.Editor.Configuration;
+using sbtw.Editor.Platform;
+using sbtw.Editor.Studios;
 
 namespace sbtw.Editor.Overlays.Settings
 {
@@ -35,20 +38,35 @@ namespace sbtw.Editor.Overlays.Settings
             [Resolved]
             private EditorConfigManager config { get; set; }
 
-            // [Resolved]
-            // private StudioManager studioManager { get; set; }
-
             [BackgroundDependencyLoader]
-            private void load()
+            private void load(Editor editor)
             {
-                Children = new Drawable[]
+                Child = new SettingsCheckbox
                 {
-                    new SettingsCheckbox
-                    {
-                        LabelText = @"Hot Reload",
-                        Current = config.GetBindable<bool>(EditorSetting.HotReload),
-                    },
+                    LabelText = @"Hot Reload",
+                    Current = config.GetBindable<bool>(EditorSetting.HotReload),
                 };
+
+                if (editor is not DesktopEditor desktopEditor)
+                    return;
+
+                Add(new StudioSettingsDropdown
+                {
+                    ShowsDefaultIndicator = false,
+                    LabelText = @"Preferred Editor",
+                    Current = desktopEditor.Studios.Current.GetBoundCopy(),
+                    Items = new Studio[] { new NoStudio() }.Concat(desktopEditor.Studios.Studios),
+                });
+            }
+        }
+
+        private class StudioSettingsDropdown : SettingsDropdown<Studio>
+        {
+            protected override OsuDropdown<Studio> CreateDropdown() => new StudioSettingsDropdownControl();
+
+            private class StudioSettingsDropdownControl : DropdownControl
+            {
+                protected override LocalisableString GenerateItemText(Studio item) => item.FriendlyName;
             }
         }
     }

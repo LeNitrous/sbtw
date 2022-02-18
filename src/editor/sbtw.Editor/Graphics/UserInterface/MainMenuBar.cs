@@ -265,10 +265,19 @@ namespace sbtw.Editor.Graphics.UserInterface
 
         private void revealProjectInCode()
         {
+            if (project.Value is not IFileBackedProject fileBackedProject)
+                return;
+
+            if (editorBase is not DesktopEditor desktopEditor)
+                return;
+
+            desktopEditor.Studios.Current.Value?.Open(fileBackedProject.Files.GetFullPath("."));
         }
 
         private void revealBeatmapFile()
         {
+            if (project.Value is ICanProvideFiles filesProvider)
+                host.OpenFileExternally(filesProvider.BeatmapFiles.GetFullPath($"{beatmap.Value}.osu"));
         }
 
         private class RulesetMenuItem : StatefulMenuItem<bool>

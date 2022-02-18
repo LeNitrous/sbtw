@@ -3,13 +3,39 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace sbtw.Editor.Studios
 {
-    public class Studio : IEquatable<Studio>
+    public abstract class Studio : IEquatable<Studio>
     {
-        public string Name { get; set; }
-        public string FriendlyName { get; set; }
+        public abstract string Name { get; }
+
+        public abstract string FriendlyName { get; }
+
+        public abstract void Open(string path, int line = 0, int column = 0);
+
+        public bool Run(string args, bool wait = false) => RunAsync(args, wait).Result;
+
+        public async Task<bool> RunAsync(string args, bool wait = false, CancellationToken token = default)
+        {
+            var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = Name,
+                Arguments = args,
+                WindowStyle = ProcessWindowStyle.Hidden,
+                UseShellExecute = true,
+            });
+
+            if (wait)
+            {
+                await process.WaitForExitAsync(token);
+                return process.ExitCode == 0;
+            }
+
+            return true;
+        }
 
         public bool Equals(Studio other)
             => other.Name == Name && other.FriendlyName == FriendlyName;
@@ -19,13 +45,5 @@ namespace sbtw.Editor.Studios
 
         public override int GetHashCode()
             => HashCode.Combine(Name, FriendlyName);
-
-        public void Open(string path) => Process.Start(new ProcessStartInfo
-        {
-            FileName = Name,
-            Arguments = $@"""{path}""",
-            WindowStyle = ProcessWindowStyle.Hidden,
-            UseShellExecute = true,
-        });
     }
 }
