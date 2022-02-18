@@ -66,7 +66,7 @@ namespace sbtw.Editor.Tests.Scripts
             Assert.That(cache[0].Compiled, Is.EqualTo("Hello World"));
             Assert.That(lang.Cache.Count, Is.EqualTo(2));
 
-            writeToStorage("a", "Goodbye World");
+            writeToStorage("file one", "Goodbye World");
             lang.Execute<object>(null);
 
             Assert.That(cache[0].CompileCount, Is.EqualTo(2));
