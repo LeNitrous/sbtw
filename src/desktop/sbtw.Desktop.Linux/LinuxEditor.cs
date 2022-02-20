@@ -7,6 +7,6 @@ namespace sbtw.Desktop.Linux
 {
     public class LinuxEditor : DesktopEditor
     {
-        protected override Picker CreatePicker() => new NoOpPicker();
+        protected override Picker CreatePicker() => new NfdPicker();
     }
 }
